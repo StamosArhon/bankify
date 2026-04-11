@@ -203,9 +203,10 @@
   - Stored insecure hosts now fail with an explicit HTTPS-required error instead of silently continuing.
 - Implemented on `stamos/phase-1-attachment-origin-validation`:
   - Attachment upload/download requests now build trusted API endpoints from the configured Firefly base URL plus attachment ID, instead of consuming server-returned absolute URLs.
+- Implemented on `stamos/phase-1-attachment-filename-sanitization`:
+  - Attachment downloads now sanitize server-provided filenames and always write into app temp storage with a generated safe name.
+  - Attachment downloads now stream response bytes directly to disk instead of buffering the entire file in memory first.
 - Still pending in Phase 1:
-  - Attachment origin validation and bearer-token containment.
-  - Attachment filename sanitization and safer download handling.
   - API key obscuring and screenshot / recents-preview protection.
   - A more explicit advanced-user compatibility path for custom CA / self-signed deployments if one is still desired after hardening.
 

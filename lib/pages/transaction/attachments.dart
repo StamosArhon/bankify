@@ -37,6 +37,38 @@ class _AttachmentDialogState extends State<AttachmentDialog>
 
   final Map<int, double> _dlProgress = <int, double>{};
 
+  String _safeAttachmentFilename(String? filename) {
+    String safeName = (filename ?? "").trim().replaceAll("\\", "/");
+    if (safeName.contains("/")) {
+      safeName = safeName.split("/").last;
+    }
+    safeName = safeName.replaceAll(RegExp(r'[\x00-\x1F\x7F]'), "");
+    safeName = safeName.replaceAll(RegExp(r"[^A-Za-z0-9._ -]"), "_");
+    safeName = safeName.replaceAll(RegExp(r"\s+"), " ").trim();
+    if (safeName.isEmpty || safeName == "." || safeName == "..") {
+      safeName = "attachment";
+    }
+    if (safeName.length > 80) {
+      final int dotIndex = safeName.lastIndexOf(".");
+      if (dotIndex > 0 && safeName.length - dotIndex <= 10) {
+        final String extension = safeName.substring(dotIndex);
+        final int baseLength = 80 - extension.length;
+        safeName = "${safeName.substring(0, baseLength)}$extension";
+      } else {
+        safeName = safeName.substring(0, 80);
+      }
+    }
+    return safeName;
+  }
+
+  File _attachmentDownloadFile(Directory tmpPath, AttachmentRead attachment) {
+    final String safeName = _safeAttachmentFilename(
+      attachment.attributes.filename,
+    );
+    final String fileName = "waterfly-${attachment.id}-$safeName";
+    return File.fromUri(tmpPath.uri.resolve(fileName));
+  }
+
   Future<void> downloadAttachment(
     BuildContext context,
     AttachmentRead attachment,
@@ -47,15 +79,12 @@ class _AttachmentDialogState extends State<AttachmentDialog>
     final S l10n = S.of(context);
     late int total;
     int received = 0;
-    final List<int> fileData = <int>[];
 
     if (user == null) {
       log.severe("downloadAttachment: user was null");
       throw Exception(l10n.errorAPIUnavailable);
     }
 
-    final Directory tmpPath = await getTemporaryDirectory();
-    final String filePath = "${tmpPath.path}/${attachment.attributes.filename}";
     final Uri downloadUri = fireflyAttachmentDownloadUri(user, attachment.id);
 
     final http.Request request = http.Request(
@@ -78,51 +107,56 @@ class _AttachmentDialogState extends State<AttachmentDialog>
     if (total == 0) {
       total = attachment.attributes.size ?? 0;
     }
-    resp.stream.listen(
-      (List<int> value) {
+    final Directory tmpPath = await getTemporaryDirectory();
+    final File outputFile = _attachmentDownloadFile(tmpPath, attachment);
+    final IOSink fileSink = outputFile.openWrite();
+
+    try {
+      await for (final List<int> value in resp.stream) {
+        fileSink.add(value);
+        received += value.length;
+        final double progress = total > 0 ? received / total : 0;
         setState(() {
-          fileData.addAll(value);
-          received += value.length;
-          _dlProgress[i] = received / total;
+          _dlProgress[i] = progress;
           log.finest(
             () =>
-                "received ${value.length} bytes (total $received of $total), ${received / total * 100}%",
+                "received ${value.length} bytes (total $received of $total), ${progress * 100}%",
           );
         });
-      },
-      cancelOnError: true,
-      onDone: () async {
-        setState(() {
-          _dlProgress.remove(i);
-        });
-        log.finest(() => "writing ${fileData.length} bytes to $filePath");
-        await File(filePath).writeAsBytes(fileData, flush: true);
-        final OpenResult file = await OpenFile.open(filePath);
-        if (file.type != ResultType.done) {
-          log.severe("error opening file", file.message);
-          msg.showSnackBar(
-            SnackBar(
-              content: Text(
-                l10n.transactionDialogAttachmentsErrorOpen(file.message),
-              ),
-              behavior: SnackBarBehavior.floating,
-            ),
-          );
-        }
-      },
-      onError: (Object e, StackTrace s) {
-        log.severe("download error", e, s);
-        setState(() {
-          _dlProgress.remove(i);
-        });
+      }
+      await fileSink.flush();
+      await fileSink.close();
+      setState(() {
+        _dlProgress.remove(i);
+      });
+      final OpenResult file = await OpenFile.open(outputFile.path);
+      if (file.type != ResultType.done) {
+        log.severe("error opening file", file.message);
         msg.showSnackBar(
           SnackBar(
-            content: Text(l10n.transactionDialogAttachmentsErrorDownload),
+            content: Text(
+              l10n.transactionDialogAttachmentsErrorOpen(file.message),
+            ),
             behavior: SnackBarBehavior.floating,
           ),
         );
-      },
-    );
+      }
+    } catch (e, s) {
+      log.severe("download error", e, s);
+      await fileSink.close();
+      if (await outputFile.exists()) {
+        await outputFile.delete();
+      }
+      setState(() {
+        _dlProgress.remove(i);
+      });
+      msg.showSnackBar(
+        SnackBar(
+          content: Text(l10n.transactionDialogAttachmentsErrorDownload),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+    }
   }
 
   Future<void> deleteAttachment(
