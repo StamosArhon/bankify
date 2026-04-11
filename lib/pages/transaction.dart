@@ -1167,6 +1167,7 @@ class _TransactionPageState extends State<TransactionPage>
                                   ),
                                 );
                             request.headers.addAll(user!.headers());
+                            disallowRedirects(request);
                             request.headers[HttpHeaders.contentTypeHeader] =
                                 ContentType.binary.mimeType;
                             request.contentLength = await file.length();

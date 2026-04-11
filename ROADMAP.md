@@ -198,7 +198,6 @@
 
 - Implemented on `stamos/phase-1-transport-security`:
   - Android release builds now disable cleartext traffic and only trust the system CA store.
-  - Debug builds keep the old cleartext / user-CA behavior so local development is still possible without weakening release output.
   - Login and auth now reject `http://` Firefly hosts and normalize scheme-less input toward `https://`.
   - Stored insecure hosts now fail with an explicit HTTPS-required error instead of silently continuing.
 - Implemented on `stamos/phase-1-attachment-origin-validation`:
@@ -206,6 +205,9 @@
 - Implemented on `stamos/phase-1-attachment-filename-sanitization`:
   - Attachment downloads now sanitize server-provided filenames and always write into app temp storage with a generated safe name.
   - Attachment downloads now stream response bytes directly to disk instead of buffering the entire file in memory first.
+- Implemented on `stamos/phase-1-redirect-policy`:
+  - Auth, API, and attachment requests now fail closed on redirects instead of automatically following them.
+  - The dead debug-only cleartext / user-CA override was removed so the repo matches the enforced HTTPS-only runtime policy.
 - Still pending in Phase 1:
   - API key obscuring and screenshot / recents-preview protection.
   - A more explicit advanced-user compatibility path for custom CA / self-signed deployments if one is still desired after hardening.
