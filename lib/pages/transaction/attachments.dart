@@ -92,6 +92,7 @@ class _AttachmentDialogState extends State<AttachmentDialog>
       downloadUri,
     );
     request.headers.addAll(user.headers());
+    disallowRedirects(request);
     final http.StreamedResponse resp = await httpClient.send(request);
     if (resp.statusCode != 200) {
       log.warning("got invalid status code ${resp.statusCode}");
@@ -237,6 +238,7 @@ class _AttachmentDialogState extends State<AttachmentDialog>
       fireflyAttachmentUploadUri(user, newAttachment.id),
     );
     request.headers.addAll(user.headers());
+    disallowRedirects(request);
     request.headers[HttpHeaders.contentTypeHeader] =
         ContentType.binary.mimeType;
     log.fine(() => "AttachmentUpload: Starting Upload $newAttachmentIndex");
