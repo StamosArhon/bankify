@@ -107,6 +107,30 @@ class AuthErrorNoInstance extends AuthError {
 http.Client get httpClient =>
     CronetClient.fromCronetEngine(CronetEngine.build(), closeEngine: false);
 
+Uri fireflyAttachmentDownloadUri(AuthUser user, String attachmentId) {
+  return user.host.replace(
+    pathSegments: <String>[
+      ...user.host.pathSegments,
+      "v1",
+      "attachments",
+      attachmentId,
+      "download",
+    ],
+  );
+}
+
+Uri fireflyAttachmentUploadUri(AuthUser user, String attachmentId) {
+  return user.host.replace(
+    pathSegments: <String>[
+      ...user.host.pathSegments,
+      "v1",
+      "attachments",
+      attachmentId,
+      "upload",
+    ],
+  );
+}
+
 class APIRequestInterceptor implements Interceptor {
   APIRequestInterceptor(this.headerFunc);
 

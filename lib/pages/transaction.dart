@@ -1161,8 +1161,9 @@ class _TransactionPageState extends State<TransactionPage>
                             final http.StreamedRequest request =
                                 http.StreamedRequest(
                                   HttpMethod.Post,
-                                  Uri.parse(
-                                    newAttachment.attributes.uploadUrl!,
+                                  fireflyAttachmentUploadUri(
+                                    user!,
+                                    newAttachment.id,
                                   ),
                                 );
                             request.headers.addAll(user!.headers());

@@ -201,6 +201,8 @@
   - Debug builds keep the old cleartext / user-CA behavior so local development is still possible without weakening release output.
   - Login and auth now reject `http://` Firefly hosts and normalize scheme-less input toward `https://`.
   - Stored insecure hosts now fail with an explicit HTTPS-required error instead of silently continuing.
+- Implemented on `stamos/phase-1-attachment-origin-validation`:
+  - Attachment upload/download requests now build trusted API endpoints from the configured Firefly base URL plus attachment ID, instead of consuming server-returned absolute URLs.
 - Still pending in Phase 1:
   - Attachment origin validation and bearer-token containment.
   - Attachment filename sanitization and safer download handling.
