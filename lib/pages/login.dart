@@ -46,6 +46,7 @@ class _LoginPageState extends State<LoginPage> {
   final TextEditingController _keyTextController = TextEditingController();
   final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
 
+  bool _obscureApiKey = true;
   String? _hostError;
   ErrorIcon _hostErrorIcon = const ErrorIcon(false);
   String? _keyError;
@@ -174,10 +175,35 @@ class _LoginPageState extends State<LoginPage> {
                     child: TextFormField(
                       controller: _keyTextController,
                       //readOnly: _formSubmitted,
+                      obscureText: _obscureApiKey,
+                      autocorrect: false,
+                      enableSuggestions: false,
+                      enableIMEPersonalizedLearning: false,
+                      keyboardType: TextInputType.visiblePassword,
                       decoration: InputDecoration(
                         filled: true,
                         labelText: S.of(context).loginFormLabelAPIKey,
-                        suffixIcon: _keyErrorIcon,
+                        suffixIcon: SizedBox(
+                          width: 96,
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: <Widget>[
+                              _keyErrorIcon,
+                              IconButton(
+                                onPressed: () {
+                                  setState(() {
+                                    _obscureApiKey = !_obscureApiKey;
+                                  });
+                                },
+                                icon: Icon(
+                                  _obscureApiKey
+                                      ? Icons.visibility_off
+                                      : Icons.visibility,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
                         errorText: _keyError,
                       ),
                       onChanged: (String value) {

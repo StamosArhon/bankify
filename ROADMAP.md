@@ -208,8 +208,10 @@
 - Implemented on `stamos/phase-1-redirect-policy`:
   - Auth, API, and attachment requests now fail closed on redirects instead of automatically following them.
   - The dead debug-only cleartext / user-CA override was removed so the repo matches the enforced HTTPS-only runtime policy.
+- Implemented on `stamos/phase-1-login-secret-protection`:
+  - The API key field is now obscured by default and disables suggestions, autocorrect, and IME personalized learning.
+  - Android now sets `FLAG_SECURE`, which protects screenshots and app-switcher previews for the whole app.
 - Still pending in Phase 1:
-  - API key obscuring and screenshot / recents-preview protection.
   - A more explicit advanced-user compatibility path for custom CA / self-signed deployments if one is still desired after hardening.
 
 ### Task Slices
