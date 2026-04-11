@@ -56,10 +56,11 @@ class _AttachmentDialogState extends State<AttachmentDialog>
 
     final Directory tmpPath = await getTemporaryDirectory();
     final String filePath = "${tmpPath.path}/${attachment.attributes.filename}";
+    final Uri downloadUri = fireflyAttachmentDownloadUri(user, attachment.id);
 
     final http.Request request = http.Request(
       HttpMethod.Get,
-      Uri.parse(attachment.attributes.downloadUrl!),
+      downloadUri,
     );
     request.headers.addAll(user.headers());
     final http.StreamedResponse resp = await httpClient.send(request);
@@ -199,7 +200,7 @@ class _AttachmentDialogState extends State<AttachmentDialog>
 
     final http.StreamedRequest request = http.StreamedRequest(
       HttpMethod.Post,
-      Uri.parse(newAttachment.attributes.uploadUrl!),
+      fireflyAttachmentUploadUri(user, newAttachment.id),
     );
     request.headers.addAll(user.headers());
     request.headers[HttpHeaders.contentTypeHeader] =
