@@ -74,6 +74,10 @@ Account Screen|Category Screen|Piggy Banks with Chart|
 
 The app is built using [Flutter](https://flutter.dev/), and tries to keep to the [Material 3](https://m3.material.io/) design guidelines. Additionally, I try to keep the app as "lean" as possible, **without any trackers** or unneeded dependency on external packages.
 
+## Development
+
+The repo is currently pinned to Flutter `3.35.6` through [`pubspec.yaml`](pubspec.yaml), and GitHub Actions reads that exact version during CI. Local workflow and branch-process notes live in [`CONTRIBUTING.md`](CONTRIBUTING.md).
+
 ## Motivation
 
 Having troubles with [Bluecoins](https://play.google.com/store/apps/details?id=com.rammigsoftware.bluecoins) syncing across devices and not always storing attachments online, I was looking for a self-hosted alternative and discovered [Firefly III](https://www.firefly-iii.org/). After a [quick script to migrate from Bluecoins to Firefly III](https://github.com/dreautall/bluecoins-to-fireflyiii), the only thing left was to download an app to easily track expenses on-the-go… or so I thought.

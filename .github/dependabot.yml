@@ -1,13 +1,19 @@
 version: 2
 updates:
   - package-ecosystem: "pub"
-    target-branch: develop
+    target-branch: master
     directory: "/"
     schedule:
       interval: "weekly"
 
+  - package-ecosystem: "gradle"
+    target-branch: master
+    directory: "/android"
+    schedule:
+      interval: "weekly"
+
   - package-ecosystem: "github-actions"
-    target-branch: develop
-    directory: "/.github/workflows/"
+    target-branch: master
+    directory: "/"
     schedule:
       interval: "weekly"

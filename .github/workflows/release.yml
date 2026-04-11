@@ -6,7 +6,7 @@ on:
       - created
   push:
     branches:
-      - develop
+      - master
 
 env:
   PROPERTIES_PATH: "./android/key.properties"
@@ -32,7 +32,7 @@ jobs:
         uses: ./.github/actions/setup_env
         with:
           java-version: 17.x
-          flutter-channel: stable
+          flutter-version-file: pubspec.yaml
 
       # Generate keystore from base64 secret
       - name: Generate keystore

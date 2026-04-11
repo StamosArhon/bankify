@@ -4,9 +4,13 @@ inputs:
   java-version:
     description: 'The version of Java to be installed. e.g. 17'
     required: true
+  flutter-version-file:
+    description: 'A pubspec.yaml or FVM config that declares the exact Flutter version.'
+    required: true
   flutter-channel:
     description: 'The Flutter channel to use. e.g. stable, beta'
-    required: true
+    required: false
+    default: stable
 runs:
   using: 'composite'
   steps:
@@ -21,6 +25,7 @@ runs:
       uses: subosito/flutter-action@v2
       with:
         channel: ${{inputs.flutter-channel}}
+        flutter-version-file: ${{inputs.flutter-version-file}}
         cache: true
 
     - name: Disable Dart Analytics
