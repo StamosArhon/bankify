@@ -13,16 +13,22 @@ class UriScheme {
   static const String https = "https://";
   static const String http = "http://";
 
+  static String normalize(String uri) {
+    final String trimmed = uri.trim();
+    if (trimmed.isEmpty || trimmed.contains("://")) {
+      return trimmed;
+    }
+    return "$https$trimmed";
+  }
+
   static bool valid(String uri) {
-    return uri.startsWith(http) || uri.startsWith(https);
+    final Uri? parsed = Uri.tryParse(normalize(uri));
+    return parsed != null && parsed.scheme == "https" && parsed.host.isNotEmpty;
   }
 
   static bool isHttp(String uri) {
-    return uri.startsWith(http);
-  }
-
-  static bool isHttps(String uri) {
-    return uri.startsWith(https);
+    final Uri? parsed = Uri.tryParse(uri.trim());
+    return parsed?.scheme == "http";
   }
 }
 
@@ -40,7 +46,6 @@ class _LoginPageState extends State<LoginPage> {
   final TextEditingController _keyTextController = TextEditingController();
   final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
 
-  String _uriScheme = UriScheme.https;
   String? _hostError;
   ErrorIcon _hostErrorIcon = const ErrorIcon(false);
   String? _keyError;
@@ -53,7 +58,7 @@ class _LoginPageState extends State<LoginPage> {
   void initState() {
     super.initState();
 
-    _hostTextController.text = _uriScheme;
+    _hostTextController.text = UriScheme.https;
   }
 
   @override
@@ -66,12 +71,7 @@ class _LoginPageState extends State<LoginPage> {
   }
 
   bool _hostValid(String value) {
-    if (!UriScheme.valid(value)) return false;
-
-    final Uri? uri = Uri.tryParse(value);
-    if (uri == null || uri.host.isEmpty) return false;
-
-    return true;
+    return UriScheme.valid(value);
   }
 
   @override
@@ -112,63 +112,6 @@ class _LoginPageState extends State<LoginPage> {
                     ),
                   ),
                   const SizedBox(height: 12),
-                  SegmentedButton<String>(
-                    segments: const <ButtonSegment<String>>[
-                      ButtonSegment<String>(
-                        value: UriScheme.https,
-                        label: Text("HTTPS"),
-                        icon: Icon(Icons.lock_outline),
-                      ),
-                      ButtonSegment<String>(
-                        value: UriScheme.http,
-                        label: Text("HTTP"),
-                        icon: Icon(Icons.lock_open_outlined),
-                      ),
-                    ],
-                    selected: <String>{_uriScheme},
-                    onSelectionChanged: /*_formSubmitted
-                        ? null
-                        : */ (Set<String> newSelection) {
-                      _hostFocusNode.requestFocus();
-                      if (!UriScheme.valid(newSelection.first) ||
-                          _uriScheme == newSelection.first) {
-                        return;
-                      }
-                      final String currentUrl = _hostTextController.text;
-                      String oldScheme, newScheme;
-                      if (UriScheme.isHttp(newSelection.first)) {
-                        oldScheme = UriScheme.https;
-                        newScheme = UriScheme.http;
-                      } else {
-                        oldScheme = UriScheme.http;
-                        newScheme = UriScheme.https;
-                      }
-                      if (currentUrl.isEmpty) {
-                        _hostTextController.text = newScheme;
-                      } else if (currentUrl.startsWith(oldScheme)) {
-                        _hostTextController.text =
-                            "$newScheme${currentUrl.substring(oldScheme.length)}";
-                      } else {
-                        _hostTextController.text = "$newScheme$currentUrl";
-                      }
-                      _hostTextController
-                          .selection = TextSelection.fromPosition(
-                        TextPosition(offset: _hostTextController.text.length),
-                      );
-
-                      final bool error =
-                          _hostTextController.text.isNotEmpty &&
-                          !_hostValid(_hostTextController.text);
-                      setState(() {
-                        _uriScheme = newScheme;
-                        // Needed here because updating the text does not actually cause onChanged to fire
-                        if (error != _hostErrorIcon.isError) {
-                          _hostErrorIcon = ErrorIcon(error);
-                        }
-                      });
-                    },
-                  ),
-                  const SizedBox(height: 12),
                   AnimatedHeight(
                     child: TextFormField(
                       controller: _hostTextController,
@@ -177,45 +120,42 @@ class _LoginPageState extends State<LoginPage> {
                       decoration: InputDecoration(
                         filled: true,
                         labelText: S.of(context).loginFormLabelHost,
+                        helperText: "HTTPS only",
                         suffixIcon: _hostErrorIcon,
                         errorText: _hostError,
                       ),
+                      autocorrect: false,
+                      enableSuggestions: false,
+                      keyboardType: TextInputType.url,
                       onChanged: (String value) {
-                        String newUriScheme = _uriScheme;
-
-                        if (!UriScheme.valid(value)) {
-                          newUriScheme = "";
-                        } else if (UriScheme.isHttp(value)) {
-                          newUriScheme = UriScheme.http;
-                        } else if (UriScheme.isHttps(value)) {
-                          newUriScheme = UriScheme.https;
-                        }
-                        if (newUriScheme != _uriScheme) {
-                          setState(() {
-                            _uriScheme = newUriScheme;
-                          });
-                        }
-
                         final bool error =
                             value.isNotEmpty &&
-                            (!UriScheme.valid(value) || !_hostValid(value));
+                            !(_hostValid(value));
+                        final String? errorText =
+                            !error
+                                ? null
+                                : UriScheme.isHttp(value)
+                                ? "Only HTTPS URLs are allowed."
+                                : S.of(context).errorInvalidURL;
                         if (error != _hostErrorIcon.isError ||
-                            (_hostError != null &&
-                                _hostError!.isNotEmpty &&
-                                _hostError != S.of(context).errorInvalidURL)) {
+                            _hostError != errorText) {
                           setState(() {
                             _hostErrorIcon = ErrorIcon(error);
-                            _hostError =
-                                error ? S.of(context).errorInvalidURL : null;
+                            _hostError = errorText;
                           });
                         }
                       },
                       autovalidateMode: AutovalidateMode.disabled,
                       validator: (String? value) {
+                        final String normalized = UriScheme.normalize(
+                          value ?? "",
+                        );
                         final String? error =
-                            value == null || value.isEmpty
+                            value == null || value.trim().isEmpty
                                 ? S.of(context).errorFieldRequired
-                                : !_hostValid(value)
+                                : UriScheme.isHttp(value)
+                                ? "Only HTTPS URLs are allowed."
+                                : !_hostValid(normalized)
                                 ? S.of(context).errorInvalidURL
                                 : null;
                         if (_hostError != error ||
@@ -288,6 +228,17 @@ class _LoginPageState extends State<LoginPage> {
                         onPressed: /*_formSubmitted
                             ? null
                             : */ () {
+                          final String normalizedHost = UriScheme.normalize(
+                            _hostTextController.text,
+                          );
+                          if (normalizedHost != _hostTextController.text) {
+                            _hostTextController.value = TextEditingValue(
+                              text: normalizedHost,
+                              selection: TextSelection.collapsed(
+                                offset: normalizedHost.length,
+                              ),
+                            );
+                          }
                           _formKey.currentState!.validate();
                           if ((_keyError != null && _keyError!.isNotEmpty) ||
                               (_hostError != null && _hostError!.isNotEmpty)) {
@@ -298,7 +249,7 @@ class _LoginPageState extends State<LoginPage> {
                             MaterialPageRoute<Widget>(
                               builder:
                                   (BuildContext context) => SplashPage(
-                                    host: _hostTextController.text,
+                                    host: normalizedHost,
                                     apiKey: _keyTextController.text,
                                   ),
                             ),
