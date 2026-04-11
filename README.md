@@ -78,6 +78,28 @@ The app is built using [Flutter](https://flutter.dev/), and tries to keep to the
 
 The repo is currently pinned to Flutter `3.35.6` through [`pubspec.yaml`](pubspec.yaml), and GitHub Actions reads that exact version during CI. Local workflow and branch-process notes live in [`CONTRIBUTING.md`](CONTRIBUTING.md).
 
+## Local Preview
+
+The easiest local UI/UX workflow is an Android emulator with hot reload. After Android Studio and an emulator are set up, you can use [`scripts/preview-android.ps1`](scripts/preview-android.ps1) from PowerShell:
+
+```powershell
+.\scripts\preview-android.ps1
+```
+
+Useful variants:
+
+```powershell
+.\scripts\preview-android.ps1 -AvdName Pixel_8_API_35
+.\scripts\preview-android.ps1 -SkipEmulatorLaunch
+```
+
+The script:
+- uses the repo's pinned Flutter version as the expected baseline,
+- tries to find `adb` / `emulator` from PATH or the default Android SDK location,
+- launches an emulator if needed,
+- runs `flutter pub get` unless `-NoPubGet` is passed,
+- starts `flutter run` so you can use hot reload with `r` and hot restart with `R`.
+
 ## Motivation
 
 Having troubles with [Bluecoins](https://play.google.com/store/apps/details?id=com.rammigsoftware.bluecoins) syncing across devices and not always storing attachments online, I was looking for a self-hosted alternative and discovered [Firefly III](https://www.firefly-iii.org/). After a [quick script to migrate from Bluecoins to Firefly III](https://github.com/dreautall/bluecoins-to-fireflyiii), the only thing left was to download an app to easily track expenses on-the-go… or so I thought.

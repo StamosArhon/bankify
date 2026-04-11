@@ -151,6 +151,9 @@
   - The shared CI setup action now reads the exact Flutter version from the repo instead of using a floating `stable` channel.
   - Dependabot now covers `pub`, `gradle`, and GitHub Actions against the real baseline branch.
   - A dedicated `CONTRIBUTING.md` workflow doc was added for the `stamos/` branch process.
+- Implemented on `stamos/phase-0-local-preview-workflow`:
+  - Added a repo-local Android emulator preview helper at `scripts/preview-android.ps1`.
+  - Documented the emulator + hot-reload workflow in `README.md` and `CONTRIBUTING.md` so future UI/UX work can be reviewed locally without reinstalling on a phone every time.
 - Still pending in Phase 0:
   - Pin third-party GitHub Actions by commit SHA.
   - Add explicit least-privilege GitHub Actions `permissions`.

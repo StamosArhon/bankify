@@ -11,6 +11,15 @@
 - The exact Flutter version is declared in `pubspec.yaml`.
 - GitHub Actions reads the pinned version from `pubspec.yaml`, so local work should use the same SDK line before running checks.
 
+## Local UI Preview
+
+- The recommended local UI/UX workflow is Android emulator + `flutter run`.
+- A helper script is available at `scripts/preview-android.ps1`.
+- From PowerShell, run `.\scripts\preview-android.ps1` to launch an emulator if needed and start the app with hot reload.
+- Use `.\scripts\preview-android.ps1 -AvdName <name>` to choose a specific Android Virtual Device.
+- Use `.\scripts\preview-android.ps1 -SkipEmulatorLaunch` if you already have a device or emulator running.
+- Inside the running Flutter session, press `r` for hot reload and `R` for hot restart.
+
 ## Branch Workflow
 
 1. Start from `master` until the baseline branch is intentionally renamed.
