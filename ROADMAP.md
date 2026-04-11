@@ -194,6 +194,19 @@
 - Safe local handling of downloaded attachments.
 - Safer credential entry and sensitive-screen presentation.
 
+### Progress Update (2026-04-11)
+
+- Implemented on `stamos/phase-1-transport-security`:
+  - Android release builds now disable cleartext traffic and only trust the system CA store.
+  - Debug builds keep the old cleartext / user-CA behavior so local development is still possible without weakening release output.
+  - Login and auth now reject `http://` Firefly hosts and normalize scheme-less input toward `https://`.
+  - Stored insecure hosts now fail with an explicit HTTPS-required error instead of silently continuing.
+- Still pending in Phase 1:
+  - Attachment origin validation and bearer-token containment.
+  - Attachment filename sanitization and safer download handling.
+  - API key obscuring and screenshot / recents-preview protection.
+  - A more explicit advanced-user compatibility path for custom CA / self-signed deployments if one is still desired after hardening.
+
 ### Task Slices
 
 - Disable cleartext traffic for release builds.

@@ -25,6 +25,7 @@ import 'package:waterflyiii/timezonehandler.dart';
 
 final Logger log = Logger("Auth");
 final Version minApiVersion = Version(6, 3, 2);
+const String secureHostScheme = "https://";
 
 class APITZReply {
   APITZReply(this.data);
@@ -65,6 +66,18 @@ class AuthErrorHost extends AuthError {
 
 class AuthErrorApiKey extends AuthError {
   const AuthErrorApiKey() : super("Invalid API key");
+}
+
+class AuthErrorInsecureTransport extends AuthError {
+  const AuthErrorInsecureTransport()
+    : super("Only HTTPS Firefly III URLs are supported.");
+}
+
+class AuthErrorUntrustedCertificate extends AuthError {
+  const AuthErrorUntrustedCertificate()
+    : super(
+        "Could not establish a trusted HTTPS connection. Use a certificate signed by a system-trusted CA.",
+      );
 }
 
 class AuthErrorVersionInvalid extends AuthError {
@@ -169,6 +182,12 @@ class AuthUser {
     } on FormatException {
       throw AuthErrorHost(host);
     }
+    if (uri.host.isEmpty) {
+      throw AuthErrorHost(host);
+    }
+    if (uri.scheme != "https") {
+      throw const AuthErrorInsecureTransport();
+    }
 
     final Uri aboutUri = uri.replace(
       pathSegments: <String>[...uri.pathSegments, "api", "v1", "about"],
@@ -200,6 +219,17 @@ class AuthUser {
       } on FormatException {
         throw AuthErrorNoInstance(host);
       }
+    } on HandshakeException {
+      throw const AuthErrorUntrustedCertificate();
+    } on http.ClientException catch (e) {
+      final String message = e.message.toLowerCase();
+      if (message.contains("certificate") ||
+          message.contains("cert") ||
+          message.contains("tls") ||
+          message.contains("ssl")) {
+        throw const AuthErrorUntrustedCertificate();
+      }
+      rethrow;
     } finally {
       client.close();
     }
@@ -293,6 +323,9 @@ class FireflyService with ChangeNotifier {
   Future<bool> signIn(String host, String apiKey) async {
     log.config("FireflyService->signIn($host)");
     host = host.strip().rightStrip('/');
+    if (host.isNotEmpty && !host.contains("://")) {
+      host = "$secureHostScheme$host";
+    }
     apiKey = apiKey.strip();
 
     _lastTriedHost = host;
