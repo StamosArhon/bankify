@@ -2,9 +2,9 @@ name: Syntax Check
 
 on:
   push:
-    # Ignore develop branch, will be triggered by workflow_call in release.yml
-    branches-ignore: 
-      - develop
+    # Ignore master, because release.yml calls this workflow for baseline-branch builds.
+    branches-ignore:
+      - master
   workflow_call:
   pull_request:
 
@@ -22,7 +22,7 @@ jobs:
         uses: ./.github/actions/setup_env
         with:
           java-version: 17.x
-          flutter-channel: stable
+          flutter-version-file: pubspec.yaml
 
       # Check for any formatting issues in the code.
       - name: Check for any formatting issues
