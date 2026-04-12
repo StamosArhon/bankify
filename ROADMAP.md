@@ -157,6 +157,9 @@
 - Implemented on `stamos/phase-0-preview-toolchain-unblock`:
   - Removed the legacy direct `test` dev dependency that blocked `flutter pub get` on Flutter `3.35.6`.
   - Updated `scripts/preview-android.ps1` so it can use a side-by-side pinned Flutter install automatically or via `-FlutterPath`, instead of assuming PATH already points to the correct SDK.
+- Implemented on `stamos/phase-0-preview-android-sdk-fix`:
+  - Updated `scripts/preview-android.ps1` to export the resolved Android SDK path to Flutter so stale local `ANDROID_HOME` values no longer break emulator detection.
+  - Adjusted `android/app/build.gradle.kts` so local debug builds no longer require release signing secrets from `android/key.properties`.
 - Still pending in Phase 0:
   - Pin third-party GitHub Actions by commit SHA.
   - Add explicit least-privilege GitHub Actions `permissions`.

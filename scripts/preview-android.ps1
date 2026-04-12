@@ -160,6 +160,11 @@ if (-not $adbPath) {
   throw "adb was not found. Install Android Studio + Android SDK Platform Tools, or add adb to PATH."
 }
 
+if ($sdkRoot) {
+  $env:ANDROID_HOME = $sdkRoot
+  $env:ANDROID_SDK_ROOT = $sdkRoot
+}
+
 $flutterVersion = $null
 $dartVersion = $null
 if ($requiredFlutterVersion) {
@@ -182,6 +187,9 @@ if ($requiredFlutterVersion) {
 Push-Location $projectRoot
 try {
   Write-Host "Using Flutter executable '$flutterPath'." -ForegroundColor Green
+  if ($sdkRoot) {
+    Write-Host "Using Android SDK '$sdkRoot'." -ForegroundColor Green
+  }
 
   if (-not $NoPubGet) {
     Write-Host "Running flutter pub get..." -ForegroundColor Cyan
@@ -242,7 +250,7 @@ try {
 
   Write-Host "Using Android device '$targetDevice'." -ForegroundColor Green
   Write-Host "Starting Flutter with hot reload enabled. Use 'r' for hot reload and 'R' for hot restart." -ForegroundColor Green
-  & $flutterPath run -d $targetDevice
+  & $flutterPath run --device-timeout 90 -d $targetDevice
   if ($LASTEXITCODE -ne 0) {
     throw "flutter run failed. Fix the build/runtime error above, then rerun the script."
   }
