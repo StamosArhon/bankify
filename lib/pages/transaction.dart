@@ -1166,7 +1166,7 @@ class _TransactionPageState extends State<TransactionPage>
                                     newAttachment.id,
                                   ),
                                 );
-                            request.headers.addAll(user!.headers());
+                            request.headers.addAll(user.headers());
                             disallowRedirects(request);
                             request.headers[HttpHeaders.contentTypeHeader] =
                                 ContentType.binary.mimeType;
@@ -1186,7 +1186,7 @@ class _TransactionPageState extends State<TransactionPage>
                               },
                             );
 
-                            await httpClient.send(request);
+                            await user.httpClient.send(request);
 
                             log.fine(() => "done uploading attachment");
                           }

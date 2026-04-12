@@ -93,7 +93,7 @@ class _AttachmentDialogState extends State<AttachmentDialog>
     );
     request.headers.addAll(user.headers());
     disallowRedirects(request);
-    final http.StreamedResponse resp = await httpClient.send(request);
+    final http.StreamedResponse resp = await user.httpClient.send(request);
     if (resp.statusCode != 200) {
       log.warning("got invalid status code ${resp.statusCode}");
       msg.showSnackBar(
@@ -261,7 +261,7 @@ class _AttachmentDialogState extends State<AttachmentDialog>
       },
     );
 
-    final http.StreamedResponse resp = await httpClient.send(request);
+    final http.StreamedResponse resp = await user.httpClient.send(request);
     log.fine(() => "AttachmentUpload: Done with Upload $newAttachmentIndex");
     setState(() {
       _dlProgress.remove(newAttachmentIndex);

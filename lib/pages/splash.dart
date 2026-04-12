@@ -24,6 +24,65 @@ class _SplashPageState extends State<SplashPage> {
 
   Object? _loginError;
 
+  String _certificateDetails(TrustedServerCertificate certificate) {
+    return <String>[
+      "Authority: ${certificate.authority}",
+      "SHA-256: ${certificate.sha256Fingerprint}",
+      "Subject: ${certificate.subject}",
+      "Issuer: ${certificate.issuer}",
+      "Valid from: ${certificate.validFrom.toLocal().toIso8601String()}",
+      "Valid to: ${certificate.validTo.toLocal().toIso8601String()}",
+    ].join("\n");
+  }
+
+  Future<void> _trustServerCertificate(
+    AuthErrorCertificateApprovalRequired error,
+  ) async {
+    final bool? shouldTrust = await showDialog<bool>(
+      context: context,
+      builder:
+          (BuildContext context) => AlertDialog(
+            icon: const Icon(Icons.verified_user),
+            title: Text(
+              error.replacingExistingTrust
+                  ? "Trust new certificate?"
+                  : "Trust this certificate?",
+            ),
+            content: SingleChildScrollView(
+              child: SelectableText(
+                "${error.cause}\n\nVerify this fingerprint with your server before continuing.\n\n${_certificateDetails(error.certificate)}",
+              ),
+            ),
+            actions: <Widget>[
+              TextButton(
+                onPressed: () => Navigator.of(context).pop(false),
+                child: Text(MaterialLocalizations.of(context).cancelButtonLabel),
+              ),
+              FilledButton(
+                onPressed: () => Navigator.of(context).pop(true),
+                child: Text(
+                  error.replacingExistingTrust
+                      ? "Trust new certificate"
+                      : "Trust certificate",
+                ),
+              ),
+            ],
+          ),
+    );
+
+    if (shouldTrust != true || !mounted) {
+      return;
+    }
+
+    await context.read<FireflyService>().trustServerCertificate(
+      error.certificate,
+    );
+    setState(() {
+      _loginError = null;
+    });
+    await _login(widget.host, widget.apiKey);
+  }
+
   Future<void> _login(String? host, String? apiKey) async {
     log.fine(() => "SplashPage->_login()");
 
@@ -102,6 +161,13 @@ class _SplashPageState extends State<SplashPage> {
       log.finer(() => "_loginError available --> show error");
       String errorDetails =
           "Host: ${context.read<FireflyService>().lastTriedHost}";
+      final AuthErrorCertificateApprovalRequired? certificateApprovalError =
+          _loginError is AuthErrorCertificateApprovalRequired
+              ? _loginError as AuthErrorCertificateApprovalRequired
+              : null;
+      if (certificateApprovalError != null) {
+        errorDetails += "\n\n${_certificateDetails(certificateApprovalError.certificate)}";
+      }
       final String errorDescription = () {
         if (_loginError is AuthErrorStatusCode) {
           final AuthErrorStatusCode errorType =
@@ -180,6 +246,16 @@ class _SplashPageState extends State<SplashPage> {
                           )
                           : Text(S.of(context).formButtonResetLogin),
                 ),
+                if (certificateApprovalError != null)
+                  FilledButton(
+                    onPressed:
+                        () => _trustServerCertificate(certificateApprovalError),
+                    child: Text(
+                      certificateApprovalError.replacingExistingTrust
+                          ? "Trust new certificate"
+                          : "Trust certificate",
+                    ),
+                  ),
                 FilledButton(
                   onPressed: () {
                     setState(() {
