@@ -168,6 +168,10 @@
 - Implemented on `stamos/phase-0-distinct-app-identity`:
   - Renamed the internal Flutter package from `waterflyiii` to `bankify` and moved Android to the distinct application ID `io.github.stamosarhon.bankify`.
   - Updated fork-owned support and release surfaces so Bankify no longer points users to the original app's package ID, store listings, sponsor links, or support email.
+- Implemented on `stamos/phase-0-ci-and-dependabot-hardening`:
+  - Pinned third-party GitHub Actions in reusable actions and workflows by immutable commit SHA instead of mutable tags.
+  - Added explicit least-privilege GitHub Actions `permissions`, keeping `contents: write` only on the GitHub release publishing job and defaulting the rest to `contents: read`.
+  - Re-ran the local Android baseline on Flutter `3.35.6` with `flutter analyze`, focused tests, and `flutter build apk --debug`.
 - Implemented on `stamos/phase-1-self-hosted-certificate-pinning`:
   - Added an explicit self-hosted HTTPS trust flow that shows the presented server certificate fingerprint and requires the user to opt in before retrying.
   - Pinned that trusted certificate per host and reused it for API, timezone, and attachment requests without relaxing the default HTTPS-only / system-CA baseline for other hosts.
@@ -179,10 +183,6 @@
 - Implemented on `stamos/phase-1-debug-local-http-development`:
   - Added a debug-only local-development path that permits explicit `http://` connections to localhost and private LAN IPs without weakening release transport policy.
   - Kept Android release builds HTTPS-only while allowing debug builds to reach local cleartext endpoints for emulator and LAN development.
-- Still pending in Phase 0:
-  - Pin third-party GitHub Actions by commit SHA.
-  - Add explicit least-privilege GitHub Actions `permissions`.
-  - Re-run `flutter pub get`, `dart analyze`, and `flutter test` on a machine with Flutter `3.35.6`.
 
 ### Task Slices
 
@@ -239,8 +239,15 @@
 - Implemented on `stamos/phase-1-login-secret-protection`:
   - The API key field is now obscured by default and disables suggestions, autocorrect, and IME personalized learning.
   - Android now sets `FLAG_SECURE`, which protects screenshots and app-switcher previews for the whole app.
-- Still pending in Phase 1:
-  - A more explicit advanced-user compatibility path for custom CA / self-signed deployments if one is still desired after hardening.
+- Implemented on `stamos/phase-1-self-hosted-certificate-pinning`:
+  - Added an explicit certificate trust prompt for self-hosted HTTPS deployments that present a custom or self-signed certificate.
+  - Persisted the trusted certificate per host only after successful sign-in so future retries stay pinned without widening trust globally.
+- Implemented on `stamos/phase-1-certificate-capture-fix`:
+  - Simplified the Android auth transport path so certificate capture and trust prompting work reliably on-device.
+- Implemented on `stamos/phase-1-https-protocol-mismatch-diagnostics`:
+  - Distinguished plain HTTP endpoints from HTTPS certificate failures so local self-hosted setups get the right error explanation.
+- Implemented on `stamos/phase-1-debug-local-http-development`:
+  - Added a debug-only local-development exception that allows explicit `http://` for localhost and private-network hosts while keeping release Android builds HTTPS-only.
 
 ### Task Slices
 
@@ -358,13 +365,13 @@
 
 ### Milestones
 
-- Baseline checks run on the pinned toolchain.
+- Baseline checks stay green on the pinned toolchain.
 - Security-sensitive units have focused tests.
 - Manual security QA is checklist-driven rather than ad hoc.
 
 ### Task Slices
 
-- Re-run `flutter pub get`, `dart analyze`, and `flutter test` on the correct toolchain and record the baseline.
+- Keep `flutter pub get`, `flutter analyze`, `flutter test`, and `flutter build apk --debug` green on the pinned toolchain as a recurring release gate.
 - Add unit tests for transport policy and host validation.
 - Add tests for attachment origin validation and filename sanitization.
 - Add tests for notification payload minimization and parsing behavior.
@@ -387,9 +394,9 @@
 
 ### Suggested Branches
 
-- `stamos/phase-4-toolchain-validation-baseline`
 - `stamos/phase-4-security-unit-tests`
 - `stamos/phase-4-widget-and-flow-tests`
+- `stamos/phase-4-manual-security-qa-checklist`
 
 ## Phase 5: Architecture Decomposition And Maintainability
 
@@ -460,25 +467,23 @@
 
 ## Recommended Execution Order
 
-1. `stamos/phase-0-branch-normalization`
-2. `stamos/phase-0-toolchain-pinning`
-3. `stamos/phase-0-ci-and-dependabot-hardening`
-4. `stamos/phase-1-transport-security`
-5. `stamos/phase-1-attachment-origin-validation`
-6. `stamos/phase-1-attachment-filename-sanitization`
-7. `stamos/phase-1-login-secret-protection`
-8. `stamos/phase-2-log-redaction`
-9. `stamos/phase-2-notification-payload-minimization`
-10. `stamos/phase-2-backup-and-prefs-privacy`
-11. `stamos/phase-3-git-dependency-pinning`
-12. `stamos/phase-3-hosted-package-upgrades`
-13. `stamos/phase-4-toolchain-validation-baseline`
-14. `stamos/phase-4-security-unit-tests`
-15. `stamos/phase-5-transaction-editor-decomposition`
-16. Phase 6 work only after the hardening baseline is closed.
+1. `stamos/phase-2-log-redaction`
+2. `stamos/phase-2-notification-payload-minimization`
+3. `stamos/phase-2-backup-and-prefs-privacy`
+4. `stamos/phase-2-share-intent-validation`
+5. `stamos/phase-2-lock-timeout-settings`
+6. `stamos/phase-3-git-dependency-pinning`
+7. `stamos/phase-3-hosted-package-upgrades`
+8. `stamos/phase-3-native-dependency-refresh`
+9. `stamos/phase-3-attack-surface-reduction`
+10. `stamos/phase-4-security-unit-tests`
+11. `stamos/phase-4-widget-and-flow-tests`
+12. `stamos/phase-4-manual-security-qa-checklist`
+13. `stamos/phase-5-transaction-editor-decomposition`
+14. Phase 6 work only after the hardening baseline is closed.
 
 ## Immediate Next Recommendation
 
-- First implementation branch should be `stamos/phase-0-toolchain-and-automation-baseline`.
-- That branch should decide the baseline branch name, pin the Flutter toolchain, fix Dependabot / release branch mismatches, and pin CI actions.
-- Once that lands, start `stamos/phase-1-transport-security`.
+- Next implementation branch should be `stamos/phase-2-log-redaction`.
+- That branch should remove low-value sensitive logging, redact exportable debug values, and keep verbose logging behind explicit debug or advanced-user gates only.
+- After that, continue with `stamos/phase-2-notification-payload-minimization`.
