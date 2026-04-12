@@ -1,5 +1,3 @@
-import 'dart:convert';
-
 import 'package:dynamic_color/dynamic_color.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart' show SystemChannels;
@@ -59,14 +57,21 @@ class _BankifyAppState extends State<BankifyApp> {
 
     FlutterLocalNotificationsPlugin().getNotificationAppLaunchDetails().then((
       NotificationAppLaunchDetails? details,
-    ) {
+    ) async {
       log.config("checking NotificationAppLaunchDetails");
       if ((details?.didNotificationLaunchApp ?? false) &&
           (details?.notificationResponse?.payload?.isNotEmpty ?? false)) {
         log.info("Was launched from notification!");
-        _notificationPayload = NotificationTransaction.fromJson(
-          jsonDecode(details!.notificationResponse!.payload!),
-        );
+        final NotificationTransaction? notificationPayload =
+            await NotificationPayloadStore().consume(
+              details!.notificationResponse!.payload!,
+            );
+        if (!mounted || notificationPayload == null) {
+          return;
+        }
+        setState(() {
+          _notificationPayload = notificationPayload;
+        });
       }
     });
 

@@ -1,11 +1,14 @@
 import 'dart:async';
 import 'dart:convert';
+import 'dart:io';
+import 'dart:math';
 
 import 'package:chopper/chopper.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:logging/logging.dart';
 import 'package:notifications_listener_service/notifications_listener_service.dart';
+import 'package:path_provider/path_provider.dart' show getTemporaryDirectory;
 import 'package:timezone/data/latest.dart' as tz;
 import 'package:bankify/app.dart';
 import 'package:bankify/auth.dart';
@@ -37,6 +40,94 @@ class NotificationTransaction {
   };
 }
 
+class NotificationPayloadStore {
+  NotificationPayloadStore({Directory? baseDirectory})
+    : _baseDirectory = baseDirectory;
+
+  final Directory? _baseDirectory;
+
+  static const Duration _draftLifetime = Duration(days: 1);
+  static const String _draftDirectoryName = 'notification_drafts';
+
+  Future<Directory> _resolveDirectory() async {
+    final Directory baseDirectory =
+        _baseDirectory ?? await getTemporaryDirectory();
+    final Directory draftDirectory = Directory.fromUri(
+      baseDirectory.uri.resolve('$_draftDirectoryName/'),
+    );
+    if (!await draftDirectory.exists()) {
+      await draftDirectory.create(recursive: true);
+    }
+    return draftDirectory;
+  }
+
+  String _newDraftId() {
+    final Random random = Random.secure();
+    return 'notification-${DateTime.now().microsecondsSinceEpoch}-${random.nextInt(0x7fffffff)}';
+  }
+
+  Future<File> _resolveDraftFile(String id) async {
+    final Directory draftDirectory = await _resolveDirectory();
+    return File.fromUri(draftDirectory.uri.resolve('$id.json'));
+  }
+
+  Future<void> _cleanupExpiredDrafts([Directory? directory]) async {
+    final Directory draftDirectory = directory ?? await _resolveDirectory();
+    if (!await draftDirectory.exists()) {
+      return;
+    }
+
+    final DateTime cutoff = DateTime.now().subtract(_draftLifetime);
+    await for (final FileSystemEntity entity in draftDirectory.list()) {
+      if (entity is! File || !entity.path.endsWith('.json')) {
+        continue;
+      }
+      try {
+        if ((await entity.lastModified()).isBefore(cutoff)) {
+          await entity.delete();
+        }
+      } catch (_) {
+        // Best-effort cleanup only.
+      }
+    }
+  }
+
+  Future<String> store(NotificationTransaction transaction) async {
+    final Directory draftDirectory = await _resolveDirectory();
+    await _cleanupExpiredDrafts(draftDirectory);
+
+    final String id = _newDraftId();
+    final File file = File.fromUri(draftDirectory.uri.resolve('$id.json'));
+    await file.writeAsString(jsonEncode(transaction.toJson()), flush: true);
+    return id;
+  }
+
+  Future<NotificationTransaction?> consume(String id) async {
+    if (id.isEmpty) {
+      return null;
+    }
+
+    final File file = await _resolveDraftFile(id);
+    if (!await file.exists()) {
+      return null;
+    }
+
+    try {
+      final dynamic decoded = jsonDecode(await file.readAsString());
+      if (decoded is! Map<String, dynamic>) {
+        return null;
+      }
+      return NotificationTransaction.fromJson(decoded);
+    } finally {
+      try {
+        await file.delete();
+      } catch (_) {
+        // Best-effort cleanup only.
+      }
+    }
+  }
+}
+
 class NotificationListenerStatus {
   NotificationListenerStatus(
     this.servicePermission,
@@ -52,6 +143,28 @@ class NotificationListenerStatus {
 final RegExp rFindMoney = RegExp(
   r'(?:^|[^\w])(?<preCurrency>(?:[^\r\n\t\f\v 0-9]){0,3})\s*(?<amount>\d[.,\s\d]+(?:[.,]\d+)?)\s*(?<postCurrency>(?:[^\r\n\t\f\v 0-9]){0,3})(?:$|\s|\.|,)',
 );
+
+const AndroidNotificationDetails createdTransactionNotificationDetails =
+    AndroidNotificationDetails(
+      'extract_transaction_created',
+      'Transaction from Notification Created',
+      channelDescription:
+          'Notification that a Transaction has been created from another Notification.',
+      importance: Importance.low,
+      priority: Priority.low,
+      visibility: NotificationVisibility.private,
+    );
+
+const AndroidNotificationDetails transactionReviewNotificationDetails =
+    AndroidNotificationDetails(
+      'extract_transaction',
+      'Create Transaction from Notification',
+      channelDescription:
+          'Notification asking to create a transaction from another Notification.',
+      importance: Importance.low,
+      priority: Priority.low,
+      visibility: NotificationVisibility.private,
+    );
 
 Future<NotificationListenerStatus> nlStatus() async {
   return NotificationListenerStatus(
@@ -108,9 +221,10 @@ void nlCallback() {
       return;
     }
 
-    final NotificationAppSettings appSettings = await settings
-        .notificationGetAppSettings(evt.packageName!);
-    bool showNotification = true;
+      final NotificationAppSettings appSettings = await settings
+          .notificationGetAppSettings(evt.packageName!);
+      final NotificationPayloadStore payloadStore = NotificationPayloadStore();
+      bool showNotification = true;
 
     if (appSettings.autoAdd) {
       tz.initializeTimeZones();
@@ -191,16 +305,9 @@ void nlCallback() {
           FlutterLocalNotificationsPlugin().show(
             DateTime.now().millisecondsSinceEpoch ~/ 1000,
             "Transaction created",
-            "Transaction created based on notification ${evt.title}",
+            "Open Bankify to review the transaction created from a watched notification.",
             const NotificationDetails(
-              android: AndroidNotificationDetails(
-                'extract_transaction_created',
-                'Transaction from Notification Created',
-                channelDescription:
-                    'Notification that a Transaction has been created from another Notification.',
-                importance: Importance.low, // Android 8.0 and higher
-                priority: Priority.low, // Android 7.1 and lower
-              ),
+              android: createdTransactionNotificationDetails,
             ),
             payload: "",
           ),
@@ -214,33 +321,30 @@ void nlCallback() {
     }
 
     if (showNotification) {
-      // :TODO: l10n
-      unawaited(
-        FlutterLocalNotificationsPlugin().show(
-          DateTime.now().millisecondsSinceEpoch ~/ 1000,
-          "Create Transaction?",
-          // :TODO: once we l10n this, a better switch can be implemented...
-          "Click to create a transaction based on the notification ${evt.title ?? evt.packageName ?? ""}",
-          const NotificationDetails(
-            android: AndroidNotificationDetails(
-              'extract_transaction',
-              'Create Transaction from Notification',
-              channelDescription:
-                  'Notification asking to create a transaction from another Notification.',
-              importance: Importance.low, // Android 8.0 and higher
-              priority: Priority.low, // Android 7.1 and lower
-            ),
+      try {
+        final String payloadId = await payloadStore.store(
+          NotificationTransaction(
+            evt.packageName ?? "",
+            evt.title ?? "",
+            evt.text ?? "",
+            DateTime.tryParse(evt.postTime ?? "") ?? DateTime.now(),
           ),
-          payload: jsonEncode(
-            NotificationTransaction(
-              evt.packageName ?? "",
-              evt.title ?? "",
-              evt.text ?? "",
-              DateTime.tryParse(evt.postTime ?? "") ?? DateTime.now(),
+        );
+
+        unawaited(
+          FlutterLocalNotificationsPlugin().show(
+            DateTime.now().millisecondsSinceEpoch ~/ 1000,
+            "Review detected transaction",
+            "Open Bankify to review a detected transaction and create it manually.",
+            const NotificationDetails(
+              android: transactionReviewNotificationDetails,
             ),
+            payload: payloadId,
           ),
-        ),
-      );
+        );
+      } catch (e, stackTrace) {
+        log.severe("Error while staging notification payload", e, stackTrace);
+      }
     }
   });
 }
@@ -258,13 +362,17 @@ Future<void> nlNotificationTap(
   if (notificationResponse.payload?.isEmpty ?? true) {
     return;
   }
+  final NotificationTransaction? transaction = await NotificationPayloadStore()
+      .consume(notificationResponse.payload!);
+  final NavigatorState? navigatorState = navigatorKey.currentState;
+  if (transaction == null || navigatorState == null || !navigatorState.mounted) {
+    return;
+  }
   await showDialog(
-    context: navigatorKey.currentState!.context,
+    context: navigatorState.context,
     builder:
         (BuildContext context) => TransactionPage(
-          notification: NotificationTransaction.fromJson(
-            jsonDecode(notificationResponse.payload!),
-          ),
+          notification: transaction,
         ),
   );
 }
