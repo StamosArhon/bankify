@@ -120,13 +120,21 @@ if (-not $adbPath) {
   throw "adb was not found. Install Android Studio + Android SDK Platform Tools, or add adb to PATH."
 }
 
+$flutterVersion = $null
+$dartVersion = $null
 if ($requiredFlutterVersion) {
   try {
-    $flutterVersion = (& $flutterPath --version --machine | ConvertFrom-Json).frameworkVersion
+    $versionInfo = & $flutterPath --version --machine | ConvertFrom-Json
+    $flutterVersion = $versionInfo.frameworkVersion
+    $dartVersion = $versionInfo.dartSdkVersion
     if ($flutterVersion -ne $requiredFlutterVersion) {
-      Write-Warning "This repo expects Flutter $requiredFlutterVersion, but PATH currently resolves to Flutter $flutterVersion."
+      throw "This repo requires Flutter $requiredFlutterVersion, but PATH currently resolves to Flutter $flutterVersion (Dart $dartVersion). Install or switch to Flutter $requiredFlutterVersion, then rerun this script."
     }
   } catch {
+    if ($_.Exception.Message -like "This repo requires Flutter*") {
+      throw
+    }
+
     Write-Warning "Could not verify the local Flutter version automatically."
   }
 }
@@ -136,9 +144,16 @@ try {
   if (-not $NoPubGet) {
     Write-Host "Running flutter pub get..." -ForegroundColor Cyan
     & $flutterPath pub get
+    if ($LASTEXITCODE -ne 0) {
+      if ($requiredFlutterVersion -and $flutterVersion) {
+        throw "flutter pub get failed while using Flutter $flutterVersion. Confirm that Flutter $requiredFlutterVersion is active and rerun the script."
+      }
+
+      throw "flutter pub get failed. Fix the dependency/toolchain error above, then rerun the script."
+    }
   }
 
-  $runningDevices = Get-RunningAndroidDevices -AdbPath $adbPath
+  $runningDevices = @(Get-RunningAndroidDevices -AdbPath $adbPath)
   $targetDevice = $DeviceId
 
   if (-not $targetDevice -and $runningDevices.Count -gt 0) {
@@ -164,7 +179,7 @@ try {
 
     for ($attempt = 0; $attempt -lt 30; $attempt++) {
       Start-Sleep -Seconds 2
-      $runningDevices = Get-RunningAndroidDevices -AdbPath $adbPath
+      $runningDevices = @(Get-RunningAndroidDevices -AdbPath $adbPath)
       if ($runningDevices.Count -gt 0) {
         $targetDevice = $runningDevices[0]
         break
@@ -186,6 +201,9 @@ try {
   Write-Host "Using Android device '$targetDevice'." -ForegroundColor Green
   Write-Host "Starting Flutter with hot reload enabled. Use 'r' for hot reload and 'R' for hot restart." -ForegroundColor Green
   & $flutterPath run -d $targetDevice
+  if ($LASTEXITCODE -ne 0) {
+    throw "flutter run failed. Fix the build/runtime error above, then rerun the script."
+  }
 } finally {
   Pop-Location
 }
