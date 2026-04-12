@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:logging/logging.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:waterflyiii/animations.dart';
+import 'package:waterflyiii/auth.dart';
 import 'package:waterflyiii/generated/l10n/app_localizations.dart';
 import 'package:waterflyiii/pages/splash.dart';
 import 'package:waterflyiii/widgets/erroricon.dart';
@@ -23,7 +24,7 @@ class UriScheme {
 
   static bool valid(String uri) {
     final Uri? parsed = Uri.tryParse(normalize(uri));
-    return parsed != null && parsed.scheme == "https" && parsed.host.isNotEmpty;
+    return parsed != null && isSupportedFireflyUri(parsed);
   }
 
   static bool isHttp(String uri) {
@@ -75,6 +76,32 @@ class _LoginPageState extends State<LoginPage> {
     return UriScheme.valid(value);
   }
 
+  String get _hostHelperText =>
+      allowsLocalDevelopmentHttp
+          ? "HTTPS by default. Debug builds also allow local HTTP hosts."
+          : "HTTPS only";
+
+  String? _hostValidationError(String value) {
+    final String trimmed = value.trim();
+    if (trimmed.isEmpty) {
+      return S.of(context).errorFieldRequired;
+    }
+
+    final Uri? parsed = Uri.tryParse(UriScheme.normalize(trimmed));
+    if (parsed == null || parsed.host.isEmpty) {
+      return S.of(context).errorInvalidURL;
+    }
+    if (parsed.scheme == "http") {
+      if (allowsLocalDevelopmentHttpUri(parsed)) {
+        return null;
+      }
+      return allowsLocalDevelopmentHttp
+          ? "Only local HTTP hosts are allowed in debug builds."
+          : "Only HTTPS URLs are allowed.";
+    }
+    return _hostValid(trimmed) ? null : S.of(context).errorInvalidURL;
+  }
+
   @override
   Widget build(BuildContext context) {
     log.finest(() => "build()");
@@ -121,7 +148,7 @@ class _LoginPageState extends State<LoginPage> {
                       decoration: InputDecoration(
                         filled: true,
                         labelText: S.of(context).loginFormLabelHost,
-                        helperText: "HTTPS only",
+                        helperText: _hostHelperText,
                         suffixIcon: _hostErrorIcon,
                         errorText: _hostError,
                       ),
@@ -129,15 +156,9 @@ class _LoginPageState extends State<LoginPage> {
                       enableSuggestions: false,
                       keyboardType: TextInputType.url,
                       onChanged: (String value) {
-                        final bool error =
-                            value.isNotEmpty &&
-                            !(_hostValid(value));
                         final String? errorText =
-                            !error
-                                ? null
-                                : UriScheme.isHttp(value)
-                                ? "Only HTTPS URLs are allowed."
-                                : S.of(context).errorInvalidURL;
+                            value.isEmpty ? null : _hostValidationError(value);
+                        final bool error = errorText != null;
                         if (error != _hostErrorIcon.isError ||
                             _hostError != errorText) {
                           setState(() {
@@ -148,17 +169,7 @@ class _LoginPageState extends State<LoginPage> {
                       },
                       autovalidateMode: AutovalidateMode.disabled,
                       validator: (String? value) {
-                        final String normalized = UriScheme.normalize(
-                          value ?? "",
-                        );
-                        final String? error =
-                            value == null || value.trim().isEmpty
-                                ? S.of(context).errorFieldRequired
-                                : UriScheme.isHttp(value)
-                                ? "Only HTTPS URLs are allowed."
-                                : !_hostValid(normalized)
-                                ? S.of(context).errorInvalidURL
-                                : null;
+                        final String? error = _hostValidationError(value ?? "");
                         if (_hostError != error ||
                             _hostErrorIcon.isError != (error != null)) {
                           setState(() {
