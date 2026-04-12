@@ -618,7 +618,7 @@ class SCs extends S {
 
   @override
   String get loginAbout =>
-      'Pro používání Waterfly III potřebujete vlastní server s instancí Firefly III nebo doplněk Firefly III v rámci služby Home Assistant.\n\nZadejte celou adresu URL spolu s vaším osobním přístupovým tokenem (Možnosti -> Profil -> OAuth -> Osobní přístupový token) níže.';
+      'Pro používání Bankify potřebujete vlastní server s instancí Firefly III nebo doplněk Firefly III v rámci služby Home Assistant.\n\nZadejte celou adresu URL spolu s vaším osobním přístupovým tokenem (Možnosti -> Profil -> OAuth -> Osobní přístupový token) níže.';
 
   @override
   String get loginFormLabelAPIKey => 'Platný klíč API';
@@ -627,7 +627,7 @@ class SCs extends S {
   String get loginFormLabelHost => 'URL serveru';
 
   @override
-  String get loginWelcome => 'Vítejte ve Waterfly III';
+  String get loginWelcome => 'Vítejte ve Bankify';
 
   @override
   String get logoutConfirmation => 'Opravdu se chcete odhlásit?';

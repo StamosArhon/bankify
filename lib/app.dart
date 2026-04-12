@@ -27,14 +27,14 @@ final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>(
   debugLabel: "Main Navigator",
 );
 
-class WaterflyApp extends StatefulWidget {
-  const WaterflyApp({super.key});
+class BankifyApp extends StatefulWidget {
+  const BankifyApp({super.key});
 
   @override
-  State<WaterflyApp> createState() => _WaterflyAppState();
+  State<BankifyApp> createState() => _BankifyAppState();
 }
 
-class _WaterflyAppState extends State<WaterflyApp> {
+class _BankifyAppState extends State<BankifyApp> {
   bool _startup = true;
   bool _authed = false;
   String? _quickAction;
@@ -137,7 +137,7 @@ class _WaterflyAppState extends State<WaterflyApp> {
       },
     );
 
-    // Share to Waterfly III
+    // Share to Bankify
     // While the app is open...
     /* Sharing while app is open is currently not supported :(
        The fix from https://github.com/bhagat-techind/flutter_sharing_intent/issues/33
@@ -178,14 +178,14 @@ class _WaterflyAppState extends State<WaterflyApp> {
   Future<bool> auth() {
     final LocalAuthentication auth = LocalAuthentication();
     return auth.authenticate(
-      localizedReason: "Waterfly III",
+      localizedReason: "Bankify",
       persistAcrossBackgrounding: true,
     );
   }
 
   @override
   Widget build(BuildContext context) {
-    log.fine(() => "WaterflyApp() building");
+    log.fine(() => "BankifyApp() building");
 
     return DynamicColorBuilder(
       builder: (
@@ -271,7 +271,7 @@ class _WaterflyAppState extends State<WaterflyApp> {
             }
 
             return MaterialApp(
-              title: 'Waterfly III',
+              title: 'Bankify',
               theme: ThemeData(
                 brightness: Brightness.light,
                 colorScheme:

@@ -614,7 +614,7 @@ class STr extends S {
 
   @override
   String get loginAbout =>
-      'To use Waterfly III productively you need your own server with a Firefly III instance or the Firefly III add-on for Home Assistant.\n\nPlease enter the full URL as well as a personal access token (Settings -> Profile -> OAuth -> Personal Access Token) below.';
+      'To use Bankify productively you need your own server with a Firefly III instance or the Firefly III add-on for Home Assistant.\n\nPlease enter the full URL as well as a personal access token (Settings -> Profile -> OAuth -> Personal Access Token) below.';
 
   @override
   String get loginFormLabelAPIKey => 'Valid API Key';
@@ -623,7 +623,7 @@ class STr extends S {
   String get loginFormLabelHost => 'Host URL';
 
   @override
-  String get loginWelcome => 'Welcome to Waterfly III';
+  String get loginWelcome => 'Welcome to Bankify';
 
   @override
   String get logoutConfirmation => 'Are you sure you want to log out?';

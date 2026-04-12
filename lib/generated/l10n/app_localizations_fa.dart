@@ -611,7 +611,7 @@ class SFa extends S {
 
   @override
   String get loginAbout =>
-      'برای استفاده مؤثر از Waterfly III به سرور خود با نمونه Firefly III یا افزونه Firefly III برای Home Assistant نیاز دارید.\n\nلطفاً URL کامل و همچنین یک نشانه دسترسی شخصی (تنظیمات -> نمایه -> OAuth -> رمز دسترسی شخصی) را در زیر وارد کنید.\n';
+      'برای استفاده مؤثر از Bankify به سرور خود با نمونه Firefly III یا افزونه Firefly III برای Home Assistant نیاز دارید.\n\nلطفاً URL کامل و همچنین یک نشانه دسترسی شخصی (تنظیمات -> نمایه -> OAuth -> رمز دسترسی شخصی) را در زیر وارد کنید.\n';
 
   @override
   String get loginFormLabelAPIKey => 'کلید API معتبر\n';
@@ -620,7 +620,7 @@ class SFa extends S {
   String get loginFormLabelHost => 'URL میزبان\n';
 
   @override
-  String get loginWelcome => 'به Waterfly III خوش آمدید\n';
+  String get loginWelcome => 'به Bankify خوش آمدید\n';
 
   @override
   String get logoutConfirmation => 'آیا برای خارج شدن مطمئن هستید؟\n';

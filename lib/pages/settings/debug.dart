@@ -76,7 +76,7 @@ class DebugDialog extends StatelessWidget {
               Email(
                 body:
                     "Debug Logs generated from ${appInfo.appName}, ${appInfo.version}+${appInfo.buildNumber}",
-                subject: "Waterfly III Debug Logs",
+                subject: "Bankify Debug Logs",
                 recipients: <String>["app@vogt.pw"],
                 attachmentPaths:
                     logExists ? <String>[logPath] : const <String>[],

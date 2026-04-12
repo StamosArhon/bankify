@@ -1,6 +1,6 @@
 # Privacy Policy
 
-We take the protection of your data very seriously and comply with applicable laws and regulations. In the following, we will give you an overview of what data is processed for what purpose and what happens to your personal data when you use our Android app Waterfly III. Personal data (hereafter often referred to as just “data”) is any data with which you can be personally identified.
+We take the protection of your data very seriously and comply with applicable laws and regulations. In the following, we will give you an overview of what data is processed for what purpose and what happens to your personal data when you use our Android app Bankify. Personal data (hereafter often referred to as just “data”) is any data with which you can be personally identified.
 
 ## 1. Responsibility
 Responsible person according to Art. 4 GDPR:
@@ -8,13 +8,13 @@ Responsible person according to Art. 4 GDPR:
 app@vogt.pw
 
 ## 2. Collected data
-We do not collect any data in Waterfly III. The app does not use ads, tracking or analytics services. Internet access is used only to connect to your Firefly III instance.
+We do not collect any data in Bankify. The app does not use ads, tracking or analytics services. Internet access is used only to connect to your Firefly III instance.
 
 ### Contact
 If you contact us via email, you agree that your data will be stored for the purpose of processing your request and for any further correspondence. If there is no reason for us to further store your data or if you exercise your right of revocation, your data will be deleted. Your data will never be passed on to third parties.
 
 ### Crash reports
-If you have installed Waterfly III via Google Play, diagnostic data about your app usage may be sent to Google, as described in the [Google Account Help](https://support.google.com/accounts/answer/6078260) for Android. You can turn this on or off in the privacy settings of your Android device, usually this setting is already asked for when you set up your device. The collected data is automatically forwarded to the respective app developers, i.e. to us in the case of our apps, if this option is enabled.
+If you have installed Bankify via Google Play, diagnostic data about your app usage may be sent to Google, as described in the [Google Account Help](https://support.google.com/accounts/answer/6078260) for Android. You can turn this on or off in the privacy settings of your Android device, usually this setting is already asked for when you set up your device. The collected data is automatically forwarded to the respective app developers, i.e. to us in the case of our apps, if this option is enabled.
 
 Specifically, this involves the causes of crashes, also called “crash logs”, as well as the number and time of the crashes that occurred. We can also see which version of the app the crashes happened on. In the vast majority of cases, this data helps us a lot, so we can search for the displayed errors and fix them faster. The transmitted data is only information about crashes, no other usage or diagnostic data is transferred to us.
 
@@ -48,9 +48,9 @@ Your requests to this web server are protected by SSL encryption. Nevertheless, 
 The use of contact data provided within the framework of the imprint obligation by third parties to send unsolicited advertising and information materials is hereby expressly prohibited. We expressly reserve the right to take legal action in the event of unsolicited promotional information, such as spam e-mails.
 
 ## 6. Liability for links
-Waterfly III contains links to third-party services. When you click on such a link, you will be redirected to the respective service. Please note that these services are not operated by us. We therefore strongly recommend that you read their privacy policies. We have no control over the services and take no responsibility for their content, their privacy policies or their practices.
+Bankify contains links to third-party services. When you click on such a link, you will be redirected to the respective service. Please note that these services are not operated by us. We therefore strongly recommend that you read their privacy policies. We have no control over the services and take no responsibility for their content, their privacy policies or their practices.
 
 ## 7. Children’s privacy
-Waterfly III is for interested people of all ages. However, we do not knowingly collect personal information from children under 13. If we discover that a child under 13 has provided us with personal information, we will destroy it immediately.
+Bankify is for interested people of all ages. However, we do not knowingly collect personal information from children under 13. If we discover that a child under 13 has provided us with personal information, we will destroy it immediately.
 
 If you are a parent or guardian and you know that your child has provided us with personal information, please contact us so that we can take the necessary action.

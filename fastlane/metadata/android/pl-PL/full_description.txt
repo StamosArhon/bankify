@@ -1,4 +1,4 @@
-Waterfly III jest nieoficjalną aplikacją dla Twojej własnej instancji Firefly III, darmowego i otwarto źródłowego menedżera finansów.
+Bankify jest nieoficjalną aplikacją dla Twojej własnej instancji Firefly III, darmowego i otwarto źródłowego menedżera finansów.
 
 Ta aplikacja wymaga samodzielnej instancji Firefly III na Twoim serwerze, odwiedź https://www.firefly-iii.org/, aby uzyskać więcej informacji o oprogramowaniu. To tylko aplikacja towarzysząca i nie może działać samodzielnie!
 

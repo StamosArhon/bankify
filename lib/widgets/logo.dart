@@ -8,7 +8,7 @@ class AppLogo extends StatelessWidget {
   Widget build(BuildContext context) {
     return SvgPicture.asset(
       'assets/images/logo.svg',
-      semanticsLabel: 'App Logo',
+      semanticsLabel: 'Bankify logo',
       width: 100,
       height: 100,
     );

@@ -28,5 +28,5 @@ void main() async {
   tz.initializeTimeZones();
   Intl.defaultLocale = await findSystemLocale();
   await initializeDateFormatting();
-  return runApp(const WaterflyApp());
+  return runApp(const BankifyApp());
 }

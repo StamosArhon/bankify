@@ -614,7 +614,7 @@ class SDe extends S {
 
   @override
   String get loginAbout =>
-      'Um Waterfly III nutzen zu können, wird ein eigener Server mit Firefly III oder das Firefly III Add-on für Home Assistant benötigt.\n\nBitte gebe den kompletten Link und den persönlichen Zugangs-Token (Einstellungen → Profil → OAuth → Persönliche Zugangs-Tokens) ein.';
+      'Um Bankify nutzen zu können, wird ein eigener Server mit Firefly III oder das Firefly III Add-on für Home Assistant benötigt.\n\nBitte gebe den kompletten Link und den persönlichen Zugangs-Token (Einstellungen → Profil → OAuth → Persönliche Zugangs-Tokens) ein.';
 
   @override
   String get loginFormLabelAPIKey => 'Gültiger API-Schlüssel';
@@ -623,7 +623,7 @@ class SDe extends S {
   String get loginFormLabelHost => 'Server URL';
 
   @override
-  String get loginWelcome => 'Willkommen zu Waterfly III';
+  String get loginWelcome => 'Willkommen zu Bankify';
 
   @override
   String get logoutConfirmation => 'Wirklich ausloggen?';
