@@ -731,7 +731,7 @@ class SIt extends S {
 
   @override
   String get settingsNLAppAddInfo =>
-      'Effettua alcune transazioni per le quali ricevi notifiche sullo smartphone per aggiungere app a questo elenco. Se l\'app che cerchi non è comunque presente, si prega di segnalarla ad app@vogt.pw.';
+      'Effettua alcune transazioni per le quali ricevi notifiche sullo smartphone per aggiungere app a questo elenco. Se l\'app che cerchi non è comunque presente, si prega di segnalarla ad github.com/StamosArhon/bankify/issues.';
 
   @override
   String get settingsNLAutoAdd => 'Crea transazione automaticamente';

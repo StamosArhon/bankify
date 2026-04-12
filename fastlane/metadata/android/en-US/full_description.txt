@@ -9,7 +9,7 @@ Features:
 - Add & edit transactions with autocomplete, including attachments, split transactions & multi currency support
 - Piggy Bank support (view & add money)
 - Notification Listener Service to easily create new transactions based on incoming notifications (e.g., from Google Pay or your banking app)
-- Completely open source: https://github.com/dreautall/waterfly-iii
+- Completely open source: https://github.com/StamosArhon/bankify
 - No ads or trackers
 
 Contribution:

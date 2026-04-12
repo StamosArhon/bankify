@@ -9,7 +9,7 @@ Caratteristiche:
 - Aggiungi e modifica le transazioni con completamento automatico, inclusi allegati, transazioni suddivise e supporto multi-valuta
 - Salvadanai (visualizza e aggiungi denaro)
 - Servizio di lettura notifiche per creare facilmente nuove transazioni in base alle notifiche ricevute (per esempio da Google Pay o app della banca)
-- Totalmente open source: https://github.com/dreautall/waterfly-iii
+- Totalmente open source: https://github.com/StamosArhon/bankify
 - Nessun annuncio o tracciamento
 
 Contribuire:

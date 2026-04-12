@@ -28,10 +28,10 @@ A: If you encounter a bug, please help me fix it by providing a detailed report:
    option to enable debug logs.
 2. **Reproduce the bug:** Perform the actions that cause the bug to occur.
 3. **Send the log:** Go back to the Settings page and send the log. This will open your email app
-   with my email address pre-filled and the log attached (it's a simple text file).
+   with the log attached (it's a simple text file).
 
 * **Alternative: GitHub issue**: You can also create
-  a [new GitHub issue](https://github.com/dreautall/waterfly-iii/issues/new) and upload the log
+  a [new GitHub issue](https://github.com/StamosArhon/bankify/issues/new) and upload the log
   there. The log may contain sensitive information. If you upload the log to GitHub, please make
   sure to remove or redact any sensitive data before sharing it.
 
@@ -39,9 +39,7 @@ A: If you encounter a bug, please help me fix it by providing a detailed report:
 **Q: How do I request new features?**
 
 A: I welcome your suggestions for new features! Either open
-a [new GitHub issue](https://github.com/dreautall/waterfly-iii/issues/new) or send me a mail. You
-can find the mail on
-the [Play Store page](https://play.google.com/store/apps/details?id=com.dreautall.waterflyiii).
+a [new GitHub issue](https://github.com/StamosArhon/bankify/issues/new) in this fork.
 
 
 
@@ -62,15 +60,15 @@ up. A valid notification is one that contains a monetary value (something like "
 still doesn't show up, there are a couple of reasons why:
 
 * Bankify needs to be pre-configured to listen to specific apps. Due to Android restrictions, I
-  need to specify all potential apps in my code. Please mail me the missing app name and Play Store
-  link. You can find my email address in the app (when you click on "Add App").
+  need to specify all potential apps in my code. Please open an issue in the Bankify repository with
+  the missing app name and Play Store link.
 * Starting with Android 15, Google implemented a feature to prevent apps from accessing one-time
   codes (like verification codes) in notifications. Unfortunately, that implementation is very
   basic. Most notably, *AMEX* generates notifications like "*You paid $12.34 with your card ending
   in \*\*12345*". Google thinks "12345" is a one-time code and hides the notification from the app.
     * **For advanced users**: You can allow Bankify to access notifications containing
       sensitive information via the adb shell command
-      `appops set com.dreautall.waterflyiii RECEIVE_SENSITIVE_NOTIFICATIONS allow`. Note that I will
+      `appops set io.github.stamosarhon.bankify RECEIVE_SENSITIVE_NOTIFICATIONS allow`. Note that I will
       not provide any support for this.
     * **For other users**: You can achieve the same by disabling the "Enhanced Notifications" in the
       Android settings. I'm not sure what the potential drawbacks of this are, but it will disable
@@ -93,8 +91,7 @@ to Austrian Dollar.
 **Q: Any plans to make money with the app?**
 
 A: No, there are no plans to monetize the app. There will be no ads, no paid features, and no price.
-I want to keep the app free for everyone. If you want to thank me, you can do so
-via [GitHub Sponsors](https://github.com/sponsors/dreautall), but I do not expect it.
+I want to keep the app free for everyone.
 
 
 **Q: Where is the privacy policy?**
@@ -103,4 +100,4 @@ A: The app has a minimal privacy policy. The app only sends data to the server y
 setup. Google may collect crash reports if you install the app via the Play Store that are forwarded
 to me. These don't contain any sensitive information. Google requires a Privacy Policy for the Play
 Store listing, which you can find
-[here](https://github.com/dreautall/waterfly-iii/blob/master/.playstore/privacy-policy.md).
+[here](https://github.com/StamosArhon/bankify/blob/master/.playstore/privacy-policy.md).

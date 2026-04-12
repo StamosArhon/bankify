@@ -934,7 +934,7 @@
     "@settingsNLAppAddHelp": {
         "description": "Help text below adding the new app button."
     },
-    "settingsNLAppAddInfo": "在您接收手机通知以添加应用程序到此列表的交易中。 如果应用程序仍未显示, 请向app@vogt.pw报告。",
+    "settingsNLAppAddInfo": "在您接收手机通知以添加应用程序到此列表的交易中。 如果应用程序仍未显示, 请向github.com/StamosArhon/bankify/issues报告。",
     "@settingsNLAppAddInfo": {
         "description": "Help text when no more app is available to add."
     },

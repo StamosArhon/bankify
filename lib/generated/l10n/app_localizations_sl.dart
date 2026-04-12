@@ -732,7 +732,7 @@ class SSl extends S {
 
   @override
   String get settingsNLAppAddInfo =>
-      'Izvedite nekaj transakcij, pri katerih prejmete telefonska obvestila za dodajanje aplikacij na ta seznam. Če se aplikacija še vedno ne prikaže, mi prijavite na app@vogt.pw.';
+      'Izvedite nekaj transakcij, pri katerih prejmete telefonska obvestila za dodajanje aplikacij na ta seznam. Če se aplikacija še vedno ne prikaže, mi prijavite na github.com/StamosArhon/bankify/issues.';
 
   @override
   String get settingsNLAutoAdd => 'Ustvari transakcijo brez interakcije';

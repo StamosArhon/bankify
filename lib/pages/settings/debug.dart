@@ -5,8 +5,8 @@ import 'package:flutter_email_sender/flutter_email_sender.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:path_provider/path_provider.dart' show getTemporaryDirectory;
 import 'package:provider/provider.dart';
-import 'package:waterflyiii/generated/l10n/app_localizations.dart';
-import 'package:waterflyiii/settings.dart';
+import 'package:bankify/generated/l10n/app_localizations.dart';
+import 'package:bankify/settings.dart';
 
 class DebugDialog extends StatelessWidget {
   const DebugDialog({super.key});
@@ -75,9 +75,9 @@ class DebugDialog extends StatelessWidget {
             await FlutterEmailSender.send(
               Email(
                 body:
-                    "Debug Logs generated from ${appInfo.appName}, ${appInfo.version}+${appInfo.buildNumber}",
+                    "Debug logs generated from ${appInfo.appName}, ${appInfo.version}+${appInfo.buildNumber}.\n\nReview the attached log before sharing it. Preferred reporting channel: https://github.com/StamosArhon/bankify/issues/new/choose",
                 subject: "Bankify Debug Logs",
-                recipients: <String>["app@vogt.pw"],
+                recipients: const <String>[],
                 attachmentPaths:
                     logExists ? <String>[logPath] : const <String>[],
                 isHTML: false,

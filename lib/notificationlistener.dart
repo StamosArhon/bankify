@@ -7,11 +7,11 @@ import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:logging/logging.dart';
 import 'package:notifications_listener_service/notifications_listener_service.dart';
 import 'package:timezone/data/latest.dart' as tz;
-import 'package:waterflyiii/app.dart';
-import 'package:waterflyiii/auth.dart';
-import 'package:waterflyiii/generated/swagger_fireflyiii_api/firefly_iii.swagger.dart';
-import 'package:waterflyiii/pages/transaction.dart';
-import 'package:waterflyiii/settings.dart';
+import 'package:bankify/app.dart';
+import 'package:bankify/auth.dart';
+import 'package:bankify/generated/swagger_fireflyiii_api/firefly_iii.swagger.dart';
+import 'package:bankify/pages/transaction.dart';
+import 'package:bankify/settings.dart';
 
 final Logger log = Logger("NotificationListener");
 
@@ -75,7 +75,7 @@ void nlCallback() {
     if (evt == null || evt.packageName == null) {
       return;
     }
-    if (evt.packageName?.startsWith("com.dreautall.waterflyiii") ?? false) {
+    if (evt.packageName?.startsWith("io.github.stamosarhon.bankify") ?? false) {
       return;
     }
     if (evt.state == NotificationState.remove) {

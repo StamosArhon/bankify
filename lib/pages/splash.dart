@@ -2,10 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:logging/logging.dart';
 import 'package:provider/provider.dart';
 import 'package:quick_actions/quick_actions.dart';
-import 'package:waterflyiii/animations.dart';
-import 'package:waterflyiii/auth.dart';
-import 'package:waterflyiii/generated/l10n/app_localizations.dart';
-import 'package:waterflyiii/widgets/logo.dart';
+import 'package:bankify/animations.dart';
+import 'package:bankify/auth.dart';
+import 'package:bankify/generated/l10n/app_localizations.dart';
+import 'package:bankify/widgets/logo.dart';
 
 final Logger log = Logger("Pages.Splash");
 
@@ -56,7 +56,9 @@ class _SplashPageState extends State<SplashPage> {
             actions: <Widget>[
               TextButton(
                 onPressed: () => Navigator.of(context).pop(false),
-                child: Text(MaterialLocalizations.of(context).cancelButtonLabel),
+                child: Text(
+                  MaterialLocalizations.of(context).cancelButtonLabel,
+                ),
               ),
               FilledButton(
                 onPressed: () => Navigator.of(context).pop(true),
@@ -166,7 +168,8 @@ class _SplashPageState extends State<SplashPage> {
               ? _loginError as AuthErrorCertificateApprovalRequired
               : null;
       if (certificateApprovalError != null) {
-        errorDetails += "\n\n${_certificateDetails(certificateApprovalError.certificate)}";
+        errorDetails +=
+            "\n\n${_certificateDetails(certificateApprovalError.certificate)}";
       }
       final String errorDescription = () {
         if (_loginError is AuthErrorStatusCode) {

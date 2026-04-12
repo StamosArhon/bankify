@@ -11,15 +11,15 @@ import 'package:logging/logging.dart';
 import 'package:provider/provider.dart';
 import 'package:provider/single_child_widget.dart';
 import 'package:quick_actions/quick_actions.dart';
-import 'package:waterflyiii/auth.dart';
-import 'package:waterflyiii/generated/l10n/app_localizations.dart';
-import 'package:waterflyiii/notificationlistener.dart';
-import 'package:waterflyiii/pages/login.dart';
-import 'package:waterflyiii/pages/navigation.dart';
-import 'package:waterflyiii/pages/splash.dart';
-import 'package:waterflyiii/pages/transaction.dart';
-import 'package:waterflyiii/settings.dart';
-import 'package:waterflyiii/widgets/logo.dart';
+import 'package:bankify/auth.dart';
+import 'package:bankify/generated/l10n/app_localizations.dart';
+import 'package:bankify/notificationlistener.dart';
+import 'package:bankify/pages/login.dart';
+import 'package:bankify/pages/navigation.dart';
+import 'package:bankify/pages/splash.dart';
+import 'package:bankify/pages/transaction.dart';
+import 'package:bankify/settings.dart';
+import 'package:bankify/widgets/logo.dart';
 
 final Logger log = Logger("App");
 

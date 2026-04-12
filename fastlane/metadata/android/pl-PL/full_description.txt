@@ -9,7 +9,7 @@ Funkcje:
 - Dodaj i edytuj transakcje z auto uzupełnianiem, w tym załączniki, dzielone transakcje i wsparcie dla wielu walut
 - Wsparcie Skarbonek (zobacz i dodaj pieniądze)
 - Usługa nasłuchiwania powiadomień w celu łatwego tworzenia nowych transakcji na podstawie przychodzących powiadomień (np. z Google Pay lub Twojej aplikacji bankowej)
-- Całkowicie open source: https://github.com/dreautall/waterfly-iii
+- Całkowicie open source: https://github.com/StamosArhon/bankify
 - Brak reklam lub trackerów
 
 Pomoc:

@@ -729,7 +729,7 @@ class SDa extends S {
 
   @override
   String get settingsNLAppAddInfo =>
-      'Foretag nogle transaktioner, hvor du modtager telefonmeddelelser for at tilføje apps til denne liste. Hvis appen stadig ikke dukker op, bedes du rapportere den til app@vogt.pw.';
+      'Foretag nogle transaktioner, hvor du modtager telefonmeddelelser for at tilføje apps til denne liste. Hvis appen stadig ikke dukker op, bedes du rapportere den til github.com/StamosArhon/bankify/issues.';
 
   @override
   String get settingsNLAutoAdd => 'Opret transaktion uden interaktion';

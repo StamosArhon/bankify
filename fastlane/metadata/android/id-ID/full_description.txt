@@ -9,7 +9,7 @@ Fitur:
 - Tambah & ubah transaksi dengan pelengkapan otomatis, termasuk lampiran, transaksi terpisah & dukungan multi mata uang
 - Dukungan Celengan (lihat & tambah uang)
 - Layanan Pendengan Notifikasi untuk membuat transaksi baru berdasarkan notifikasi masuk dengan mudah (misalnya dari Google Pay atau aplikasi banking anda)
-- Open source sepenuhnya: https://github.com/dreautall/waterfly-iii
+- Open source sepenuhnya: https://github.com/StamosArhon/bankify
 - Tanpa iklan maupun pelacak
 
 Kontribusi:

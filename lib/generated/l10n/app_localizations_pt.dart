@@ -727,7 +727,7 @@ class SPt extends S {
 
   @override
   String get settingsNLAppAddInfo =>
-      'Make some transactions where you receive phone notifications to add apps to this list. If the app still doesn\'t show up, please report it to app@vogt.pw.';
+      'Make some transactions where you receive phone notifications to add apps to this list. If the app still doesn\'t show up, please report it to github.com/StamosArhon/bankify/issues.';
 
   @override
   String get settingsNLAutoAdd => 'Create transaction without interaction';
@@ -1667,7 +1667,7 @@ class SPtBr extends SPt {
 
   @override
   String get settingsNLAppAddInfo =>
-      'Faça algumas transações que gerem notificações no seu celular para popular essa lista. Se o app ainda não aparecer, por favor, reporte-o para app@vogt.pw.';
+      'Faça algumas transações que gerem notificações no seu celular para popular essa lista. Se o app ainda não aparecer, por favor, reporte-o para github.com/StamosArhon/bankify/issues.';
 
   @override
   String get settingsNLAutoAdd => 'Criar transação sem interação';

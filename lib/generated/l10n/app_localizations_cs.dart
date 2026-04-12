@@ -733,7 +733,7 @@ class SCs extends S {
 
   @override
   String get settingsNLAppAddInfo =>
-      'Pro přidání aplikací do tohoto seznamu proveďte transakce, při kterých obdržíte oznámení v telefonu. Pokud se aplikace přesto nezobrazí, nahlaste to prosím na app@vogt.pw.';
+      'Pro přidání aplikací do tohoto seznamu proveďte transakce, při kterých obdržíte oznámení v telefonu. Pokud se aplikace přesto nezobrazí, nahlaste to prosím na github.com/StamosArhon/bankify/issues.';
 
   @override
   String get settingsNLAutoAdd => 'Vytvořit transakci bez interakce';

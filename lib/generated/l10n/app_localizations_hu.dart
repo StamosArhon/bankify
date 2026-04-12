@@ -737,7 +737,7 @@ class SHu extends S {
 
   @override
   String get settingsNLAppAddInfo =>
-      'Egy alkalmazás ezen listához adásához indítson olyan tranzakciókat amelyek telefonértesítéseket generálnak. Ha az alkalmazás továbbra sem jelenik meg, kérjük, jelentse az app@vogt.pw email címre írva.';
+      'Egy alkalmazás ezen listához adásához indítson olyan tranzakciókat amelyek telefonértesítéseket generálnak. Ha az alkalmazás továbbra sem jelenik meg, kérjük, jelentse az github.com/StamosArhon/bankify/issues email címre írva.';
 
   @override
   String get settingsNLAutoAdd =>

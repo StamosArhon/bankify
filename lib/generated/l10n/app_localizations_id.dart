@@ -732,7 +732,7 @@ class SId extends S {
 
   @override
   String get settingsNLAppAddInfo =>
-      'Jadikan beberapa transaksi dimana anda menerima notifikasi untuk menambahkan aplikasi ke daftar ini. Jika aplikasi tidak muncul, silahkan laporkan ke app@vogt.pw.';
+      'Jadikan beberapa transaksi dimana anda menerima notifikasi untuk menambahkan aplikasi ke daftar ini. Jika aplikasi tidak muncul, silahkan laporkan ke github.com/StamosArhon/bankify/issues.';
 
   @override
   String get settingsNLAutoAdd => 'Buat transaksi tanpa interaksi';

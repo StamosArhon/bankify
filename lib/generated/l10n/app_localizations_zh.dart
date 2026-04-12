@@ -717,7 +717,7 @@ class SZh extends S {
 
   @override
   String get settingsNLAppAddInfo =>
-      '在您接收手机通知以添加应用程序到此列表的交易中。 如果应用程序仍未显示, 请向app@vogt.pw报告。';
+      '在您接收手机通知以添加应用程序到此列表的交易中。 如果应用程序仍未显示, 请向github.com/StamosArhon/bankify/issues报告。';
 
   @override
   String get settingsNLAutoAdd => '创建无互动的交易';
@@ -1633,7 +1633,7 @@ class SZhTw extends SZh {
 
   @override
   String get settingsNLAppAddInfo =>
-      '請先做幾筆交易，等你的 App 跳通知後，才會出現在這個列表裡。如果你的 App 一直沒有出現在列表中，請聯繫 app@vogt.pw。';
+      '請先做幾筆交易，等你的 App 跳通知後，才會出現在這個列表裡。如果你的 App 一直沒有出現在列表中，請聯繫 github.com/StamosArhon/bankify/issues。';
 
   @override
   String get settingsNLAutoAdd => '直接新增交易記錄';

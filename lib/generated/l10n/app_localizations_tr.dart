@@ -727,7 +727,7 @@ class STr extends S {
 
   @override
   String get settingsNLAppAddInfo =>
-      'Make some transactions where you receive phone notifications to add apps to this list. If the app still doesn\'t show up, please report it to app@vogt.pw.';
+      'Make some transactions where you receive phone notifications to add apps to this list. If the app still doesn\'t show up, please report it to github.com/StamosArhon/bankify/issues.';
 
   @override
   String get settingsNLAutoAdd => 'Create transaction without interaction';

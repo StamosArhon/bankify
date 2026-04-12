@@ -9,7 +9,7 @@ Funkciók:
 - Tranzakciók hozzáadása és szerkesztése automatikus kiegészítéssel, beleértve a mellékleteket, az osztott tranzakciókat és a több pénznem támogatását
 - Persely támogatás (megtekintés és pénz hozzáadása)
 - Értesítésfigyelő szolgáltatás, amellyel egyszerűen hozhat létre új tranzakciókat a bejövő értesítések alapján (például a Google Pay szolgáltatásból vagy a banki alkalmazásból)
-- Teljesen nyílt forráskódú: https://github.com/dreautall/waterfly-iii
+- Teljesen nyílt forráskódú: https://github.com/StamosArhon/bankify
 - Nincsenek hirdetések vagy nyomkövetők
 
 Közreműködés:

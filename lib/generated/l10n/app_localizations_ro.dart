@@ -731,7 +731,7 @@ class SRo extends S {
 
   @override
   String get settingsNLAppAddInfo =>
-      'Efectuați unele tranzacții în care primiți notificări prin telefon pentru a adăuga aplicații la această listă. Dacă aplicația încă nu apare, vă rugăm să raportați la app@vogt.pw.';
+      'Efectuați unele tranzacții în care primiți notificări prin telefon pentru a adăuga aplicații la această listă. Dacă aplicația încă nu apare, vă rugăm să raportați la github.com/StamosArhon/bankify/issues.';
 
   @override
   String get settingsNLAutoAdd => 'Creează tranzacție fără interacțiune';

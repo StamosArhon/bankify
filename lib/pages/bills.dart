@@ -5,14 +5,14 @@ import 'package:intl/intl.dart';
 import 'package:logging/logging.dart';
 import 'package:provider/provider.dart';
 import 'package:syncfusion_flutter_charts/charts.dart' show SortingOrder;
-import 'package:waterflyiii/auth.dart';
-import 'package:waterflyiii/extensions.dart';
-import 'package:waterflyiii/generated/l10n/app_localizations.dart';
-import 'package:waterflyiii/generated/swagger_fireflyiii_api/firefly_iii.swagger.dart';
-import 'package:waterflyiii/pages/bills/billdetails.dart';
-import 'package:waterflyiii/pages/navigation.dart';
-import 'package:waterflyiii/settings.dart';
-import 'package:waterflyiii/timezonehandler.dart';
+import 'package:bankify/auth.dart';
+import 'package:bankify/extensions.dart';
+import 'package:bankify/generated/l10n/app_localizations.dart';
+import 'package:bankify/generated/swagger_fireflyiii_api/firefly_iii.swagger.dart';
+import 'package:bankify/pages/bills/billdetails.dart';
+import 'package:bankify/pages/navigation.dart';
+import 'package:bankify/settings.dart';
+import 'package:bankify/timezonehandler.dart';
 
 class BillsPage extends StatefulWidget {
   const BillsPage({super.key});

@@ -735,7 +735,7 @@ class SPl extends S {
 
   @override
   String get settingsNLAppAddInfo =>
-      'Wykonaj transakcje, w których otrzymujesz powiadomienia telefoniczne, aby dodać aplikacje do tej listy. Jeśli aplikacja nadal się nie pojawia, zgłoś to do app@vogt.pw.';
+      'Wykonaj transakcje, w których otrzymujesz powiadomienia telefoniczne, aby dodać aplikacje do tej listy. Jeśli aplikacja nadal się nie pojawia, zgłoś to do github.com/StamosArhon/bankify/issues.';
 
   @override
   String get settingsNLAutoAdd => 'Utwórz transakcję bez interakcji';

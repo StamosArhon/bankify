@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:syncfusion_flutter_charts/charts.dart';
-import 'package:waterflyiii/animations.dart';
-import 'package:waterflyiii/widgets/charts.dart';
+import 'package:bankify/animations.dart';
+import 'package:bankify/widgets/charts.dart';
 
 class NetWorthChart extends StatelessWidget {
   const NetWorthChart({

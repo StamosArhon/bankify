@@ -731,7 +731,7 @@ class SNl extends S {
 
   @override
   String get settingsNLAppAddInfo =>
-      'Maak enkele transacties waar je telefoonmeldingen ontvangt om apps toe te voegen aan deze lijst. Als de app nog steeds niet verschijnt, rapporteer deze dan aan app@vogt.pw.';
+      'Maak enkele transacties waar je telefoonmeldingen ontvangt om apps toe te voegen aan deze lijst. Als de app nog steeds niet verschijnt, rapporteer deze dan aan github.com/StamosArhon/bankify/issues.';
 
   @override
   String get settingsNLAutoAdd => 'Transactie zonder interactie maken';

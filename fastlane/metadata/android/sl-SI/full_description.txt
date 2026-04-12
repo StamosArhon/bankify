@@ -9,7 +9,7 @@ Funkcije:
 - Dodajanje in urejanje transakcij s samodokončanjem, vključno s prilogami, razdeljenimi transakcijami in podporo za več valut
 - Podpora za hranilnike (ogled in dodajanje denarja)
 - Storitev poslušanja obvestil za preprosto ustvarjanje novih transakcij na podlagi dohodnih obvestil (npr. iz Google Pay ali vaše bančne aplikacije)
-- Popolnoma odprtokoden: https://github.com/dreautall/waterfly-iii
+- Popolnoma odprtokoden: https://github.com/StamosArhon/bankify
 - Brez oglasov ali sledenja
 
 Prispevanje:

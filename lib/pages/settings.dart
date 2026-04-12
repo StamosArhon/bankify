@@ -9,13 +9,13 @@ import 'package:package_info_plus/package_info_plus.dart';
 import 'package:provider/provider.dart';
 import 'package:quick_actions/quick_actions.dart';
 import 'package:url_launcher/url_launcher.dart';
-import 'package:waterflyiii/auth.dart';
-import 'package:waterflyiii/extensions.dart';
-import 'package:waterflyiii/generated/l10n/app_localizations.dart';
-import 'package:waterflyiii/notificationlistener.dart';
-import 'package:waterflyiii/pages/settings/debug.dart';
-import 'package:waterflyiii/pages/settings/notifications.dart';
-import 'package:waterflyiii/settings.dart';
+import 'package:bankify/auth.dart';
+import 'package:bankify/extensions.dart';
+import 'package:bankify/generated/l10n/app_localizations.dart';
+import 'package:bankify/notificationlistener.dart';
+import 'package:bankify/pages/settings/debug.dart';
+import 'package:bankify/pages/settings/notifications.dart';
+import 'package:bankify/settings.dart';
 
 final Logger log = Logger("Pages.Settings");
 
@@ -231,7 +231,7 @@ class SettingsPageState extends State<SettingsPage>
           leading: const CircleAvatar(child: Icon(Icons.question_answer)),
           onTap: () async {
             final Uri uri = Uri.parse(
-              "https://github.com/dreautall/waterfly-iii/blob/master/FAQ.md",
+              "https://github.com/StamosArhon/bankify/blob/master/FAQ.md",
             );
             if (await canLaunchUrl(uri)) {
               await launchUrl(uri);

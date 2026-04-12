@@ -12,10 +12,10 @@ import 'package:logging/logging.dart';
 import 'package:open_file_plus/open_file_plus.dart';
 import 'package:path_provider/path_provider.dart' show getTemporaryDirectory;
 import 'package:provider/provider.dart';
-import 'package:waterflyiii/auth.dart';
-import 'package:waterflyiii/generated/l10n/app_localizations.dart';
-import 'package:waterflyiii/generated/swagger_fireflyiii_api/firefly_iii.swagger.dart';
-import 'package:waterflyiii/widgets/materialiconbutton.dart';
+import 'package:bankify/auth.dart';
+import 'package:bankify/generated/l10n/app_localizations.dart';
+import 'package:bankify/generated/swagger_fireflyiii_api/firefly_iii.swagger.dart';
+import 'package:bankify/widgets/materialiconbutton.dart';
 
 class AttachmentDialog extends StatefulWidget {
   const AttachmentDialog({
@@ -65,7 +65,7 @@ class _AttachmentDialogState extends State<AttachmentDialog>
     final String safeName = _safeAttachmentFilename(
       attachment.attributes.filename,
     );
-    final String fileName = "waterfly-${attachment.id}-$safeName";
+    final String fileName = "bankify-${attachment.id}-$safeName";
     return File.fromUri(tmpPath.uri.resolve(fileName));
   }
 
@@ -87,10 +87,7 @@ class _AttachmentDialogState extends State<AttachmentDialog>
 
     final Uri downloadUri = fireflyAttachmentDownloadUri(user, attachment.id);
 
-    final http.Request request = http.Request(
-      HttpMethod.Get,
-      downloadUri,
-    );
+    final http.Request request = http.Request(HttpMethod.Get, downloadUri);
     request.headers.addAll(user.headers());
     disallowRedirects(request);
     final http.StreamedResponse resp = await user.httpClient.send(request);

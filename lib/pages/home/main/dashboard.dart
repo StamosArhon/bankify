@@ -3,8 +3,8 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:logging/logging.dart';
 import 'package:provider/provider.dart';
-import 'package:waterflyiii/generated/l10n/app_localizations.dart';
-import 'package:waterflyiii/settings.dart';
+import 'package:bankify/generated/l10n/app_localizations.dart';
+import 'package:bankify/settings.dart';
 
 final Logger log = Logger("Pages.Home.Main.Dashboard");
 

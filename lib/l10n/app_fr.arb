@@ -934,7 +934,7 @@
     "@settingsNLAppAddHelp": {
         "description": "Help text below adding the new app button."
     },
-    "settingsNLAppAddInfo": "Effectuez des opérations pour lesquelles vous recevez des notifications sur votre téléphone afin d'ajouter des applications à cette liste. Si l'application ne s'affiche toujours pas, veuillez le signaler à app@vogt.pw.",
+    "settingsNLAppAddInfo": "Effectuez des opérations pour lesquelles vous recevez des notifications sur votre téléphone afin d'ajouter des applications à cette liste. Si l'application ne s'affiche toujours pas, veuillez le signaler à github.com/StamosArhon/bankify/issues.",
     "@settingsNLAppAddInfo": {
         "description": "Help text when no more app is available to add."
     },

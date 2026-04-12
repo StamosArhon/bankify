@@ -6,11 +6,11 @@ import 'package:collection/collection.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:stock/stock.dart';
-import 'package:waterflyiii/extensions.dart';
-import 'package:waterflyiii/generated/swagger_fireflyiii_api/firefly_iii.enums.swagger.dart'
+import 'package:bankify/extensions.dart';
+import 'package:bankify/generated/swagger_fireflyiii_api/firefly_iii.enums.swagger.dart'
     as enums
     show TransactionTypeFilter;
-import 'package:waterflyiii/generated/swagger_fireflyiii_api/firefly_iii.swagger.dart';
+import 'package:bankify/generated/swagger_fireflyiii_api/firefly_iii.swagger.dart';
 
 class TransStock with ChangeNotifier {
   final FireflyIii api;

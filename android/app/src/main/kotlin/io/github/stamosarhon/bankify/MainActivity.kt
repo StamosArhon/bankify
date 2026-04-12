@@ -1,4 +1,4 @@
-package com.dreautall.waterflyiii
+package io.github.stamosarhon.bankify
 
 import android.os.Bundle
 import android.view.WindowManager

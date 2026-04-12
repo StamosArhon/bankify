@@ -1,9 +1,9 @@
 import 'package:chopper/chopper.dart' show Response;
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:waterflyiii/auth.dart';
-import 'package:waterflyiii/generated/l10n/app_localizations.dart';
-import 'package:waterflyiii/generated/swagger_fireflyiii_api/firefly_iii.swagger.dart';
+import 'package:bankify/auth.dart';
+import 'package:bankify/generated/l10n/app_localizations.dart';
+import 'package:bankify/generated/swagger_fireflyiii_api/firefly_iii.swagger.dart';
 
 class CurrencyDialog extends StatelessWidget {
   const CurrencyDialog({super.key, required this.currentCurrency});

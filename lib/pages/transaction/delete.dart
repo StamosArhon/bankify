@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:waterflyiii/generated/l10n/app_localizations.dart';
+import 'package:bankify/generated/l10n/app_localizations.dart';
 
 class DeletionConfirmDialog extends StatelessWidget {
   const DeletionConfirmDialog({super.key});
