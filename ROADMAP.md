@@ -163,6 +163,9 @@
 - Implemented on `stamos/phase-1-self-hosted-certificate-pinning`:
   - Added an explicit self-hosted HTTPS trust flow that shows the presented server certificate fingerprint and requires the user to opt in before retrying.
   - Pinned that trusted certificate per host and reused it for API, timezone, and attachment requests without relaxing the default HTTPS-only / system-CA baseline for other hosts.
+- Implemented on `stamos/phase-1-certificate-capture-fix`:
+  - Replaced the mixed Cronet/IO auth path with a single certificate-aware client so Android reliably surfaces the self-hosted certificate trust prompt.
+  - Removed the now-unused `cronet_http` dependency to keep the transport path simpler and easier to audit.
 - Still pending in Phase 0:
   - Pin third-party GitHub Actions by commit SHA.
   - Add explicit least-privilege GitHub Actions `permissions`.

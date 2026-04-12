@@ -12,7 +12,6 @@ import 'package:chopper/chopper.dart'
         StripStringExtension,
         applyHeaders;
 import 'package:crypto/crypto.dart';
-import 'package:cronet_http/cronet_http.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:http/http.dart' as http;
@@ -210,54 +209,25 @@ http.Client get httpClient =>
 
 http.Client createHttpClient({
   TrustedServerCertificate? trustedCertificate,
+  void Function(TrustedServerCertificate certificate)? onInvalidCertificate,
 }) {
-  if (trustedCertificate == null) {
-    return CronetClient.fromCronetEngine(
-      CronetEngine.build(),
-      closeEngine: false,
-    );
-  }
-
-  final HttpClient client = HttpClient(
-    context: SecurityContext(withTrustedRoots: false),
-  );
-  client.badCertificateCallback =
-      (X509Certificate cert, String host, int port) =>
-          trustedCertificate.acceptsCertificate(cert, host, port);
-  return IOClient(client);
-}
-
-Future<TrustedServerCertificate?> probePresentedCertificate(Uri uri) async {
   final HttpClient client = HttpClient(
     context: SecurityContext(withTrustedRoots: true),
   );
-  TrustedServerCertificate? presentedCertificate;
   client.badCertificateCallback = (
     X509Certificate cert,
     String host,
     int port,
   ) {
-    presentedCertificate = TrustedServerCertificate.fromX509Certificate(
-      cert,
-      host,
-      port,
-    );
-    return false;
+    final TrustedServerCertificate presentedCertificate =
+        TrustedServerCertificate.fromX509Certificate(cert, host, port);
+    onInvalidCertificate?.call(presentedCertificate);
+    if (trustedCertificate == null) {
+      return false;
+    }
+    return trustedCertificate.acceptsCertificate(cert, host, port);
   };
-
-  try {
-    final HttpClientRequest request = await client.getUrl(uri);
-    request.followRedirects = false;
-    request.maxRedirects = 0;
-    final HttpClientResponse response = await request.close();
-    await response.drain<void>();
-  } on HandshakeException {
-    return presentedCertificate;
-  } finally {
-    client.close(force: true);
-  }
-
-  return null;
+  return IOClient(client);
 }
 
 void disallowRedirects(http.BaseRequest request) {
@@ -366,8 +336,12 @@ class AuthUser {
     log.config("AuthUser->create($host)");
 
     // This call is on purpose not using the Swagger API
+    TrustedServerCertificate? presentedCertificate;
     final http.Client client = createHttpClient(
       trustedCertificate: trustedCertificate,
+      onInvalidCertificate: (TrustedServerCertificate certificate) {
+        presentedCertificate = certificate;
+      },
     );
     late Uri uri;
     bool keepClient = false;
@@ -415,30 +389,34 @@ class AuthUser {
       }
       keepClient = true;
     } on HandshakeException {
-      final TrustedServerCertificate? presentedCertificate =
-          await probePresentedCertificate(aboutUri);
       if (presentedCertificate != null) {
         throw AuthErrorCertificateApprovalRequired(
-          presentedCertificate,
+          presentedCertificate!,
           replacingExistingTrust: trustedCertificate != null,
         );
       }
       throw const AuthErrorUntrustedCertificate();
     } on http.ClientException catch (e) {
+      if (presentedCertificate != null) {
+        throw AuthErrorCertificateApprovalRequired(
+          presentedCertificate!,
+          replacingExistingTrust: trustedCertificate != null,
+        );
+      }
       final String message = e.message.toLowerCase();
       if (message.contains("certificate") ||
           message.contains("cert") ||
           message.contains("tls") ||
           message.contains("ssl")) {
-        final TrustedServerCertificate? presentedCertificate =
-            await probePresentedCertificate(aboutUri);
-        if (presentedCertificate != null) {
-          throw AuthErrorCertificateApprovalRequired(
-            presentedCertificate,
-            replacingExistingTrust: trustedCertificate != null,
-          );
-        }
         throw const AuthErrorUntrustedCertificate();
+      }
+      rethrow;
+    } on SocketException {
+      if (presentedCertificate != null) {
+        throw AuthErrorCertificateApprovalRequired(
+          presentedCertificate!,
+          replacingExistingTrust: trustedCertificate != null,
+        );
       }
       rethrow;
     } finally {
