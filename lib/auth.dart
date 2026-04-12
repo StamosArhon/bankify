@@ -20,10 +20,10 @@ import 'package:http/io_client.dart';
 import 'package:logging/logging.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:version/version.dart';
-import 'package:waterflyiii/generated/l10n/app_localizations.dart';
-import 'package:waterflyiii/generated/swagger_fireflyiii_api/firefly_iii.swagger.dart';
-import 'package:waterflyiii/stock.dart';
-import 'package:waterflyiii/timezonehandler.dart';
+import 'package:bankify/generated/l10n/app_localizations.dart';
+import 'package:bankify/generated/swagger_fireflyiii_api/firefly_iii.swagger.dart';
+import 'package:bankify/stock.dart';
+import 'package:bankify/timezonehandler.dart';
 
 final Logger log = Logger("Auth");
 final Version minApiVersion = Version(6, 3, 2);

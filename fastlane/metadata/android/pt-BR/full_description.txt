@@ -9,7 +9,7 @@ Recursos:
 - Adicionar e editar transações com preenchimento automático, incluindo anexos, divisão de transações & suporte a múltiplas moedas
 - Suporte à Cofrinhos (visualizar e adicionar dinheiro)
 - Serviço de monitoramento de notificações para facilmente criar novas transações com base nas notificações recebidas (ex.: do Google Pay ou do seu aplicativo de banco)
-- Completamente open source: https://github.com/dreautall/waterfly-iii
+- Completamente open source: https://github.com/StamosArhon/bankify
 - Sem anúncios ou rastreamento
 
 Contribuições:

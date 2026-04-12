@@ -1,13 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:logging/logging.dart';
 import 'package:provider/provider.dart';
-import 'package:waterflyiii/generated/l10n/app_localizations.dart';
-import 'package:waterflyiii/pages/home/balance.dart';
-import 'package:waterflyiii/pages/home/main.dart';
-import 'package:waterflyiii/pages/home/piggybank.dart';
-import 'package:waterflyiii/pages/home/transactions.dart';
-import 'package:waterflyiii/pages/navigation.dart';
-import 'package:waterflyiii/widgets/fabs.dart';
+import 'package:bankify/generated/l10n/app_localizations.dart';
+import 'package:bankify/pages/home/balance.dart';
+import 'package:bankify/pages/home/main.dart';
+import 'package:bankify/pages/home/piggybank.dart';
+import 'package:bankify/pages/home/transactions.dart';
+import 'package:bankify/pages/navigation.dart';
+import 'package:bankify/widgets/fabs.dart';
 
 final Logger log = Logger("Pages.Home");
 

@@ -9,7 +9,7 @@ Funcționalități:
 - Adaugă și editează tranzacțiile cu autocompletare, inclusiv atașamentele, tranzacții divizate și suport multi valută
 - Suport pușculiță (vizualizează și adaugă bani)
 - Serviciu de Ascultare al Notificărilor pentru a crea cu ușurință noi tranzacții bazate pe notificările primite (de exemplu, din Google Pay sau din aplicația bancară)
-- Sursă complet deschisă: https://github.com/dreautall/waterfly-iii
+- Sursă complet deschisă: https://github.com/StamosArhon/bankify
 - Fără reclame sau trackere
 
 Contribuie:

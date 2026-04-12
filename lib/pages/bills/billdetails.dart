@@ -5,14 +5,14 @@ import 'package:infinite_scroll_pagination/infinite_scroll_pagination.dart';
 import 'package:intl/intl.dart';
 import 'package:logging/logging.dart';
 import 'package:provider/provider.dart';
-import 'package:waterflyiii/animations.dart';
-import 'package:waterflyiii/auth.dart';
-import 'package:waterflyiii/extensions.dart';
-import 'package:waterflyiii/generated/l10n/app_localizations.dart';
-import 'package:waterflyiii/generated/swagger_fireflyiii_api/firefly_iii.swagger.dart';
-import 'package:waterflyiii/pages/bills/billchart.dart';
-import 'package:waterflyiii/pages/transaction.dart';
-import 'package:waterflyiii/timezonehandler.dart';
+import 'package:bankify/animations.dart';
+import 'package:bankify/auth.dart';
+import 'package:bankify/extensions.dart';
+import 'package:bankify/generated/l10n/app_localizations.dart';
+import 'package:bankify/generated/swagger_fireflyiii_api/firefly_iii.swagger.dart';
+import 'package:bankify/pages/bills/billchart.dart';
+import 'package:bankify/pages/transaction.dart';
+import 'package:bankify/timezonehandler.dart';
 
 class BillDetails extends StatefulWidget {
   const BillDetails({super.key, required this.bill});

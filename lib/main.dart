@@ -9,7 +9,7 @@ import 'package:logging/logging.dart';
 
 import 'package:timezone/data/latest.dart' as tz;
 
-import 'package:waterflyiii/app.dart';
+import 'package:bankify/app.dart';
 
 void main() async {
   Logger.root.level = kDebugMode ? Level.ALL : Level.INFO;

@@ -728,7 +728,7 @@ class SSv extends S {
 
   @override
   String get settingsNLAppAddInfo =>
-      'Gör några transaktioner där du får telefonaviseringar för att lägga till appar i den här listan. Om appen fortfarande inte dyker upp, vänligen rapportera det till app@vogt.pw.';
+      'Gör några transaktioner där du får telefonaviseringar för att lägga till appar i den här listan. Om appen fortfarande inte dyker upp, vänligen rapportera det till github.com/StamosArhon/bankify/issues.';
 
   @override
   String get settingsNLAutoAdd => 'Skapa transaktion utan interaktion';

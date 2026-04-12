@@ -859,7 +859,7 @@
     "@settingsNLAppAddHelp": {
         "description": "Help text below adding the new app button."
     },
-    "settingsNLAppAddInfo": "Jadikan beberapa transaksi dimana anda menerima notifikasi untuk menambahkan aplikasi ke daftar ini. Jika aplikasi tidak muncul, silahkan laporkan ke app@vogt.pw.",
+    "settingsNLAppAddInfo": "Jadikan beberapa transaksi dimana anda menerima notifikasi untuk menambahkan aplikasi ke daftar ini. Jika aplikasi tidak muncul, silahkan laporkan ke github.com/StamosArhon/bankify/issues.",
     "@settingsNLAppAddInfo": {
         "description": "Help text when no more app is available to add."
     },

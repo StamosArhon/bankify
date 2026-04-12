@@ -22,7 +22,7 @@ val hasReleaseSigningConfig = listOf(
 ).all { keystoreProperties.getProperty(it)?.isNotBlank() == true }
 
 android {
-    namespace = "com.dreautall.waterflyiii"
+    namespace = "io.github.stamosarhon.bankify"
     compileSdk = flutter.compileSdkVersion
     ndkVersion = flutter.ndkVersion
 
@@ -39,7 +39,7 @@ android {
     }
 
     defaultConfig {
-        applicationId = "com.dreautall.waterflyiii"
+        applicationId = "io.github.stamosarhon.bankify"
         // You can update the following values to match your application needs.
         // For more information, see: https://flutter.dev/to/review-gradle-config.
         minSdk = 28

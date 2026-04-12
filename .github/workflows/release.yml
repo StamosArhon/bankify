@@ -166,7 +166,7 @@ jobs:
         if: ${{ !startsWith(github.ref, 'refs/tags/')  }}
         with:
           serviceAccountJsonPlainText: ${{ secrets.PLAYSTORE_ACCOUNT_KEY }}
-          packageName: com.dreautall.waterflyiii
+          packageName: io.github.stamosarhon.bankify
           releaseFiles: ./artifacts/app-release.aab
           debugSymbols: ./artifacts/aab-debug-symbols.zip
           mappingFile: ./artifacts/mapping.txt
@@ -178,7 +178,7 @@ jobs:
         if: ${{ startsWith(github.ref, 'refs/tags/') && github.event.release.prerelease  }}
         with:
           serviceAccountJsonPlainText: ${{ secrets.PLAYSTORE_ACCOUNT_KEY }}
-          packageName: com.dreautall.waterflyiii
+          packageName: io.github.stamosarhon.bankify
           releaseFiles: ./artifacts/app-release.aab
           debugSymbols: ./artifacts/aab-debug-symbols.zip
           mappingFile: ./artifacts/mapping.txt
@@ -190,7 +190,7 @@ jobs:
         if: ${{ startsWith(github.ref, 'refs/tags/') && !github.event.release.prerelease  }}
         with:
           serviceAccountJsonPlainText: ${{ secrets.PLAYSTORE_ACCOUNT_KEY }}
-          packageName: com.dreautall.waterflyiii
+          packageName: io.github.stamosarhon.bankify
           releaseFiles: ./artifacts/app-release.aab
           debugSymbols: ./artifacts/aab-debug-symbols.zip
           mappingFile: ./artifacts/mapping.txt

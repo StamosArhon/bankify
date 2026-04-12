@@ -721,7 +721,7 @@ class SKo extends S {
 
   @override
   String get settingsNLAppAddInfo =>
-      '이 목록에 앱을 추가하기 위해 폰 알림을 받는 거래를 몇 가지 하세요. 앱이 여전히 표시되지 않으면 app@vogt.pw로 알려주십시요.';
+      '이 목록에 앱을 추가하기 위해 폰 알림을 받는 거래를 몇 가지 하세요. 앱이 여전히 표시되지 않으면 github.com/StamosArhon/bankify/issues로 알려주십시요.';
 
   @override
   String get settingsNLAutoAdd => '상호작용 없이 거래 생성';

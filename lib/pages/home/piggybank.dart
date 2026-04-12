@@ -6,15 +6,15 @@ import 'package:flutter/material.dart';
 import 'package:infinite_scroll_pagination/infinite_scroll_pagination.dart';
 import 'package:logging/logging.dart';
 import 'package:provider/provider.dart';
-import 'package:waterflyiii/animations.dart';
-import 'package:waterflyiii/auth.dart';
-import 'package:waterflyiii/extensions.dart';
-import 'package:waterflyiii/generated/l10n/app_localizations.dart';
-import 'package:waterflyiii/generated/swagger_fireflyiii_api/firefly_iii.swagger.dart';
-import 'package:waterflyiii/pages/home.dart';
-import 'package:waterflyiii/pages/home/piggybank/chart.dart';
-import 'package:waterflyiii/widgets/input_number.dart';
-import 'package:waterflyiii/widgets/materialiconbutton.dart';
+import 'package:bankify/animations.dart';
+import 'package:bankify/auth.dart';
+import 'package:bankify/extensions.dart';
+import 'package:bankify/generated/l10n/app_localizations.dart';
+import 'package:bankify/generated/swagger_fireflyiii_api/firefly_iii.swagger.dart';
+import 'package:bankify/pages/home.dart';
+import 'package:bankify/pages/home/piggybank/chart.dart';
+import 'package:bankify/widgets/input_number.dart';
+import 'package:bankify/widgets/materialiconbutton.dart';
 
 class AccountStatusData {
   const AccountStatusData({

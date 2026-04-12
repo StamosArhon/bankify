@@ -165,6 +165,9 @@
 - Implemented on `stamos/phase-0-bankify-branding`:
   - Rebranded the user-facing app name from Waterfly III to Bankify across the Android app label, in-app copy, docs, and Android store metadata.
   - Replaced the shared in-app logo and Android adaptive launcher icon assets with the new Bankify branding.
+- Implemented on `stamos/phase-0-distinct-app-identity`:
+  - Renamed the internal Flutter package from `waterflyiii` to `bankify` and moved Android to the distinct application ID `io.github.stamosarhon.bankify`.
+  - Updated fork-owned support and release surfaces so Bankify no longer points users to the original app's package ID, store listings, sponsor links, or support email.
 - Implemented on `stamos/phase-1-self-hosted-certificate-pinning`:
   - Added an explicit self-hosted HTTPS trust flow that shows the presented server certificate fingerprint and requires the user to opt in before retrying.
   - Pinned that trusted certificate per host and reused it for API, timezone, and attachment requests without relaxing the default HTTPS-only / system-CA baseline for other hosts.

@@ -734,7 +734,7 @@ class SEs extends S {
 
   @override
   String get settingsNLAppAddInfo =>
-      'Haga algunas transacciones que generen notificaciones en el teléfono para añadir aplicaciones a esta lista. Si la aplicación todavía no aparece, por favor, informe a app@vogt.pw.';
+      'Haga algunas transacciones que generen notificaciones en el teléfono para añadir aplicaciones a esta lista. Si la aplicación todavía no aparece, por favor, informe a github.com/StamosArhon/bankify/issues.';
 
   @override
   String get settingsNLAutoAdd => 'Crear transacción sin interacción';

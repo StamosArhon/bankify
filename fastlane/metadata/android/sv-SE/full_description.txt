@@ -9,7 +9,7 @@ Funktioner:
 - Lägg till & redigera transaktioner med autokomplettering, inklusive bilagor, delade transaktioner & stöd för flera valutor
 - Stöd för "Piggy Bank" (visa & lägg till pengar)
 - Tjänst för att lyssna av notifikationer för att enkelt skapa nya transaktioner baserade på inkommande notifikationer (t.ex. från Google Pay eller din bankapp)
-- Fullständigt öppen källkod: https://github.com/dreautall/waterfly-iii
+- Fullständigt öppen källkod: https://github.com/StamosArhon/bankify
 - Inga annonser eller spårare
 
 Bidrag:

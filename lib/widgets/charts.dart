@@ -7,7 +7,7 @@ import 'package:community_charts_flutter/src/text_element.dart' as charts_text;
 // ignore: implementation_imports
 import 'package:community_charts_flutter/src/text_style.dart' as charts_style;
 import 'package:flutter/material.dart';
-import 'package:waterflyiii/generated/swagger_fireflyiii_api/firefly_iii.swagger.dart';
+import 'package:bankify/generated/swagger_fireflyiii_api/firefly_iii.swagger.dart';
 
 class TimeSeriesChart {
   final DateTime time;

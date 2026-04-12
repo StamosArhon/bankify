@@ -729,7 +729,7 @@ class SDe extends S {
 
   @override
   String get settingsNLAppAddInfo =>
-      'Führe eine Zahlung durch, bei der die gewünschte Benachrichtigung erscheint, um eine App zu dieser Liste hinzuzufügen. Wenn die App trotzdem nicht erscheint, bitte melde dies an app@vogt.pw.';
+      'Führe eine Zahlung durch, bei der die gewünschte Benachrichtigung erscheint, um eine App zu dieser Liste hinzuzufügen. Wenn die App trotzdem nicht erscheint, bitte melde dies an github.com/StamosArhon/bankify/issues.';
 
   @override
   String get settingsNLAutoAdd => 'Transaktion ohne Nachfragen erstellen';

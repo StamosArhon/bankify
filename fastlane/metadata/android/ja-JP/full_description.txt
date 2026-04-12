@@ -9,7 +9,7 @@ Bankifyは、無料でオープンソースの財務マネージャー Firefly I
 - 添付ファイル、分割取引、多通貨サポートと、オートコンプリートによる取引の追加と編集
 - 貯金箱のサポート (資金の表示と追加)
 - 新しいトランザクションを簡単に作成する通知リスナーサービス (Google Pay やバンキングアプリなどから)
-- 完全なオープンソース: https://github.com/dreautall/waterfly-iii
+- 完全なオープンソース: https://github.com/StamosArhon/bankify
 - 広告やトラッカーなし
 
 貢献：

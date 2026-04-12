@@ -5,11 +5,11 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import 'package:syncfusion_flutter_charts/charts.dart';
-import 'package:waterflyiii/animations.dart';
-import 'package:waterflyiii/auth.dart';
-import 'package:waterflyiii/extensions.dart';
-import 'package:waterflyiii/generated/swagger_fireflyiii_api/firefly_iii.swagger.dart';
-import 'package:waterflyiii/widgets/charts.dart';
+import 'package:bankify/animations.dart';
+import 'package:bankify/auth.dart';
+import 'package:bankify/extensions.dart';
+import 'package:bankify/generated/swagger_fireflyiii_api/firefly_iii.swagger.dart';
+import 'package:bankify/widgets/charts.dart';
 
 class NetEarningsChart extends StatelessWidget {
   const NetEarningsChart({

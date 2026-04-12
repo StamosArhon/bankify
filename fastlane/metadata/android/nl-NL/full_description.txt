@@ -9,7 +9,7 @@ Kenmerken:
 Transacties toevoegen en bewerken met automatische aanvulling, inclusief bijlagen, gesplitste transacties en ondersteuning voor meerdere valuta's
 - Spaarpot ondersteuning (geld bekijken en toevoegen)
 - Notification Listener Service om eenvoudig nieuwe transacties aan te maken op basis van binnenkomende meldingen (bijvoorbeeld van Google Pay of uw bankapp)
-Volledig open source: https://github.com/dreautall/waterfly-iii
+Volledig open source: https://github.com/StamosArhon/bankify
 Geen advertenties of trackers
 
 Bijdrage:

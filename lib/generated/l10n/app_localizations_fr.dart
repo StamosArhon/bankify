@@ -738,7 +738,7 @@ class SFr extends S {
 
   @override
   String get settingsNLAppAddInfo =>
-      'Effectuez des opérations pour lesquelles vous recevez des notifications sur votre téléphone afin d\'ajouter des applications à cette liste. Si l\'application ne s\'affiche toujours pas, veuillez le signaler à app@vogt.pw.';
+      'Effectuez des opérations pour lesquelles vous recevez des notifications sur votre téléphone afin d\'ajouter des applications à cette liste. Si l\'application ne s\'affiche toujours pas, veuillez le signaler à github.com/StamosArhon/bankify/issues.';
 
   @override
   String get settingsNLAutoAdd => 'Créer une transaction sans interaction';

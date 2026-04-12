@@ -11,9 +11,9 @@ import 'package:package_info_plus/package_info_plus.dart';
 import 'package:path_provider/path_provider.dart' show getTemporaryDirectory;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:syncfusion_flutter_charts/charts.dart';
-import 'package:waterflyiii/extensions.dart';
-import 'package:waterflyiii/generated/l10n/app_localizations.dart';
-import 'package:waterflyiii/pages/bills.dart';
+import 'package:bankify/extensions.dart';
+import 'package:bankify/generated/l10n/app_localizations.dart';
+import 'package:bankify/pages/bills.dart';
 
 final Logger log = Logger("Settings");
 

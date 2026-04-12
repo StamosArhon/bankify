@@ -9,7 +9,7 @@ Fonctionnalités :
 - Ajouter et modifier des opérations avec saisie semi-automatique, y compris avec pièces jointes, opérations fractionnées et prise en charge de plusieurs devises
 - Prise en charge des tirelires (afficher et ajouter de l'argent)
 - Service d'écoute des notifications pour créer facilement de nouvelles transactions en fonction des notifications entrantes (par exemple, depuis Google Pay ou votre application bancaire)
-- Entièrement open source: https://github.com/dreautall/waterfly-iii
+- Entièrement open source: https://github.com/StamosArhon/bankify
 - Pas de publicité ou de trackers
 
 Contribution:

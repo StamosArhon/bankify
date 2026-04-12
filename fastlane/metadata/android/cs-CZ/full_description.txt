@@ -9,7 +9,7 @@ Funkce:
 - Přidávání & úprava transakcí s automatickým doplňováním, včetně příloh, rozdělených transakcí a s podporou více měn
 - Podpora pokladniček (zobrazení & přidávání peněz)
 - Služba pro poslech notifikací pro snadné přidávání nových transakcí na základě příhozích notifikací (např. z Google Play nebo Vaší bankovní aplikace)
-- Zcela open source: https://github.com/dreautall/waterfly-iii
+- Zcela open source: https://github.com/StamosArhon/bankify
 - Žádný reklamy nebo sledovače
 
 Přispívání:

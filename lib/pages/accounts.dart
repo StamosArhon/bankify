@@ -4,13 +4,13 @@ import 'package:flutter/material.dart';
 import 'package:infinite_scroll_pagination/infinite_scroll_pagination.dart';
 import 'package:logging/logging.dart';
 import 'package:provider/provider.dart';
-import 'package:waterflyiii/animations.dart';
-import 'package:waterflyiii/auth.dart';
-import 'package:waterflyiii/generated/l10n/app_localizations.dart';
-import 'package:waterflyiii/generated/swagger_fireflyiii_api/firefly_iii.swagger.dart';
-import 'package:waterflyiii/pages/home/accounts/row.dart';
-import 'package:waterflyiii/pages/home/accounts/search.dart';
-import 'package:waterflyiii/pages/navigation.dart';
+import 'package:bankify/animations.dart';
+import 'package:bankify/auth.dart';
+import 'package:bankify/generated/l10n/app_localizations.dart';
+import 'package:bankify/generated/swagger_fireflyiii_api/firefly_iii.swagger.dart';
+import 'package:bankify/pages/home/accounts/row.dart';
+import 'package:bankify/pages/home/accounts/search.dart';
+import 'package:bankify/pages/navigation.dart';
 
 final Logger log = Logger("Pages.Accounts");
 

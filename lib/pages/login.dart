@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:logging/logging.dart';
 import 'package:url_launcher/url_launcher.dart';
-import 'package:waterflyiii/animations.dart';
-import 'package:waterflyiii/auth.dart';
-import 'package:waterflyiii/generated/l10n/app_localizations.dart';
-import 'package:waterflyiii/pages/splash.dart';
-import 'package:waterflyiii/widgets/erroricon.dart';
-import 'package:waterflyiii/widgets/logo.dart';
+import 'package:bankify/animations.dart';
+import 'package:bankify/auth.dart';
+import 'package:bankify/generated/l10n/app_localizations.dart';
+import 'package:bankify/pages/splash.dart';
+import 'package:bankify/widgets/erroricon.dart';
+import 'package:bankify/widgets/logo.dart';
 
 final Logger log = Logger("Pages.Login");
 

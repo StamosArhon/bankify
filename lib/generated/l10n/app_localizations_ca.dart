@@ -738,7 +738,7 @@ class SCa extends S {
 
   @override
   String get settingsNLAppAddInfo =>
-      'Fes algunes transaccions de les aplicacions on rebis notificacions per afegir-les a la llista. Si encara no es mostren, per favor informa app@vogt.pw.';
+      'Fes algunes transaccions de les aplicacions on rebis notificacions per afegir-les a la llista. Si encara no es mostren, per favor informa github.com/StamosArhon/bankify/issues.';
 
   @override
   String get settingsNLAutoAdd => 'Crea una transacció sense interacció';

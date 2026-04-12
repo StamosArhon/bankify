@@ -3,7 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:logging/logging.dart';
-import 'package:waterflyiii/widgets/erroricon.dart';
+import 'package:bankify/widgets/erroricon.dart';
 
 final Logger log = Logger("Widgets.AutoCompleteText");
 

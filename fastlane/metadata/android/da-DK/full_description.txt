@@ -9,7 +9,7 @@ Funktioner:
 - Tilføj og rediger transaktioner med autofuldførelse, inkluderede vedhæftninger, split-transaktioner og multi-valuta support
 - Sparegris support (se og tilføj penge)
 - Notifikationslytter-service for let at skabe nye transaktioner baseret på indkommende notifikationer (f.eks. fra Google Pay eller din bankapp)
-- Fuldstændig åben kildekode: https://github.com/dreautall/waterfly-iii
+- Fuldstændig åben kildekode: https://github.com/StamosArhon/bankify
 - Ingen reklamer eller trackers
 
 Bidrag:
