@@ -3,7 +3,6 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:collection/collection.dart';
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:logging/logging.dart';
@@ -13,6 +12,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:syncfusion_flutter_charts/charts.dart';
 import 'package:bankify/extensions.dart';
 import 'package:bankify/generated/l10n/app_localizations.dart';
+import 'package:bankify/log_privacy.dart';
 import 'package:bankify/pages/bills.dart';
 
 final Logger log = Logger("Settings");
@@ -334,11 +334,12 @@ class SettingsProvider with ChangeNotifier {
 
     if (debug) {
       log.config("setting debug");
-      Logger.root.level = Level.ALL;
+      Logger.root.level = computeRootLogLevel(debugLoggingEnabled: true);
+      await _debugLogger?.cancel();
       _debugLogger = Logger.root.onRecord.listen(await DebugLogger().get());
     } else {
       log.config("not setting debug");
-      Logger.root.level = kDebugMode ? Level.ALL : Level.INFO;
+      Logger.root.level = computeRootLogLevel(debugLoggingEnabled: false);
     }
 
     _notificationApps =
@@ -447,14 +448,15 @@ class SettingsProvider with ChangeNotifier {
 
     () async {
       if (debug) {
-        Logger.root.level = Level.ALL;
+        Logger.root.level = computeRootLogLevel(debugLoggingEnabled: true);
+        await _debugLogger?.cancel();
         _debugLogger = Logger.root.onRecord.listen(await DebugLogger().get());
         final PackageInfo appInfo = await PackageInfo.fromPlatform();
         log.info(
           "Enabling debug logs, app ${appInfo.appName} v${appInfo.version}+${appInfo.buildNumber}",
         );
       } else {
-        Logger.root.level = kDebugMode ? Level.ALL : Level.INFO;
+        Logger.root.level = computeRootLogLevel(debugLoggingEnabled: false);
         await _debugLogger?.cancel();
         await DebugLogger().destroy();
       }
@@ -793,12 +795,13 @@ class DebugLogger {
     if (_logPath?.isEmpty ?? true) {
       return;
     }
-    String message = record.message;
+    String message = sanitizeLogText(record.message);
     if (record.error != null) {
-      message += "\nERROR MESSAGE: ${record.error}";
+      message += "\nERROR MESSAGE: ${sanitizeLogObject(record.error)}";
     }
     if (record.stackTrace != null) {
-      message += "\nSTACKTRACE:\n${record.stackTrace}\n\n";
+      message +=
+          "\nSTACKTRACE:\n${sanitizeLogStackTrace(record.stackTrace)}\n\n";
     }
     File(_logPath!).writeAsStringSync(
       "${record.time}: [${record.loggerName} - ${record.level.name}] $message\n",

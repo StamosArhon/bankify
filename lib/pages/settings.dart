@@ -271,7 +271,6 @@ class LanguageDialog extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    debugPrint("current locale: ${S.of(context).localeName}");
     return SimpleDialog(
       title: Text(S.of(context).settingsDialogLanguageTitle),
       children: <Widget>[

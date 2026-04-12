@@ -295,7 +295,7 @@ class _HomeTransactionsState extends State<HomeTransactions>
         if (!context.read<SettingsProvider>().showFutureTXs) {
           query = "date_before:today $query";
         }
-        log.fine(() => "Search query: $query");
+        log.fine(() => "Search query prepared with active filters");
         transactionList = await stock.getSearch(
           query: query,
           page: pageKey,

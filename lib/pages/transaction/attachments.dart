@@ -441,7 +441,7 @@ class _AttachmentDialogState extends State<AttachmentDialog>
                 return;
               }
 
-              log.finer(() => "Image ${imageFile.path} will be uploaded");
+              log.finer(() => "Image selected for upload");
               final PlatformFile file = PlatformFile(
                 path: imageFile.path,
                 name: imageFile.name,

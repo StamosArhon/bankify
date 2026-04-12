@@ -75,7 +75,7 @@ class DebugDialog extends StatelessWidget {
             await FlutterEmailSender.send(
               Email(
                 body:
-                    "Debug logs generated from ${appInfo.appName}, ${appInfo.version}+${appInfo.buildNumber}.\n\nReview the attached log before sharing it. Preferred reporting channel: https://github.com/StamosArhon/bankify/issues/new/choose",
+                    "Debug logs generated from ${appInfo.appName}, ${appInfo.version}+${appInfo.buildNumber}.\n\nBankify redacts obvious URLs, hosts, local file paths, and token patterns before storing this file, but you should still review the attachment for any personal finance details before sharing it. Preferred reporting channel: https://github.com/StamosArhon/bankify/issues/new/choose",
                 subject: "Bankify Debug Logs",
                 recipients: const <String>[],
                 attachmentPaths:

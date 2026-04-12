@@ -335,10 +335,7 @@ class APIRequestInterceptor implements Interceptor {
 
   @override
   FutureOr<Response<BodyType>> intercept<BodyType>(Chain<BodyType> chain) {
-    log.finest(() => "API query ${chain.request.method} ${chain.request.url}");
-    if (chain.request.body != null) {
-      log.finest(() => "Query Body: ${chain.request.body}");
-    }
+    log.finest(() => "API query ${chain.request.method}");
     final Request request = applyHeaders(
       chain.request,
       headerFunc(),
@@ -366,7 +363,7 @@ class AuthUser {
   final Logger log = Logger("Auth.AuthUser");
 
   AuthUser._create(Uri host, String apiKey, http.Client client) {
-    log.config("AuthUser->_create($host)");
+    log.config("AuthUser->_create()");
     _apiKey = apiKey;
     _httpClient = client;
 
@@ -402,7 +399,7 @@ class AuthUser {
     TrustedServerCertificate? trustedCertificate,
   }) async {
     final Logger log = Logger("Auth.AuthUser");
-    log.config("AuthUser->create($host)");
+    log.config("AuthUser->create()");
 
     // This call is on purpose not using the Swagger API
     TrustedServerCertificate? presentedCertificate;
@@ -639,7 +636,7 @@ class FireflyService with ChangeNotifier {
     final String? apiKey = await storage.read(key: storageApiKey);
 
     log.config(
-      "storage: $apiHost, apiKey ${apiKey?.isEmpty ?? true ? "unset" : "set"}",
+      "storage: apiHost ${apiHost == null ? "unset" : "set"}, apiKey ${apiKey?.isEmpty ?? true ? "unset" : "set"}",
     );
 
     if (apiHost == null || apiKey == null) {
@@ -673,7 +670,7 @@ class FireflyService with ChangeNotifier {
   }
 
   Future<bool> signIn(String host, String apiKey) async {
-    log.config("FireflyService->signIn($host)");
+    log.config("FireflyService->signIn()");
     host = host.strip().rightStrip('/');
     if (host.isNotEmpty && !host.contains("://")) {
       host = "$secureHostScheme$host";
@@ -754,12 +751,16 @@ void apiThrowErrorIfEmpty(Response<dynamic> response, BuildContext? context) {
   if (response.isSuccessful && response.body != null) {
     return;
   }
-  log.severe("Invalid API response", response.error);
+  final List<String> safeErrorParts = <String>[
+    "status ${response.statusCode}",
+    "body ${response.body == null ? "missing" : "present"}",
+    "error ${response.error.runtimeType}",
+  ];
+  final String safeErrorSummary = safeErrorParts.join(", ");
+  log.severe("Invalid API response", safeErrorSummary);
   if (context?.mounted ?? false) {
-    throw Exception(
-      S.of(context!).errorAPIInvalidResponse(response.error?.toString() ?? ""),
-    );
+    throw Exception(S.of(context!).errorAPIInvalidResponse(safeErrorSummary));
   } else {
-    throw Exception("[nocontext] Invalid API response: ${response.error}");
+    throw Exception("[nocontext] Invalid API response: $safeErrorSummary");
   }
 }

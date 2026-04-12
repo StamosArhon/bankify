@@ -160,9 +160,7 @@ class _BankifyAppState extends State<BankifyApp> {
       List<SharedFile> value,
     ) {
       log.config("App was opened via file sharing");
-      log.finest(
-        () => "files: ${value.map((SharedFile f) => f.value).join(",")}",
-      );
+      log.finest(() => "shared file count: ${value.length}");
       _filesSharedToApp = value;
     });
   }

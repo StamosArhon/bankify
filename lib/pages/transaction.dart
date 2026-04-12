@@ -362,7 +362,7 @@ class _TransactionPageState extends State<TransactionPage>
           final FireflyIii api = context.read<FireflyService>().api;
           final SettingsProvider settings = context.read<SettingsProvider>();
 
-          log.info("Got notification ${widget.notification?.title}");
+          log.info("Got notification payload for transaction creation");
           _transactionType = TransactionTypeProperty.withdrawal;
           final CurrencyRead defaultCurrency =
               context.read<FireflyService>().defaultCurrency;
@@ -928,9 +928,6 @@ class _TransactionPageState extends State<TransactionPage>
                             destinationName =
                                 _destinationAccountTextController.text;
                           }
-                          debugPrint(sourceName);
-                          debugPrint(destinationName);
-
                           final TransactionSplitUpdate
                           txSs = TransactionSplitUpdate(
                             amount: _localAmounts[i].toString(),

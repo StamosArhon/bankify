@@ -83,7 +83,7 @@ void nlCallback() {
     }
     final Iterable<RegExpMatch> matches = rFindMoney.allMatches(evt.text ?? "");
     if (matches.isEmpty) {
-      log.finer(() => "nlCallback(${evt.packageName}): no money found");
+      log.finer(() => "notification ignored: no money found");
       return;
     }
 
@@ -96,9 +96,7 @@ void nlCallback() {
       }
     }
     if (!validMatch) {
-      log.finer(
-        () => "nlCallback(${evt.packageName}): no money with currency found",
-      );
+      log.finer(() => "notification ignored: no money with currency found");
       return;
     }
 
@@ -106,7 +104,7 @@ void nlCallback() {
     await settings.notificationAddKnownApp(evt.packageName!);
 
     if (!(await settings.notificationUsedApps()).contains(evt.packageName)) {
-      log.finer(() => "nlCallback(${evt.packageName}): app not used");
+      log.finer(() => "notification ignored: app not enabled");
       return;
     }
 
@@ -116,9 +114,7 @@ void nlCallback() {
 
     if (appSettings.autoAdd) {
       tz.initializeTimeZones();
-      log.finer(
-        () => "nlCallback(${evt.packageName}): trying to auto-add transaction",
-      );
+      log.finer(() => "trying to auto-add transaction from notification");
       try {
         final FireflyService ffService = FireflyService();
         if (!await ffService.signInFromStorage()) {

@@ -672,14 +672,14 @@ class SUk extends S {
 
   @override
   String get settingsDialogDebugInfo =>
-      'You can enable & send debug logs here. These have a bad impact on performance, so please don\'t enable them unless you\'re advised to do so. Disabling logging will delete the stored log.';
+      'You can enable and send debug logs here. These hurt performance, so please only enable them when you\'re actively troubleshooting. Disabling logging will delete the stored log. Exported logs are redacted for obvious URLs, hosts, local file paths, and token patterns, but you should still review them before sharing.';
 
   @override
   String get settingsDialogDebugMailCreate => 'Create Mail';
 
   @override
   String get settingsDialogDebugMailDisclaimer =>
-      'WARNING: A mail draft will open with the log file attached (in text format). The logs might contain sensitive information, such as the host name of your Firefly instance (though I try to avoid logging of any secrets, such as the api key). Please read through the log carefully and censor out any information you don\'t want to share and/or is not relevant to the problem you want to report.\n\nPlease do not send in logs without prior agreement via mail/GitHub to do so. I will delete any logs sent without context for privacy reasons. Never upload the log uncensored to GitHub or elsewhere.';
+      'WARNING: A mail draft will open with the log file attached (in text format). Bankify redacts obvious URLs, hosts, local file paths, and token patterns before storing this file, but the logs can still mention personal finance details such as transaction descriptions, notification text, or account labels depending on what happened before logging was enabled. Please read through the log carefully and remove anything you do not want to share and/or that is not relevant to the issue you want to report.\n\nPlease do not send logs without prior agreement via mail/GitHub. I will delete any logs sent without context for privacy reasons. Never upload the log uncensored to GitHub or elsewhere.';
 
   @override
   String get settingsDialogDebugSendButton => 'Send Logs via Mail';

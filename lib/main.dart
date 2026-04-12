@@ -1,6 +1,5 @@
 import 'dart:developer' as developer;
 
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'package:intl/intl.dart';
@@ -10,19 +9,20 @@ import 'package:logging/logging.dart';
 import 'package:timezone/data/latest.dart' as tz;
 
 import 'package:bankify/app.dart';
+import 'package:bankify/log_privacy.dart';
 
 void main() async {
-  Logger.root.level = kDebugMode ? Level.ALL : Level.INFO;
+  Logger.root.level = computeRootLogLevel(debugLoggingEnabled: false);
   Logger.root.onRecord.listen((LogRecord record) {
     developer.log(
-      record.message,
+      sanitizeLogText(record.message),
       time: record.time,
       sequenceNumber: record.sequenceNumber,
       level: record.level.value,
       name: record.loggerName,
       zone: record.zone,
-      error: record.error,
-      stackTrace: record.stackTrace,
+      error: sanitizeLogObject(record.error),
+      stackTrace: sanitizeLogStackTrace(record.stackTrace),
     );
   });
   tz.initializeTimeZones();

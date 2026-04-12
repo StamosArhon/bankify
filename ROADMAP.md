@@ -289,6 +289,15 @@
 - Backup behavior matches privacy expectations.
 - Shared-file intake is narrowed and validated.
 
+### Progress Update (2026-04-13)
+
+- Implemented on `stamos/phase-2-log-redaction`:
+  - Added centralized sanitization for exported and forwarded logs, redacting obvious URLs, hosts, local file paths, and token patterns.
+  - Lowered the default release log verbosity to warnings/errors unless the user explicitly enables debug logging, while keeping debug builds verbose for development.
+  - Removed low-value logs that included hosts, search queries, notification titles, file paths, and source/destination account names.
+  - Strengthened the debug-log export copy so it explicitly warns users to review even redacted logs before sharing.
+  - Added focused regression tests for log sanitization and root log-level policy.
+
 ### Task Slices
 
 - Remove stray `debugPrint` and low-value logging of accounts, titles, file paths, and URLs.
@@ -467,23 +476,22 @@
 
 ## Recommended Execution Order
 
-1. `stamos/phase-2-log-redaction`
-2. `stamos/phase-2-notification-payload-minimization`
-3. `stamos/phase-2-backup-and-prefs-privacy`
-4. `stamos/phase-2-share-intent-validation`
-5. `stamos/phase-2-lock-timeout-settings`
-6. `stamos/phase-3-git-dependency-pinning`
-7. `stamos/phase-3-hosted-package-upgrades`
-8. `stamos/phase-3-native-dependency-refresh`
-9. `stamos/phase-3-attack-surface-reduction`
-10. `stamos/phase-4-security-unit-tests`
-11. `stamos/phase-4-widget-and-flow-tests`
-12. `stamos/phase-4-manual-security-qa-checklist`
-13. `stamos/phase-5-transaction-editor-decomposition`
-14. Phase 6 work only after the hardening baseline is closed.
+1. `stamos/phase-2-notification-payload-minimization`
+2. `stamos/phase-2-backup-and-prefs-privacy`
+3. `stamos/phase-2-share-intent-validation`
+4. `stamos/phase-2-lock-timeout-settings`
+5. `stamos/phase-3-git-dependency-pinning`
+6. `stamos/phase-3-hosted-package-upgrades`
+7. `stamos/phase-3-native-dependency-refresh`
+8. `stamos/phase-3-attack-surface-reduction`
+9. `stamos/phase-4-security-unit-tests`
+10. `stamos/phase-4-widget-and-flow-tests`
+11. `stamos/phase-4-manual-security-qa-checklist`
+12. `stamos/phase-5-transaction-editor-decomposition`
+13. Phase 6 work only after the hardening baseline is closed.
 
 ## Immediate Next Recommendation
 
-- Next implementation branch should be `stamos/phase-2-log-redaction`.
-- That branch should remove low-value sensitive logging, redact exportable debug values, and keep verbose logging behind explicit debug or advanced-user gates only.
-- After that, continue with `stamos/phase-2-notification-payload-minimization`.
+- Next implementation branch should be `stamos/phase-2-notification-payload-minimization`.
+- That branch should stop storing full third-party notification contents in local-notification payloads, prefer opaque IDs or lightweight in-memory handoff state, and set safer Android notification visibility defaults.
+- After that, continue with `stamos/phase-2-backup-and-prefs-privacy`.
