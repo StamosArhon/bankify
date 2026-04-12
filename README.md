@@ -86,6 +86,8 @@ The easiest local UI/UX workflow is an Android emulator with hot reload. After A
 .\scripts\preview-android.ps1
 ```
 
+If you prefer a double-click launcher on Windows, use [`preview-android.cmd`](preview-android.cmd) from the repo root. It starts the PowerShell helper from the correct directory automatically and pauses on errors so the message stays visible.
+
 Useful variants:
 
 ```powershell
