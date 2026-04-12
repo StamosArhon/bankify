@@ -12,6 +12,7 @@ import 'package:chopper/chopper.dart'
         StripStringExtension,
         applyHeaders;
 import 'package:crypto/crypto.dart';
+import 'package:flutter/foundation.dart' show kReleaseMode;
 import 'package:flutter/material.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:http/http.dart' as http;
@@ -27,6 +28,58 @@ import 'package:waterflyiii/timezonehandler.dart';
 final Logger log = Logger("Auth");
 final Version minApiVersion = Version(6, 3, 2);
 const String secureHostScheme = "https://";
+
+bool get allowsLocalDevelopmentHttp => !kReleaseMode;
+
+bool isLocalDevelopmentHost(String host) {
+  final String normalizedHost = host.trim().toLowerCase();
+  if (normalizedHost.isEmpty) {
+    return false;
+  }
+  if (normalizedHost == "localhost") {
+    return true;
+  }
+
+  final InternetAddress? address = InternetAddress.tryParse(normalizedHost);
+  if (address == null) {
+    return false;
+  }
+
+  final List<int> rawAddress = address.rawAddress;
+  if (rawAddress.length == 4) {
+    final int firstOctet = rawAddress[0];
+    final int secondOctet = rawAddress[1];
+    return firstOctet == 10 ||
+        firstOctet == 127 ||
+        (firstOctet == 192 && secondOctet == 168) ||
+        (firstOctet == 172 && secondOctet >= 16 && secondOctet <= 31) ||
+        (firstOctet == 169 && secondOctet == 254);
+  }
+
+  if (rawAddress.length == 16) {
+    final bool isLoopback =
+        rawAddress.sublist(0, 15).every((int byte) => byte == 0) &&
+        rawAddress[15] == 1;
+    final bool isLinkLocal =
+        rawAddress[0] == 0xfe && (rawAddress[1] & 0xc0) == 0x80;
+    final bool isUniqueLocal = (rawAddress[0] & 0xfe) == 0xfc;
+    return isLoopback || isLinkLocal || isUniqueLocal;
+  }
+
+  return false;
+}
+
+bool allowsLocalDevelopmentHttpUri(Uri uri) {
+  return allowsLocalDevelopmentHttp &&
+      uri.scheme == "http" &&
+      uri.host.isNotEmpty &&
+      isLocalDevelopmentHost(uri.host);
+}
+
+bool isSupportedFireflyUri(Uri uri) {
+  return uri.host.isNotEmpty &&
+      (uri.scheme == "https" || allowsLocalDevelopmentHttpUri(uri));
+}
 
 int effectiveUriPort(Uri uri) {
   if (uri.hasPort) {
@@ -102,7 +155,9 @@ class AuthErrorApiKey extends AuthError {
 
 class AuthErrorInsecureTransport extends AuthError {
   const AuthErrorInsecureTransport()
-    : super("Only HTTPS Firefly III URLs are supported.");
+    : super(
+        "Only HTTPS Firefly III URLs are supported. Debug builds also allow explicit local HTTP hosts for development.",
+      );
 }
 
 class AuthErrorUntrustedCertificate extends AuthError {
@@ -115,7 +170,7 @@ class AuthErrorUntrustedCertificate extends AuthError {
 class AuthErrorInvalidHttpsEndpoint extends AuthError {
   const AuthErrorInvalidHttpsEndpoint()
     : super(
-        "Could not complete an HTTPS handshake with this host. It may be serving plain HTTP on this port instead of HTTPS.",
+        "Could not complete an HTTPS handshake with this host. It may be serving plain HTTP on this port instead of HTTPS. For local development, use an explicit http:// URL against localhost or a private LAN IP in a debug build.",
       );
 }
 
@@ -368,7 +423,7 @@ class AuthUser {
     if (uri.host.isEmpty) {
       throw AuthErrorHost(host);
     }
-    if (uri.scheme != "https") {
+    if (!isSupportedFireflyUri(uri)) {
       throw const AuthErrorInsecureTransport();
     }
 

@@ -168,6 +168,9 @@
   - Removed the now-unused `cronet_http` dependency to keep the transport path simpler and easier to audit.
 - Implemented on `stamos/phase-1-https-protocol-mismatch-diagnostics`:
   - Differentiated invalid/self-signed certificate failures from plain-HTTP-on-HTTPS-port failures so self-hosted users get an accurate connection error instead of a misleading trust prompt expectation.
+- Implemented on `stamos/phase-1-debug-local-http-development`:
+  - Added a debug-only local-development path that permits explicit `http://` connections to localhost and private LAN IPs without weakening release transport policy.
+  - Kept Android release builds HTTPS-only while allowing debug builds to reach local cleartext endpoints for emulator and LAN development.
 - Still pending in Phase 0:
   - Pin third-party GitHub Actions by commit SHA.
   - Add explicit least-privilege GitHub Actions `permissions`.
