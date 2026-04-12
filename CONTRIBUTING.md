@@ -18,6 +18,7 @@
 - From PowerShell, run `.\scripts\preview-android.ps1` to launch an emulator if needed and start the app with hot reload.
 - Use `.\scripts\preview-android.ps1 -AvdName <name>` to choose a specific Android Virtual Device.
 - Use `.\scripts\preview-android.ps1 -SkipEmulatorLaunch` if you already have a device or emulator running.
+- Use `.\scripts\preview-android.ps1 -FlutterPath <path-to-flutter.bat>` if you keep the pinned Flutter SDK in a side-by-side install.
 - Inside the running Flutter session, press `r` for hot reload and `R` for hot restart.
 
 ## Branch Workflow

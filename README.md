@@ -91,10 +91,12 @@ Useful variants:
 ```powershell
 .\scripts\preview-android.ps1 -AvdName Pixel_8_API_35
 .\scripts\preview-android.ps1 -SkipEmulatorLaunch
+.\scripts\preview-android.ps1 -FlutterPath C:\appdev\flutter-3.35.6\bin\flutter.bat
 ```
 
 The script:
 - uses the repo's pinned Flutter version as the expected baseline,
+- prefers a side-by-side `flutter-<version>` install next to your current Flutter SDK when it finds one,
 - tries to find `adb` / `emulator` from PATH or the default Android SDK location,
 - launches an emulator if needed,
 - runs `flutter pub get` unless `-NoPubGet` is passed,

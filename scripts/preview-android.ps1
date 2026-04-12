@@ -3,7 +3,8 @@ param(
   [string]$AvdName,
   [string]$DeviceId,
   [switch]$SkipEmulatorLaunch,
-  [switch]$NoPubGet
+  [switch]$NoPubGet,
+  [string]$FlutterPath
 )
 
 Set-StrictMode -Version Latest
@@ -16,15 +17,15 @@ function Resolve-Executable {
     [string[]]$FallbackPaths = @()
   )
 
-  $command = Get-Command $CommandName -ErrorAction SilentlyContinue
-  if ($command) {
-    return $command.Source
-  }
-
   foreach ($path in $FallbackPaths) {
     if ($path -and (Test-Path $path)) {
       return $path
     }
+  }
+
+  $command = Get-Command $CommandName -ErrorAction SilentlyContinue
+  if ($command) {
+    return $command.Source
   }
 
   return $null
@@ -62,6 +63,40 @@ function Get-RequiredFlutterVersion {
   }
 
   return $null
+}
+
+function Get-FlutterFallbackPaths {
+  param(
+    [string]$RequiredVersion,
+    [string]$ConfiguredFlutterPath
+  )
+
+  $fallbackPaths = @()
+
+  if ($ConfiguredFlutterPath) {
+    if (-not (Test-Path $ConfiguredFlutterPath)) {
+      throw "The configured Flutter path '$ConfiguredFlutterPath' does not exist."
+    }
+    $fallbackPaths += $ConfiguredFlutterPath
+  }
+
+  if ($env:FLUTTER_ROOT) {
+    $fallbackPaths += Join-Path $env:FLUTTER_ROOT "bin\flutter.bat"
+  }
+
+  $pathFlutter = Get-Command flutter -ErrorAction SilentlyContinue
+  if ($pathFlutter -and $RequiredVersion) {
+    $pathFlutterBin = Split-Path -Parent $pathFlutter.Source
+    $pathFlutterRoot = Split-Path -Parent $pathFlutterBin
+    $pathFlutterParent = Split-Path -Parent $pathFlutterRoot
+    $fallbackPaths += Join-Path $pathFlutterParent "flutter-$RequiredVersion\bin\flutter.bat"
+  }
+
+  return @(
+    $fallbackPaths |
+      Where-Object { $_ } |
+      Select-Object -Unique
+  )
 }
 
 function Get-RunningAndroidDevices {
@@ -104,7 +139,12 @@ $pubspecPath = Join-Path $projectRoot "pubspec.yaml"
 $requiredFlutterVersion = Get-RequiredFlutterVersion -PubspecPath $pubspecPath
 
 $sdkRoot = Get-AndroidSdkRoot
-$flutterPath = Resolve-Executable -CommandName "flutter" -FallbackPaths @()
+$flutterFallbackPaths = Get-FlutterFallbackPaths `
+  -RequiredVersion $requiredFlutterVersion `
+  -ConfiguredFlutterPath $FlutterPath
+$flutterPath = Resolve-Executable `
+  -CommandName "flutter" `
+  -FallbackPaths $flutterFallbackPaths
 $adbPath = Resolve-Executable -CommandName "adb" -FallbackPaths @(
   $(if ($sdkRoot) { Join-Path $sdkRoot "platform-tools\adb.exe" })
 )
@@ -113,7 +153,7 @@ $emulatorPath = Resolve-Executable -CommandName "emulator" -FallbackPaths @(
 )
 
 if (-not $flutterPath) {
-  throw "Flutter was not found in PATH. Install Flutter $requiredFlutterVersion and make sure 'flutter' is available."
+  throw "Flutter was not found. Install Flutter $requiredFlutterVersion, set FLUTTER_ROOT, or pass -FlutterPath with the SDK's flutter.bat path."
 }
 
 if (-not $adbPath) {
@@ -141,6 +181,8 @@ if ($requiredFlutterVersion) {
 
 Push-Location $projectRoot
 try {
+  Write-Host "Using Flutter executable '$flutterPath'." -ForegroundColor Green
+
   if (-not $NoPubGet) {
     Write-Host "Running flutter pub get..." -ForegroundColor Cyan
     & $flutterPath pub get

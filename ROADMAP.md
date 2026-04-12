@@ -154,6 +154,9 @@
 - Implemented on `stamos/phase-0-local-preview-workflow`:
   - Added a repo-local Android emulator preview helper at `scripts/preview-android.ps1`.
   - Documented the emulator + hot-reload workflow in `README.md` and `CONTRIBUTING.md` so future UI/UX work can be reviewed locally without reinstalling on a phone every time.
+- Implemented on `stamos/phase-0-preview-toolchain-unblock`:
+  - Removed the legacy direct `test` dev dependency that blocked `flutter pub get` on Flutter `3.35.6`.
+  - Updated `scripts/preview-android.ps1` so it can use a side-by-side pinned Flutter install automatically or via `-FlutterPath`, instead of assuming PATH already points to the correct SDK.
 - Still pending in Phase 0:
   - Pin third-party GitHub Actions by commit SHA.
   - Add explicit least-privilege GitHub Actions `permissions`.
