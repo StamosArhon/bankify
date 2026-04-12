@@ -1,4 +1,4 @@
-Waterfly III er en uofficiel app til din egen instans af FireFly III, en fri og åben-kildekode økonomimanager.
+Bankify er en uofficiel app til din egen instans af FireFly III, en fri og åben-kildekode økonomimanager.
 
 Denne app kræver en egen-hosted Firefly III instans på din egen server, se venligst https://www.firefly-iii.org/ for mere information omkring softwaren. Det er kun en ledsagerapp og kan ikke køre alene!
 

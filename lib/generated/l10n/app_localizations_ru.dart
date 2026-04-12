@@ -623,7 +623,7 @@ class SRu extends S {
 
   @override
   String get loginAbout =>
-      'Для эффективного использования Waterfly III Вам необходим собственный сервер с установленным Firefly III или аддоном Firefly III для Home Assistant.\n\nПожалуйста, введите полный URL-адрес и персональный ключ доступа (Настройки -> Профиль -> OAuth -> Персональный ключ доступа).';
+      'Для эффективного использования Bankify Вам необходим собственный сервер с установленным Firefly III или аддоном Firefly III для Home Assistant.\n\nПожалуйста, введите полный URL-адрес и персональный ключ доступа (Настройки -> Профиль -> OAuth -> Персональный ключ доступа).';
 
   @override
   String get loginFormLabelAPIKey => 'Действительный ключ API';
@@ -632,7 +632,7 @@ class SRu extends S {
   String get loginFormLabelHost => 'URL-адрес хоста';
 
   @override
-  String get loginWelcome => 'Добро пожаловать в Waterfly III';
+  String get loginWelcome => 'Добро пожаловать в Bankify';
 
   @override
   String get logoutConfirmation => 'Вы уверены, что хотите выйти?';

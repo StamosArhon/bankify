@@ -615,7 +615,7 @@ class SDa extends S {
 
   @override
   String get loginAbout =>
-      'For at bruge Waterfly III produktivt har du brug for din egen server med en Firefly III-instans eller Firefly II-add-on til Home Assistant.\n\nIndtast venligst det fulde URL samt en personlig adgangstoken (Indstillinger -> Profil -> OAuth -> Personlig adgangstoken) nedenfor.';
+      'For at bruge Bankify produktivt har du brug for din egen server med en Firefly III-instans eller Firefly II-add-on til Home Assistant.\n\nIndtast venligst det fulde URL samt en personlig adgangstoken (Indstillinger -> Profil -> OAuth -> Personlig adgangstoken) nedenfor.';
 
   @override
   String get loginFormLabelAPIKey => 'Gyldig API-nøgle';
@@ -624,7 +624,7 @@ class SDa extends S {
   String get loginFormLabelHost => 'Værts-URL';
 
   @override
-  String get loginWelcome => 'Velkommen til Waterfly III';
+  String get loginWelcome => 'Velkommen til Bankify';
 
   @override
   String get logoutConfirmation => 'Er du sikker på, at du vil logge ud?';

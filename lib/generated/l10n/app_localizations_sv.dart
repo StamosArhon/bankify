@@ -614,7 +614,7 @@ class SSv extends S {
 
   @override
   String get loginAbout =>
-      'För att använda Waterfly III på ett produktivt sätt behöver du din egen server med en Firefly III instans eller Firefly III-tillägget för Home Assistant.\n\nAnge hela URL: en samt en personlig åtkomst-token (inställningar -> Profil -> OAuth -> Personlig åtkomst-token) nedan.';
+      'För att använda Bankify på ett produktivt sätt behöver du din egen server med en Firefly III instans eller Firefly III-tillägget för Home Assistant.\n\nAnge hela URL: en samt en personlig åtkomst-token (inställningar -> Profil -> OAuth -> Personlig åtkomst-token) nedan.';
 
   @override
   String get loginFormLabelAPIKey => 'Giltig API-nyckel';
@@ -623,7 +623,7 @@ class SSv extends S {
   String get loginFormLabelHost => 'Värd URL';
 
   @override
-  String get loginWelcome => 'Välkommen till Waterfly III';
+  String get loginWelcome => 'Välkommen till Bankify';
 
   @override
   String get logoutConfirmation => 'Är du säker på att du vill logga ut?';

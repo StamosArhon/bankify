@@ -616,7 +616,7 @@ class SNl extends S {
 
   @override
   String get loginAbout =>
-      'Om Waterfly III productief te gebruiken, heb je je eigen server nodig met een Firefly III-installatie of de Firefly III-add-on voor Home Assistant.\n\nVoer de volledige URL en ook een persoonlijke toegangstoken in (Instellingen -> Profiel -> OAuth -> Persoonlijke Toegang) hieronder in.';
+      'Om Bankify productief te gebruiken, heb je je eigen server nodig met een Firefly III-installatie of de Firefly III-add-on voor Home Assistant.\n\nVoer de volledige URL en ook een persoonlijke toegangstoken in (Instellingen -> Profiel -> OAuth -> Persoonlijke Toegang) hieronder in.';
 
   @override
   String get loginFormLabelAPIKey => 'Geldige API-sleutel';
@@ -625,7 +625,7 @@ class SNl extends S {
   String get loginFormLabelHost => 'Host-URL';
 
   @override
-  String get loginWelcome => 'Welkom bij Waterfly III';
+  String get loginWelcome => 'Welkom bij Bankify';
 
   @override
   String get logoutConfirmation => 'Weet u zeker dat u zich wilt afmelden?';

@@ -1,4 +1,4 @@
-A Waterfly III egy nem hivatalos alkalmazás a Firefly III-hoz, mely egy ingyenes, nyílt forráskódú, saját üzemeltetésű pénzügyi menedzser.
+A Bankify egy nem hivatalos alkalmazás a Firefly III-hoz, mely egy ingyenes, nyílt forráskódú, saját üzemeltetésű pénzügyi menedzser.
 
 Ehhez az alkalmazáshoz saját szerveren tárolt Firefly III példányra van szükség. A szoftverrel kapcsolatos további információkért látogasson el a https://www.firefly-iii.org/ oldalra. Ez csak egy társalkalmazás ami nem tud önállóan futni!
 

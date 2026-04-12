@@ -622,7 +622,7 @@ class SHu extends S {
 
   @override
   String get loginAbout =>
-      'A Waterfly III hatékony használatához saját szerveren futtatott Firefly III-ra vagy Firefly III kiegészítővel ellátott Home Assistant-re van szükség.\n\nKérjük, adja meg alább a teljes URL-t, valamint egy személyes hozzáférési tokent (Beállítások -> Profil -> OAuth -> Személyes hozzáférési tokenek).';
+      'A Bankify hatékony használatához saját szerveren futtatott Firefly III-ra vagy Firefly III kiegészítővel ellátott Home Assistant-re van szükség.\n\nKérjük, adja meg alább a teljes URL-t, valamint egy személyes hozzáférési tokent (Beállítások -> Profil -> OAuth -> Személyes hozzáférési tokenek).';
 
   @override
   String get loginFormLabelAPIKey => 'Érvényes API kulcs';
@@ -631,7 +631,7 @@ class SHu extends S {
   String get loginFormLabelHost => 'Szerver URL';
 
   @override
-  String get loginWelcome => 'Üdvözöljük a Waterfly III-ban';
+  String get loginWelcome => 'Üdvözöljük a Bankify-ban';
 
   @override
   String get logoutConfirmation => 'Biztos, hogy ki szeretne jelentkezni?';

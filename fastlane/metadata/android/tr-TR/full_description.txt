@@ -1,4 +1,4 @@
-Waterfly III, ücretsiz ve açık kaynaklı bir finans yöneticisi olan Firefly III'ün kendi örneğiniz için resmi olmayan bir uygulamadır.
+Bankify, ücretsiz ve açık kaynaklı bir finans yöneticisi olan Firefly III'ün kendi örneğiniz için resmi olmayan bir uygulamadır.
 
 Bu uygulama, kendi sunucunuzda kendi kendine barındırılan bir Firefly III örneği gerektirir, yazılım hakkında daha fazla bilgi için lütfen https://www.firefly-iii.org/ adresini ziyaret edin. Bu sadece bir tamamlayıcı uygulamadır ve tek başına çalışamaz!
 

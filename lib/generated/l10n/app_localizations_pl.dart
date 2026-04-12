@@ -619,7 +619,7 @@ class SPl extends S {
 
   @override
   String get loginAbout =>
-      'Aby wydajnie korzystać z Waterfly III, potrzebujesz własnego serwera z instancją Firefly III lub dodatkiem Firefly III dla asystenta domowego.\n\nWprowadź pełny adres URL oraz osobisty token dostępu (Ustawienia -> Profil -> OAuth -> Osobisty token dostępu) poniżej.';
+      'Aby wydajnie korzystać z Bankify, potrzebujesz własnego serwera z instancją Firefly III lub dodatkiem Firefly III dla asystenta domowego.\n\nWprowadź pełny adres URL oraz osobisty token dostępu (Ustawienia -> Profil -> OAuth -> Osobisty token dostępu) poniżej.';
 
   @override
   String get loginFormLabelAPIKey => 'Prawidłowy klucz API';
@@ -628,7 +628,7 @@ class SPl extends S {
   String get loginFormLabelHost => 'Adres URL hosta';
 
   @override
-  String get loginWelcome => 'Witaj w Waterfly III';
+  String get loginWelcome => 'Witaj w Bankify';
 
   @override
   String get logoutConfirmation =>

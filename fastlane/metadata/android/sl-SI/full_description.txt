@@ -1,4 +1,4 @@
-Waterfly III je neuradna aplikacija za vašo namestitev Firefly III, brezplačnega in odprtokodnega upravitelja financ.
+Bankify je neuradna aplikacija za vašo namestitev Firefly III, brezplačnega in odprtokodnega upravitelja financ.
 
 Ta aplikacija zahteva namestitev Firefly III, ki ga sami gostite, na vašem strežniku. Za več informacij o programski opremi obiščite https://www.firefly-iii.org/. Je le spremljevalna aplikacija in ne more delovati samostojno!
 

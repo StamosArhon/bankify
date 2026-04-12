@@ -51,7 +51,7 @@ the [Play Store page](https://play.google.com/store/apps/details?id=com.dreautal
 
 A: When enabled, the app will monitor incoming notifications containing a monetary value (something
 like "*$12.34*"). If it detects such a notification, you can add the app in the settings. Then,
-whenever you receive a notification from that app, Waterfly III will offer you the option to add a
+whenever you receive a notification from that app, Bankify will offer you the option to add a
 new transaction.
 
 
@@ -61,14 +61,14 @@ A: After enabling, you need to receive at least one valid notification from your
 up. A valid notification is one that contains a monetary value (something like "*$12.34*"). If it
 still doesn't show up, there are a couple of reasons why:
 
-* Waterfly III needs to be pre-configured to listen to specific apps. Due to Android restrictions, I
+* Bankify needs to be pre-configured to listen to specific apps. Due to Android restrictions, I
   need to specify all potential apps in my code. Please mail me the missing app name and Play Store
   link. You can find my email address in the app (when you click on "Add App").
 * Starting with Android 15, Google implemented a feature to prevent apps from accessing one-time
   codes (like verification codes) in notifications. Unfortunately, that implementation is very
   basic. Most notably, *AMEX* generates notifications like "*You paid $12.34 with your card ending
   in \*\*12345*". Google thinks "12345" is a one-time code and hides the notification from the app.
-    * **For advanced users**: You can allow Waterfly III to access notifications containing
+    * **For advanced users**: You can allow Bankify to access notifications containing
       sensitive information via the adb shell command
       `appops set com.dreautall.waterflyiii RECEIVE_SENSITIVE_NOTIFICATIONS allow`. Note that I will
       not provide any support for this.

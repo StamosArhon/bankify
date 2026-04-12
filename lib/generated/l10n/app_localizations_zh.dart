@@ -606,7 +606,7 @@ class SZh extends S {
 
   @override
   String get loginAbout =>
-      '要生产性地使用 WaterFly III，您需要您自己的服务器与 Fifly III 实例或家庭助手的 Firefly III附加组件。\n\n请输入完整的URL以及个人访问令牌(设置 -> 个人资料-> OAuth -> 个人访问令牌)。';
+      '要生产性地使用 Bankify，您需要您自己的服务器与 Fifly III 实例或家庭助手的 Firefly III附加组件。\n\n请输入完整的URL以及个人访问令牌(设置 -> 个人资料-> OAuth -> 个人访问令牌)。';
 
   @override
   String get loginFormLabelAPIKey => '无效的 API 密钥';
@@ -1522,7 +1522,7 @@ class SZhTw extends SZh {
 
   @override
   String get loginAbout =>
-      '想要使用 Waterfly III 的完整功能，您必須架設您的 Firefly III 伺服器，或是安裝智慧家居的擴充功能 (您可以在 Firefly III 官網找到相關的指引)。\n\n請在以下欄位輸入您的伺服器的完整網址，以及您的個人存取權杖 (設定 -> 個人檔案 -> OAuth -> 個人存取權杖)。';
+      '想要使用 Bankify 的完整功能，您必須架設您的 Firefly III 伺服器，或是安裝智慧家居的擴充功能 (您可以在 Firefly III 官網找到相關的指引)。\n\n請在以下欄位輸入您的伺服器的完整網址，以及您的個人存取權杖 (設定 -> 個人檔案 -> OAuth -> 個人存取權杖)。';
 
   @override
   String get loginFormLabelAPIKey => '有效的 API 密鑰';
@@ -1531,7 +1531,7 @@ class SZhTw extends SZh {
   String get loginFormLabelHost => '伺服器的網址';
 
   @override
-  String get loginWelcome => '歡迎使用 Waterfly III';
+  String get loginWelcome => '歡迎使用 Bankify';
 
   @override
   String get logoutConfirmation => '您確定要登出？';

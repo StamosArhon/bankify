@@ -192,7 +192,7 @@ class NavPageState extends State<NavPage> with TickerProviderStateMixin {
                     vertical: 16,
                   ),
                   child: Text(
-                    'Waterfly III',
+                    'Bankify',
                     style: Theme.of(context).textTheme.titleSmall,
                   ),
                 ),
