@@ -160,6 +160,8 @@
 - Implemented on `stamos/phase-0-preview-android-sdk-fix`:
   - Updated `scripts/preview-android.ps1` to export the resolved Android SDK path to Flutter so stale local `ANDROID_HOME` values no longer break emulator detection.
   - Adjusted `android/app/build.gradle.kts` so local debug builds no longer require release signing secrets from `android/key.properties`.
+- Implemented on `stamos/phase-0-double-click-preview-launcher`:
+  - Added a root-level Windows launcher so local emulator preview can be started by double-clicking `preview-android.cmd` without worrying about the current shell directory.
 - Implemented on `stamos/phase-1-self-hosted-certificate-pinning`:
   - Added an explicit self-hosted HTTPS trust flow that shows the presented server certificate fingerprint and requires the user to opt in before retrying.
   - Pinned that trusted certificate per host and reused it for API, timezone, and attachment requests without relaxing the default HTTPS-only / system-CA baseline for other hosts.
