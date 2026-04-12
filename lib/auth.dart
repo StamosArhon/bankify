@@ -112,6 +112,13 @@ class AuthErrorUntrustedCertificate extends AuthError {
       );
 }
 
+class AuthErrorInvalidHttpsEndpoint extends AuthError {
+  const AuthErrorInvalidHttpsEndpoint()
+    : super(
+        "Could not complete an HTTPS handshake with this host. It may be serving plain HTTP on this port instead of HTTPS.",
+      );
+}
+
 class TrustedServerCertificate {
   const TrustedServerCertificate({
     required this.authority,
@@ -159,8 +166,7 @@ class TrustedServerCertificate {
     final DateTime notBefore = certificate.startValidity.toUtc();
     final DateTime notAfter = certificate.endValidity.toUtc();
 
-    return sha256Fingerprint ==
-            certificateSha256Fingerprint(certificate.der) &&
+    return sha256Fingerprint == certificateSha256Fingerprint(certificate.der) &&
         !now.isBefore(notBefore) &&
         !now.isAfter(notAfter);
   }
@@ -204,8 +210,16 @@ class AuthErrorNoInstance extends AuthError {
   final String host;
 }
 
-http.Client get httpClient =>
-    createHttpClient();
+http.Client get httpClient => createHttpClient();
+
+bool isLikelyPlainHttpOverHttpsError(Object error) {
+  final String message = error.toString().toLowerCase();
+  return message.contains("wrong_version_number") ||
+      message.contains("packet length too long") ||
+      message.contains("record layer failure") ||
+      message.contains("unknown protocol") ||
+      message.contains("http request");
+}
 
 http.Client createHttpClient({
   TrustedServerCertificate? trustedCertificate,
@@ -388,12 +402,15 @@ class AuthUser {
         throw AuthErrorNoInstance(host);
       }
       keepClient = true;
-    } on HandshakeException {
+    } on HandshakeException catch (e) {
       if (presentedCertificate != null) {
         throw AuthErrorCertificateApprovalRequired(
           presentedCertificate!,
           replacingExistingTrust: trustedCertificate != null,
         );
+      }
+      if (isLikelyPlainHttpOverHttpsError(e)) {
+        throw const AuthErrorInvalidHttpsEndpoint();
       }
       throw const AuthErrorUntrustedCertificate();
     } on http.ClientException catch (e) {
@@ -489,7 +506,9 @@ class FireflyService with ChangeNotifier {
   ) async {
     final Uri uri = Uri.parse(host);
     final String authority = tlsAuthorityForUri(uri);
-    final String? storedAuthority = await storage.read(key: storageTlsAuthority);
+    final String? storedAuthority = await storage.read(
+      key: storageTlsAuthority,
+    );
     if (storedAuthority != authority) {
       return null;
     }
