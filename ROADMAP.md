@@ -500,25 +500,58 @@
 
 - Do not begin this phase until Phases 1 through 3 have met exit criteria, and Phase 4 has at least a usable baseline in place.
 
-### High-Value UX Improvements
+### Goal
+
+- Turn the hardened and decomposed baseline into a faster, clearer, more deliberate Bankify experience without regressing the security and privacy work already completed.
+
+### Milestones
+
+- Transaction creation and editing are clearer, faster, and more forgiving.
+- Repeated actions such as filtering, drafting, and templating require less re-entry work.
+- Navigation and major screen states feel consistent across the app.
+- Self-hosted onboarding and connection diagnostics reduce setup friction.
+- Privacy-sensitive controls are discoverable and understandable.
+- Larger product bets such as multi-profile support and local cache have explicit rollout boundaries.
+
+### Task Slices
 
 - Rework the transaction editor into clearer sections with progressive disclosure for advanced fields.
-- Improve transaction filters with lighter UI, saved presets, and better repeat-use ergonomics.
+- Improve transaction filters with lighter UI and saved presets for repeat use.
+- Finish share-while-open support so shared files behave correctly whether Bankify is closed, backgrounded, or already open.
 - Normalize navigation so Settings and other top-level destinations behave consistently.
-- Improve loading / error / empty states on bills, dashboard, accounts, and balance screens.
-- Finish share-while-open support.
+- Standardize loading, empty, and error states across bills, dashboard, accounts, and balance screens.
 - Turn bills and piggy-bank detail dialogs into richer full-screen flows where it improves context and history visibility.
+- Add better onboarding and connection health checks for Firefly host, API version, and certificate trust.
+- Add a safer advanced-user certificate management flow.
+- Add draft autosave for unfinished transactions.
+- Add saved transaction templates and shortcuts beyond simple duplication.
+- Add more powerful dashboard customization and an explicit privacy center for notification listener, debug logs, and share/file permissions.
+- Explore multi-profile or multi-server support together with the account/session model needed for a read-only startup or offline cache for core lists.
 
-### Candidate Feature Backlog
+### Exit Criteria
 
-- Multi-profile or multi-server support.
-- Better onboarding / connection health checks for Firefly host, API version, and certificate trust.
-- Safer advanced-user certificate management flow.
-- Draft autosave for unfinished transactions.
-- Saved transaction templates / shortcuts beyond duplication.
-- Read-only offline cache or startup cache for core lists.
-- More powerful dashboard customization.
-- Explicit privacy center for notification listener, debug logs, and share/file permissions.
+- The transaction editor and repeat transaction workflows feel materially lighter than the pre-Phase-6 baseline.
+- Major destinations share consistent navigation, loading, empty, and error behavior.
+- Share-in and detail flows no longer feel like edge-case dialogs or partial implementations.
+- Connection setup, trust decisions, and privacy controls are understandable to a self-hosting user without digging through scattered settings.
+- Larger feature investments are decomposed into reviewable branches instead of one monolithic product branch.
+
+### Suggested Branches
+
+- `stamos/phase-6-transaction-editor-ux`
+  Reworks editor information architecture, sections, progressive disclosure, validation ergonomics, and advanced-field presentation.
+- `stamos/phase-6-transaction-flow-productivity`
+  Adds saved filter presets, draft autosave, and transaction templates / shortcuts for repeat workflows.
+- `stamos/phase-6-navigation-and-screen-states`
+  Normalizes top-level navigation and standardizes loading, empty, and error presentation across the main screens.
+- `stamos/phase-6-share-and-detail-flows`
+  Finishes share-while-open behavior and upgrades bills and piggy-bank detail flows into richer dedicated screens where they provide better context.
+- `stamos/phase-6-onboarding-and-connection-health`
+  Improves first-run and login guidance, adds connection diagnostics, and introduces safer certificate-management UX for advanced users.
+- `stamos/phase-6-dashboard-and-privacy-center`
+  Expands dashboard customization and adds a dedicated privacy center for notification-listener, debug-log, and share/file-permission controls.
+- `stamos/phase-6-multi-profile-and-cache-foundation`
+  Introduces the account/session model required for multi-profile support and only then layers in a read-only startup or offline cache for core lists.
 
 ## Recommended Execution Order
 
@@ -533,10 +566,16 @@
 9. `stamos/phase-5-shell-state-refactor`
 10. `stamos/phase-5-domain-service-extraction`
 11. `stamos/phase-5-logout-preference-retention`
-12. Phase 6 work only after the hardening baseline is closed.
+12. `stamos/phase-6-transaction-editor-ux`
+13. `stamos/phase-6-transaction-flow-productivity`
+14. `stamos/phase-6-navigation-and-screen-states`
+15. `stamos/phase-6-share-and-detail-flows`
+16. `stamos/phase-6-onboarding-and-connection-health`
+17. `stamos/phase-6-dashboard-and-privacy-center`
+18. `stamos/phase-6-multi-profile-and-cache-foundation`
 
 ## Immediate Next Recommendation
 
-- Phase 5 is complete.
+- Phase 5 is complete, and Phase 6 is now formalized into 12 task slices across 7 suggested branch groups.
 - Architecture work is now in a safer place for UX and feature iteration: transaction payload/editor logic is split out, shell/session state is typed, domain fetch logic has service seams, and logout now preserves non-secret preferences while still clearing persisted auth material.
-- Next implementation work can begin in Phase 6, starting with `stamos/phase-6-transaction-editor-ux`.
+- Next implementation work should begin with `stamos/phase-6-transaction-editor-ux`.
