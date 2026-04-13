@@ -264,6 +264,137 @@ class AuthErrorNoInstance extends AuthError {
   final String host;
 }
 
+enum ConnectionFailureKind {
+  certificateApprovalRequired,
+  untrustedCertificate,
+  invalidHttpsEndpoint,
+  insecureTransport,
+  invalidHost,
+  invalidApiKey,
+  versionTooLow,
+  invalidVersion,
+  unexpectedStatusCode,
+  noInstance,
+  networkUnavailable,
+  unknown,
+}
+
+class ConnectionFailureDetails {
+  const ConnectionFailureDetails({
+    required this.kind,
+    this.certificate,
+    this.replacingExistingTrust = false,
+    this.requiredVersion,
+    this.statusCode,
+    this.host,
+    this.rawError,
+  });
+
+  final ConnectionFailureKind kind;
+  final TrustedServerCertificate? certificate;
+  final bool replacingExistingTrust;
+  final Version? requiredVersion;
+  final int? statusCode;
+  final String? host;
+  final Object? rawError;
+
+  bool get canTrustPresentedCertificate =>
+      kind == ConnectionFailureKind.certificateApprovalRequired &&
+      certificate != null;
+}
+
+ConnectionFailureDetails diagnoseConnectionFailure(
+  Object? error, {
+  String? host,
+}) {
+  if (error is AuthErrorCertificateApprovalRequired) {
+    return ConnectionFailureDetails(
+      kind: ConnectionFailureKind.certificateApprovalRequired,
+      certificate: error.certificate,
+      replacingExistingTrust: error.replacingExistingTrust,
+      host: host,
+      rawError: error,
+    );
+  }
+  if (error is AuthErrorUntrustedCertificate) {
+    return ConnectionFailureDetails(
+      kind: ConnectionFailureKind.untrustedCertificate,
+      host: host,
+      rawError: error,
+    );
+  }
+  if (error is AuthErrorInvalidHttpsEndpoint) {
+    return ConnectionFailureDetails(
+      kind: ConnectionFailureKind.invalidHttpsEndpoint,
+      host: host,
+      rawError: error,
+    );
+  }
+  if (error is AuthErrorInsecureTransport) {
+    return ConnectionFailureDetails(
+      kind: ConnectionFailureKind.insecureTransport,
+      host: host,
+      rawError: error,
+    );
+  }
+  if (error is AuthErrorHost) {
+    return ConnectionFailureDetails(
+      kind: ConnectionFailureKind.invalidHost,
+      host: host ?? error.host,
+      rawError: error,
+    );
+  }
+  if (error is AuthErrorApiKey) {
+    return ConnectionFailureDetails(
+      kind: ConnectionFailureKind.invalidApiKey,
+      host: host,
+      rawError: error,
+    );
+  }
+  if (error is AuthErrorVersionTooLow) {
+    return ConnectionFailureDetails(
+      kind: ConnectionFailureKind.versionTooLow,
+      requiredVersion: error.requiredVersion,
+      host: host,
+      rawError: error,
+    );
+  }
+  if (error is AuthErrorVersionInvalid) {
+    return ConnectionFailureDetails(
+      kind: ConnectionFailureKind.invalidVersion,
+      host: host,
+      rawError: error,
+    );
+  }
+  if (error is AuthErrorStatusCode) {
+    return ConnectionFailureDetails(
+      kind: ConnectionFailureKind.unexpectedStatusCode,
+      statusCode: error.code,
+      host: host,
+      rawError: error,
+    );
+  }
+  if (error is AuthErrorNoInstance) {
+    return ConnectionFailureDetails(
+      kind: ConnectionFailureKind.noInstance,
+      host: host ?? error.host,
+      rawError: error,
+    );
+  }
+  if (error is SocketException) {
+    return ConnectionFailureDetails(
+      kind: ConnectionFailureKind.networkUnavailable,
+      host: host,
+      rawError: error,
+    );
+  }
+  return ConnectionFailureDetails(
+    kind: ConnectionFailureKind.unknown,
+    host: host,
+    rawError: error,
+  );
+}
+
 http.Client get httpClient => createHttpClient();
 
 bool isLikelyPlainHttpOverHttpsError(Object error) {
@@ -553,6 +684,8 @@ class FireflyService with ChangeNotifier {
   AuthUser? get user => _currentUser;
   bool _signedIn = false;
   bool get signedIn => _signedIn;
+  String? _connectedHost;
+  String? get connectedHost => _connectedHost;
   String? _lastTriedHost;
   String? get lastTriedHost => _lastTriedHost;
   Object? _storageSignInException;
@@ -676,6 +809,15 @@ class FireflyService with ChangeNotifier {
     _pendingTrustedCertificate = certificate;
   }
 
+  Future<TrustedServerCertificate?>
+  readTrustedCertificateForCurrentConnection() async {
+    final String? host = _connectedHost ?? _lastTriedHost;
+    if (host == null || host.isEmpty) {
+      return null;
+    }
+    return _readStoredTrustedCertificate(host);
+  }
+
   Future<bool> signInFromStorage() async {
     _storageSignInException = null;
     final String? apiHost = await storage.read(key: storageApiHost);
@@ -705,6 +847,7 @@ class FireflyService with ChangeNotifier {
     _currentUser?.dispose();
     _currentUser = null;
     _signedIn = false;
+    _connectedHost = null;
     _lastTriedHost = null;
     _storageSignInException = null;
     _apiVersion = null;
@@ -777,6 +920,7 @@ class FireflyService with ChangeNotifier {
     tzHandler = TimeZoneHandler(reply.data.value);
 
     _signedIn = true;
+    _connectedHost = host;
     _transStock = TransStock(api);
     log.finest(() => "notify FireflyService->signIn");
     notifyListeners();

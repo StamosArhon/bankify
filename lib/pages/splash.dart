@@ -24,6 +24,11 @@ class _SplashPageState extends State<SplashPage> {
 
   Object? _loginError;
 
+  String get _progressLabel =>
+      widget.host == null || widget.apiKey == null
+          ? "Checking saved connection…"
+          : "Signing in…";
+
   String _certificateDetails(TrustedServerCertificate certificate) {
     return <String>[
       "Authority: ${certificate.authority}",
@@ -33,6 +38,190 @@ class _SplashPageState extends State<SplashPage> {
       "Valid from: ${certificate.validFrom.toLocal().toIso8601String()}",
       "Valid to: ${certificate.validTo.toLocal().toIso8601String()}",
     ].join("\n");
+  }
+
+  IconData _diagnosisIcon(ConnectionFailureDetails diagnosis) {
+    switch (diagnosis.kind) {
+      case ConnectionFailureKind.certificateApprovalRequired:
+      case ConnectionFailureKind.untrustedCertificate:
+        return Icons.verified_user_outlined;
+      case ConnectionFailureKind.invalidHttpsEndpoint:
+        return Icons.http_outlined;
+      case ConnectionFailureKind.insecureTransport:
+        return Icons.gpp_bad_outlined;
+      case ConnectionFailureKind.invalidHost:
+      case ConnectionFailureKind.noInstance:
+        return Icons.link_off_outlined;
+      case ConnectionFailureKind.invalidApiKey:
+        return Icons.key_off_outlined;
+      case ConnectionFailureKind.versionTooLow:
+      case ConnectionFailureKind.invalidVersion:
+        return Icons.system_update_outlined;
+      case ConnectionFailureKind.unexpectedStatusCode:
+        return Icons.warning_amber_outlined;
+      case ConnectionFailureKind.networkUnavailable:
+        return Icons.wifi_off_outlined;
+      case ConnectionFailureKind.unknown:
+        return Icons.error_outline;
+    }
+  }
+
+  String _diagnosisTitle(ConnectionFailureDetails diagnosis) {
+    switch (diagnosis.kind) {
+      case ConnectionFailureKind.certificateApprovalRequired:
+        return diagnosis.replacingExistingTrust
+            ? "Certificate changed"
+            : "Certificate verification required";
+      case ConnectionFailureKind.untrustedCertificate:
+        return "Untrusted HTTPS certificate";
+      case ConnectionFailureKind.invalidHttpsEndpoint:
+        return "HTTPS is not available on this port";
+      case ConnectionFailureKind.insecureTransport:
+        return "Unsupported connection type";
+      case ConnectionFailureKind.invalidHost:
+        return "Invalid Firefly URL";
+      case ConnectionFailureKind.invalidApiKey:
+        return "Personal access token required";
+      case ConnectionFailureKind.versionTooLow:
+        return "Firefly version too old";
+      case ConnectionFailureKind.invalidVersion:
+        return "Could not verify Firefly version";
+      case ConnectionFailureKind.unexpectedStatusCode:
+        return "Unexpected server response";
+      case ConnectionFailureKind.noInstance:
+        return "Firefly III was not detected";
+      case ConnectionFailureKind.networkUnavailable:
+        return "Could not reach the server";
+      case ConnectionFailureKind.unknown:
+        return "Could not connect";
+    }
+  }
+
+  String _diagnosisSummary(ConnectionFailureDetails diagnosis) {
+    switch (diagnosis.kind) {
+      case ConnectionFailureKind.certificateApprovalRequired:
+        return diagnosis.replacingExistingTrust
+            ? "Bankify saw a different HTTPS certificate for this host than the one you previously trusted."
+            : "This server uses a custom HTTPS certificate. Verify its fingerprint before trusting it.";
+      case ConnectionFailureKind.untrustedCertificate:
+        return "Bankify could not build a trusted HTTPS connection. Use a system-trusted certificate or retry and review the presented fingerprint.";
+      case ConnectionFailureKind.invalidHttpsEndpoint:
+        return "This host answered in a way that looks like plain HTTP instead of HTTPS. For local development, use an explicit http:// URL only on localhost or private LAN hosts in debug builds.";
+      case ConnectionFailureKind.insecureTransport:
+        return "Bankify only accepts HTTPS in normal use. Debug builds can use explicit local http:// URLs for localhost or private LAN hosts.";
+      case ConnectionFailureKind.invalidHost:
+        return "Enter the full Firefly III base URL, for example https://firefly.example.com.";
+      case ConnectionFailureKind.invalidApiKey:
+        return "Generate a Personal Access Token in Firefly III and paste it into the login form.";
+      case ConnectionFailureKind.versionTooLow:
+        return "This Firefly III server is older than the minimum Bankify supports.";
+      case ConnectionFailureKind.invalidVersion:
+        return "Bankify could not understand the API version returned by this server.";
+      case ConnectionFailureKind.unexpectedStatusCode:
+        return "The server responded, but not with the API response Bankify expected.";
+      case ConnectionFailureKind.noInstance:
+        return "The URL responded, but it does not look like a Firefly III API instance.";
+      case ConnectionFailureKind.networkUnavailable:
+        return "Check that the device can reach your server, then retry.";
+      case ConnectionFailureKind.unknown:
+        return "Bankify hit an unexpected connection problem.";
+    }
+  }
+
+  List<String> _diagnosisNextSteps(ConnectionFailureDetails diagnosis) {
+    switch (diagnosis.kind) {
+      case ConnectionFailureKind.certificateApprovalRequired:
+        return <String>[
+          "Verify the SHA-256 fingerprint against your server or reverse proxy.",
+          diagnosis.replacingExistingTrust
+              ? "Only trust the new certificate if you expected the rotation."
+              : "If it matches, continue with Trust certificate.",
+        ];
+      case ConnectionFailureKind.untrustedCertificate:
+        return <String>[
+          "Use a certificate signed by an Android system-trusted CA, or retry so Bankify can show the presented fingerprint.",
+          "If you self-host, double-check the certificate chain and hostname mapping on your reverse proxy.",
+        ];
+      case ConnectionFailureKind.invalidHttpsEndpoint:
+        return <String>[
+          "If your server is HTTP-only for local development, enter the host with an explicit http:// prefix.",
+          "If you expected HTTPS, check your reverse proxy, TLS termination, and port mapping.",
+        ];
+      case ConnectionFailureKind.insecureTransport:
+        return <String>[
+          "Switch the host to HTTPS, or use a debug-only local http:// URL on localhost or a private LAN IP.",
+        ];
+      case ConnectionFailureKind.invalidHost:
+        return <String>[
+          "Include the full base URL and scheme.",
+          "Example: https://firefly.example.com or http://192.168.1.6:8084 in a debug build.",
+        ];
+      case ConnectionFailureKind.invalidApiKey:
+        return <String>[
+          "Create a Personal Access Token in Firefly III: Profile > OAuth > Personal Access Tokens.",
+          "Paste the token exactly as generated.",
+        ];
+      case ConnectionFailureKind.versionTooLow:
+        return <String>[
+          "Upgrade Firefly III before connecting with this Bankify build.",
+          if (diagnosis.requiredVersion != null)
+            "Minimum supported API version: ${diagnosis.requiredVersion}",
+        ];
+      case ConnectionFailureKind.invalidVersion:
+        return <String>[
+          "Retry once to rule out a temporary proxy or caching issue.",
+          "If the problem persists, check the Firefly III and reverse-proxy versions.",
+        ];
+      case ConnectionFailureKind.unexpectedStatusCode:
+        return <String>[
+          if (diagnosis.statusCode == 401 || diagnosis.statusCode == 403)
+            "Check that the token is valid and still has access."
+          else
+            "Check the Firefly III URL, reverse proxy, and API availability.",
+          if (diagnosis.statusCode != null)
+            "Observed HTTP status: ${diagnosis.statusCode}.",
+        ];
+      case ConnectionFailureKind.noInstance:
+        return <String>[
+          "Double-check that this is the Firefly III base URL, not a different service or landing page.",
+        ];
+      case ConnectionFailureKind.networkUnavailable:
+        return <String>[
+          "Make sure the phone or emulator can reach the same network as your Firefly server.",
+          "Verify the host, port, firewall rules, and reverse proxy.",
+        ];
+      case ConnectionFailureKind.unknown:
+        return <String>[
+          "Retry once, then review the technical details below.",
+          "If the issue persists, export debug logs only after reviewing them for personal finance details.",
+        ];
+    }
+  }
+
+  String _technicalDetails(ConnectionFailureDetails diagnosis, String? host) {
+    final List<String> details = <String>[];
+    final String? effectiveHost = diagnosis.host ?? host;
+    if (effectiveHost != null && effectiveHost.isNotEmpty) {
+      details.add("Host: $effectiveHost");
+    }
+    if (diagnosis.requiredVersion != null) {
+      details.add(
+        "Minimum supported API version: ${diagnosis.requiredVersion}",
+      );
+    }
+    if (diagnosis.statusCode != null) {
+      details.add("HTTP status: ${diagnosis.statusCode}");
+    }
+    if (diagnosis.certificate != null) {
+      details.add(_certificateDetails(diagnosis.certificate!));
+    }
+    if (diagnosis.rawError != null &&
+        diagnosis.kind == ConnectionFailureKind.unknown) {
+      details.add(
+        "Error: ${diagnosis.rawError.runtimeType}: ${diagnosis.rawError}",
+      );
+    }
+    return details.join("\n\n");
   }
 
   Future<void> _trustServerCertificate(
@@ -148,9 +337,17 @@ class _SplashPageState extends State<SplashPage> {
 
     if (_loginError == null) {
       log.finer(() => "_loginError null --> show spinner");
-      page = Container(
-        alignment: const Alignment(0, 0),
-        child: const CircularProgressIndicator(),
+      page = Column(
+        mainAxisSize: MainAxisSize.min,
+        children: <Widget>[
+          const CircularProgressIndicator(),
+          const SizedBox(height: 16),
+          Text(
+            _progressLabel,
+            textAlign: TextAlign.center,
+            style: Theme.of(context).textTheme.titleMedium,
+          ),
+        ],
       );
       const QuickActions().setShortcutItems(<ShortcutItem>[
         ShortcutItem(
@@ -161,74 +358,120 @@ class _SplashPageState extends State<SplashPage> {
       ]);
     } else {
       log.finer(() => "_loginError available --> show error");
-      String errorDetails =
-          "Host: ${context.read<FireflyService>().lastTriedHost}";
+      final String? host = context.read<FireflyService>().lastTriedHost;
+      final ConnectionFailureDetails diagnosis = diagnoseConnectionFailure(
+        _loginError,
+        host: host,
+      );
       final AuthErrorCertificateApprovalRequired? certificateApprovalError =
-          _loginError is AuthErrorCertificateApprovalRequired
+          diagnosis.canTrustPresentedCertificate
               ? _loginError as AuthErrorCertificateApprovalRequired
               : null;
-      if (certificateApprovalError != null) {
-        errorDetails +=
-            "\n\n${_certificateDetails(certificateApprovalError.certificate)}";
-      }
-      final String errorDescription = () {
-        if (_loginError is AuthErrorStatusCode) {
-          final AuthErrorStatusCode errorType =
-              _loginError as AuthErrorStatusCode;
-          errorDetails += "\n";
-          errorDetails += S.of(context).errorStatusCode(errorType.code);
-          return errorType.cause;
-        } else if (_loginError is AuthErrorVersionTooLow) {
-          final AuthErrorVersionTooLow errorType =
-              _loginError as AuthErrorVersionTooLow;
-          errorDetails += "\n";
-          errorDetails += S
-              .of(context)
-              .errorMinAPIVersion(errorType.requiredVersion.toString());
-          return errorType.cause;
-        } else if (_loginError is AuthError) {
-          final AuthError errorType = _loginError as AuthError;
-          return errorType.cause;
-        }
-        errorDetails += "\n$_loginError";
-        return S.of(context).errorUnknown;
-      }();
+      final String technicalDetails = _technicalDetails(diagnosis, host);
+      final List<String> nextSteps = _diagnosisNextSteps(diagnosis);
       page = SizedBox(
         width: double.infinity,
         child: Column(
           children: <Widget>[
-            AnimatedHeight(
-              child: Card(
-                elevation: 0,
-                color: Theme.of(context).colorScheme.errorContainer,
-                child: Padding(
-                  padding: const EdgeInsets.all(12),
-                  child: Text(
-                    errorDescription,
-                    style: TextStyle(
-                      height: 2,
+            Card(
+              elevation: 0,
+              color: Theme.of(context).colorScheme.errorContainer,
+              child: Padding(
+                padding: const EdgeInsets.all(16),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: <Widget>[
+                    Icon(
+                      _diagnosisIcon(diagnosis),
                       color: Theme.of(context).colorScheme.error,
                     ),
-                  ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: <Widget>[
+                          Text(
+                            _diagnosisTitle(diagnosis),
+                            style: Theme.of(
+                              context,
+                            ).textTheme.titleMedium?.copyWith(
+                              color: Theme.of(context).colorScheme.error,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          Text(
+                            _diagnosisSummary(diagnosis),
+                            style: TextStyle(
+                              height: 1.5,
+                              color: Theme.of(context).colorScheme.error,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
                 ),
               ),
             ),
-            AnimatedHeight(
-              child: Card(
+            if (nextSteps.isNotEmpty)
+              Card(
                 elevation: 0,
-                color: Theme.of(context).colorScheme.errorContainer,
                 child: Padding(
-                  padding: const EdgeInsets.all(12),
-                  child: Text(
-                    errorDetails,
-                    style: TextStyle(
-                      height: 2,
-                      color: Theme.of(context).colorScheme.error,
-                    ),
+                  padding: const EdgeInsets.all(16),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: <Widget>[
+                      Text(
+                        "Try this",
+                        style: Theme.of(context).textTheme.titleSmall,
+                      ),
+                      const SizedBox(height: 8),
+                      ...nextSteps.map(
+                        (String step) => Padding(
+                          padding: const EdgeInsets.only(bottom: 8),
+                          child: Row(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: <Widget>[
+                              const Padding(
+                                padding: EdgeInsets.only(top: 2),
+                                child: Icon(Icons.arrow_right, size: 20),
+                              ),
+                              const SizedBox(width: 4),
+                              Expanded(
+                                child: Text(
+                                  step,
+                                  style: const TextStyle(height: 1.4),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
                 ),
               ),
-            ),
+            if (technicalDetails.isNotEmpty)
+              Card(
+                elevation: 0,
+                child: Theme(
+                  data: Theme.of(
+                    context,
+                  ).copyWith(dividerColor: Colors.transparent),
+                  child: ExpansionTile(
+                    tilePadding: const EdgeInsets.symmetric(horizontal: 16),
+                    childrenPadding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+                    title: const Text("Technical details"),
+                    children: <Widget>[
+                      SelectableText(
+                        technicalDetails,
+                        style: const TextStyle(height: 1.5),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
             const SizedBox(height: 12),
             OverflowBar(
               alignment: MainAxisAlignment.center,
