@@ -33,15 +33,6 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "2.0.3"
-  appcheck:
-    dependency: "direct main"
-    description:
-      path: "."
-      ref: ce371398f86412a8d9a2e0b75a9b51597ea1d79f
-      resolved-ref: ce371398f86412a8d9a2e0b75a9b51597ea1d79f
-      url: "https://github.com/bugrevealingbme/AppCheck.git"
-    source: git
-    version: "1.5.2"
   archive:
     dependency: transitive
     description:

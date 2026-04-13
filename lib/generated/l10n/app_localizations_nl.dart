@@ -759,6 +759,9 @@ class SNl extends S {
       'Maak enkele transacties waar je telefoonmeldingen ontvangt om apps toe te voegen aan deze lijst. Als de app nog steeds niet verschijnt, rapporteer deze dan aan github.com/StamosArhon/bankify/issues.';
 
   @override
+  String get settingsNLAppObservedPackage => 'Observed package name';
+
+  @override
   String get settingsNLAutoAdd => 'Transactie zonder interactie maken';
 
   @override
@@ -864,6 +867,19 @@ class SNl extends S {
 
   @override
   String get transactionDialogAttachmentsTitle => 'Bijlagen';
+
+  @override
+  String get transactionDialogAttachmentsOpenExternalTitle =>
+      'Open attachment in another app?';
+
+  @override
+  String transactionDialogAttachmentsOpenExternalBody(String fileName) {
+    return 'Bankify will ask Android to hand \"$fileName\" to another app. Only continue if you trust the file and expect another app to open it.';
+  }
+
+  @override
+  String get transactionDialogAttachmentsOpenExternalConfirm =>
+      'Open in another app';
 
   @override
   String get transactionSharedAttachmentsReviewTitle =>

@@ -765,6 +765,9 @@ class SHu extends S {
       'Egy alkalmazás ezen listához adásához indítson olyan tranzakciókat amelyek telefonértesítéseket generálnak. Ha az alkalmazás továbbra sem jelenik meg, kérjük, jelentse az github.com/StamosArhon/bankify/issues email címre írva.';
 
   @override
+  String get settingsNLAppObservedPackage => 'Observed package name';
+
+  @override
   String get settingsNLAutoAdd =>
       'Tranzakció létrehozása felhasználói beavatkozás nélkül';
 
@@ -871,6 +874,19 @@ class SHu extends S {
 
   @override
   String get transactionDialogAttachmentsTitle => 'Mellékletek';
+
+  @override
+  String get transactionDialogAttachmentsOpenExternalTitle =>
+      'Open attachment in another app?';
+
+  @override
+  String transactionDialogAttachmentsOpenExternalBody(String fileName) {
+    return 'Bankify will ask Android to hand \"$fileName\" to another app. Only continue if you trust the file and expect another app to open it.';
+  }
+
+  @override
+  String get transactionDialogAttachmentsOpenExternalConfirm =>
+      'Open in another app';
 
   @override
   String get transactionSharedAttachmentsReviewTitle =>

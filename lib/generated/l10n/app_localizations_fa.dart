@@ -754,6 +754,9 @@ class SFa extends S {
       'برخی از تراکنش‌ها را در جایی که اعلان‌های تلفن دریافت می‌کنید انجام دهید تا برنامه‌ها را به این فهرست اضافه کنید. اگر برنامه همچنان نمایش داده نشد، لطفاً آن را به github.com/StamosArhon/bankify/issues گزارش دهید.\n';
 
   @override
+  String get settingsNLAppObservedPackage => 'Observed package name';
+
+  @override
   String get settingsNLAutoAdd => 'ایجاد تراکنش بدون تعامل';
 
   @override
@@ -858,6 +861,19 @@ class SFa extends S {
 
   @override
   String get transactionDialogAttachmentsTitle => 'پیوست ها';
+
+  @override
+  String get transactionDialogAttachmentsOpenExternalTitle =>
+      'Open attachment in another app?';
+
+  @override
+  String transactionDialogAttachmentsOpenExternalBody(String fileName) {
+    return 'Bankify will ask Android to hand \"$fileName\" to another app. Only continue if you trust the file and expect another app to open it.';
+  }
+
+  @override
+  String get transactionDialogAttachmentsOpenExternalConfirm =>
+      'Open in another app';
 
   @override
   String get transactionSharedAttachmentsReviewTitle =>

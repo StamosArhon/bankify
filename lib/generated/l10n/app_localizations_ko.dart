@@ -749,6 +749,9 @@ class SKo extends S {
       '이 목록에 앱을 추가하기 위해 폰 알림을 받는 거래를 몇 가지 하세요. 앱이 여전히 표시되지 않으면 github.com/StamosArhon/bankify/issues로 알려주십시요.';
 
   @override
+  String get settingsNLAppObservedPackage => 'Observed package name';
+
+  @override
   String get settingsNLAutoAdd => '상호작용 없이 거래 생성';
 
   @override
@@ -850,6 +853,19 @@ class SKo extends S {
 
   @override
   String get transactionDialogAttachmentsTitle => '첨부 파일';
+
+  @override
+  String get transactionDialogAttachmentsOpenExternalTitle =>
+      'Open attachment in another app?';
+
+  @override
+  String transactionDialogAttachmentsOpenExternalBody(String fileName) {
+    return 'Bankify will ask Android to hand \"$fileName\" to another app. Only continue if you trust the file and expect another app to open it.';
+  }
+
+  @override
+  String get transactionDialogAttachmentsOpenExternalConfirm =>
+      'Open in another app';
 
   @override
   String get transactionSharedAttachmentsReviewTitle =>

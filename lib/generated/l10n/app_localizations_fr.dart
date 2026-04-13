@@ -766,6 +766,9 @@ class SFr extends S {
       'Effectuez des opérations pour lesquelles vous recevez des notifications sur votre téléphone afin d\'ajouter des applications à cette liste. Si l\'application ne s\'affiche toujours pas, veuillez le signaler à github.com/StamosArhon/bankify/issues.';
 
   @override
+  String get settingsNLAppObservedPackage => 'Observed package name';
+
+  @override
   String get settingsNLAutoAdd => 'Créer une transaction sans interaction';
 
   @override
@@ -874,6 +877,19 @@ class SFr extends S {
 
   @override
   String get transactionDialogAttachmentsTitle => 'Pièces jointes';
+
+  @override
+  String get transactionDialogAttachmentsOpenExternalTitle =>
+      'Open attachment in another app?';
+
+  @override
+  String transactionDialogAttachmentsOpenExternalBody(String fileName) {
+    return 'Bankify will ask Android to hand \"$fileName\" to another app. Only continue if you trust the file and expect another app to open it.';
+  }
+
+  @override
+  String get transactionDialogAttachmentsOpenExternalConfirm =>
+      'Open in another app';
 
   @override
   String get transactionSharedAttachmentsReviewTitle =>

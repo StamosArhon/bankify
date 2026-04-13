@@ -1257,7 +1257,7 @@ abstract class S {
   /// Help text below adding the new app button.
   ///
   /// In en, this message translates to:
-  /// **'Click to add an app to listen to. Only eligible apps will show up in the list.'**
+  /// **'Click to add an app to listen to. Only apps Bankify has already seen in notifications will show up in the list.'**
   String get settingsNLAppAddHelp;
 
   /// Help text when no more app is available to add.
@@ -1265,6 +1265,12 @@ abstract class S {
   /// In en, this message translates to:
   /// **'Make some transactions where you receive phone notifications to add apps to this list. If the app still doesn\'t show up, please report it to github.com/StamosArhon/bankify/issues.'**
   String get settingsNLAppAddInfo;
+
+  /// Subtitle shown for notification listener apps that were discovered from incoming notifications instead of installed-app inspection.
+  ///
+  /// In en, this message translates to:
+  /// **'Observed package name'**
+  String get settingsNLAppObservedPackage;
 
   /// With this setting enabled, the transaction will be added automatically without further user interaction.
   ///
@@ -1439,6 +1445,24 @@ abstract class S {
   /// In en, this message translates to:
   /// **'Attachments'**
   String get transactionDialogAttachmentsTitle;
+
+  /// Confirmation dialog title shown before Bankify asks Android to open an attachment in another app.
+  ///
+  /// In en, this message translates to:
+  /// **'Open attachment in another app?'**
+  String get transactionDialogAttachmentsOpenExternalTitle;
+
+  /// Confirmation dialog body shown before an attachment is opened outside Bankify.
+  ///
+  /// In en, this message translates to:
+  /// **'Bankify will ask Android to hand \"{fileName}\" to another app. Only continue if you trust the file and expect another app to open it.'**
+  String transactionDialogAttachmentsOpenExternalBody(String fileName);
+
+  /// Confirmation button label for opening an attachment in another app.
+  ///
+  /// In en, this message translates to:
+  /// **'Open in another app'**
+  String get transactionDialogAttachmentsOpenExternalConfirm;
 
   /// Dialog title shown before shared files are attached to a new transaction
   ///

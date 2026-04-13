@@ -745,6 +745,9 @@ class SZh extends S {
       '在您接收手机通知以添加应用程序到此列表的交易中。 如果应用程序仍未显示, 请向github.com/StamosArhon/bankify/issues报告。';
 
   @override
+  String get settingsNLAppObservedPackage => 'Observed package name';
+
+  @override
   String get settingsNLAutoAdd => '创建无互动的交易';
 
   @override
@@ -844,6 +847,19 @@ class SZh extends S {
 
   @override
   String get transactionDialogAttachmentsTitle => '附件';
+
+  @override
+  String get transactionDialogAttachmentsOpenExternalTitle =>
+      'Open attachment in another app?';
+
+  @override
+  String transactionDialogAttachmentsOpenExternalBody(String fileName) {
+    return 'Bankify will ask Android to hand \"$fileName\" to another app. Only continue if you trust the file and expect another app to open it.';
+  }
+
+  @override
+  String get transactionDialogAttachmentsOpenExternalConfirm =>
+      'Open in another app';
 
   @override
   String get transactionSharedAttachmentsReviewTitle =>

@@ -1,4 +1,3 @@
-import 'package:appcheck/appcheck.dart';
 import 'package:chopper/chopper.dart' show Response;
 import 'package:flutter/material.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
@@ -177,18 +176,18 @@ class _SettingsNotificationsState extends State<SettingsNotifications> {
               onTap: () async {
                 final SettingsProvider settings =
                     context.read<SettingsProvider>();
-                final AppInfo? app = await showDialog<AppInfo>(
+                final String? app = await showDialog<String>(
                   context: context,
                   builder: (BuildContext context) => const AppDialog(),
                 );
-                if (app == null || app.appName == null) {
+                if (app == null || app.isEmpty) {
                   return;
                 }
 
-                await settings.notificationAddUsedApp(app.packageName);
+                await settings.notificationAddUsedApp(app);
                 await settings.notificationSetAppSettings(
-                  app.packageName,
-                  NotificationAppSettings(app.appName!),
+                  app,
+                  NotificationAppSettings(app),
                 );
                 setState(() {});
               },
@@ -503,42 +502,12 @@ class AppDialogEntry extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final Logger log = Logger("Notifications.AppDialog.Entry");
-
-    return FutureBuilder<AppInfo?>(
-      future: AppCheck().checkAvailability(app),
-      builder: (BuildContext context, AsyncSnapshot<AppInfo?> snapshot) {
-        if (snapshot.connectionState == ConnectionState.done) {
-          if (snapshot.data == null || snapshot.data!.appName == null) {
-            return const SizedBox.shrink();
-          }
-          late Widget leading;
-          try {
-            if (snapshot.data!.icon == null) {
-              throw Exception(); // will be caught below
-            }
-            leading = Image.memory(snapshot.data!.icon!);
-          } catch (e) {
-            leading = const Icon(Icons.api);
-          }
-          return ListTile(
-            leading: CircleAvatar(child: leading),
-            title: Text(snapshot.data!.appName!),
-            subtitle: Text(app),
-            onTap: () {
-              Navigator.pop(context, snapshot.data);
-            },
-          );
-        } else if (snapshot.hasError) {
-          log.severe(
-            "error getting app details",
-            snapshot.error,
-            snapshot.stackTrace,
-          );
-          return const SizedBox.shrink();
-        } else {
-          return const CircularProgressIndicator();
-        }
+    return ListTile(
+      leading: const CircleAvatar(child: Icon(Icons.notifications_active)),
+      title: Text(app),
+      subtitle: Text(S.of(context).settingsNLAppObservedPackage),
+      onTap: () {
+        Navigator.pop(context, app);
       },
     );
   }

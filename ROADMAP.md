@@ -374,6 +374,11 @@
   - Updated the explicitly managed Android native dependencies in `android/app/build.gradle.kts`, moving `androidx.window:window` and `androidx.window:window-java` from `1.0.0` to `1.5.1`.
   - Updated `coreLibraryDesugaring` from `com.android.tools:desugar_jdk_libs:2.1.4` to `2.1.5`, keeping the project on the current 2.1.x line compatible with the repo's AGP 8.x baseline.
   - Centralized those versions as local Gradle constants so future native dependency refreshes are easier to review and update intentionally.
+- Implemented on `stamos/phase-3-attack-surface-reduction`:
+  - Removed the installed-app inspection path from notification-listener setup, dropping the external `appcheck` Git dependency and simplifying app selection to packages Bankify has already observed in incoming notifications.
+  - Removed the large static Android `<queries>` package allowlist that previously exposed visibility into hundreds of finance and messaging apps just to support installed-app lookup.
+  - Added an explicit confirmation dialog before downloaded or draft attachments are handed off to external apps via Android's file-open flow.
+  - Kept share-intent support in place for now because Phase 2 already narrowed it to images/PDFs and added explicit review before inbound files become attachments; the remaining risk is now materially smaller than the removed package-visibility and installed-app-inspection surface.
 
 ### Task Slices
 
@@ -522,6 +527,6 @@
 
 ## Immediate Next Recommendation
 
-- Next implementation branch should be `stamos/phase-3-attack-surface-reduction`.
-- That branch should reassess whether notification listener, installed-app inspection, arbitrary file open, and share-intent support all need to remain enabled in the default Bankify product.
-- After that, continue with `stamos/phase-4-security-unit-tests`.
+- Next implementation branch should be `stamos/phase-4-security-unit-tests`.
+- That branch should add focused regression coverage for attachment origin/open behavior, logout and preference retention, and any remaining transport/privacy edge cases that still rely mainly on manual QA.
+- After that, continue with `stamos/phase-4-widget-and-flow-tests`.

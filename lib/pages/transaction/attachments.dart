@@ -69,6 +69,39 @@ class _AttachmentDialogState extends State<AttachmentDialog>
     return File.fromUri(tmpPath.uri.resolve(fileName));
   }
 
+  Future<bool> _confirmExternalOpen(
+    BuildContext context, {
+    required String fileName,
+  }) async {
+    final S l10n = S.of(context);
+    return await showDialog<bool>(
+          context: context,
+          builder:
+              (BuildContext context) => AlertDialog(
+                icon: const Icon(Icons.open_in_new),
+                title: Text(l10n.transactionDialogAttachmentsOpenExternalTitle),
+                content: Text(
+                  l10n.transactionDialogAttachmentsOpenExternalBody(fileName),
+                ),
+                actions: <Widget>[
+                  TextButton(
+                    onPressed: () => Navigator.of(context).pop(false),
+                    child: Text(
+                      MaterialLocalizations.of(context).cancelButtonLabel,
+                    ),
+                  ),
+                  FilledButton(
+                    onPressed: () => Navigator.of(context).pop(true),
+                    child: Text(
+                      l10n.transactionDialogAttachmentsOpenExternalConfirm,
+                    ),
+                  ),
+                ],
+              ),
+        ) ??
+        false;
+  }
+
   Future<void> downloadAttachment(
     BuildContext context,
     AttachmentRead attachment,
@@ -127,6 +160,16 @@ class _AttachmentDialogState extends State<AttachmentDialog>
       setState(() {
         _dlProgress.remove(i);
       });
+      if (!context.mounted) {
+        return;
+      }
+      final bool confirmed = await _confirmExternalOpen(
+        context,
+        fileName: attachment.attributes.filename ?? outputFile.path,
+      );
+      if (!confirmed) {
+        return;
+      }
       final OpenResult file = await OpenFile.open(outputFile.path);
       if (file.type != ResultType.done) {
         log.severe("error opening file", file.message);
@@ -296,6 +339,14 @@ class _AttachmentDialogState extends State<AttachmentDialog>
   ) async {
     final ScaffoldMessengerState msg = ScaffoldMessenger.of(context);
     final S l10n = S.of(context);
+
+    final bool confirmed = await _confirmExternalOpen(
+      context,
+      fileName: attachment.attributes.filename ?? attachment.id,
+    );
+    if (!confirmed) {
+      return;
+    }
 
     final OpenResult file = await OpenFile.open(
       attachment.attributes.uploadUrl,

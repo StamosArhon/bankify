@@ -748,11 +748,14 @@ class STr extends S {
 
   @override
   String get settingsNLAppAddHelp =>
-      'Click to add an app to listen to. Only eligible apps will show up in the list.';
+      'Click to add an app to listen to. Only apps Bankify has already seen in notifications will show up in the list.';
 
   @override
   String get settingsNLAppAddInfo =>
       'Make some transactions where you receive phone notifications to add apps to this list. If the app still doesn\'t show up, please report it to github.com/StamosArhon/bankify/issues.';
+
+  @override
+  String get settingsNLAppObservedPackage => 'Observed package name';
 
   @override
   String get settingsNLAutoAdd => 'Create transaction without interaction';
@@ -860,6 +863,19 @@ class STr extends S {
 
   @override
   String get transactionDialogAttachmentsTitle => 'Attachments';
+
+  @override
+  String get transactionDialogAttachmentsOpenExternalTitle =>
+      'Open attachment in another app?';
+
+  @override
+  String transactionDialogAttachmentsOpenExternalBody(String fileName) {
+    return 'Bankify will ask Android to hand \"$fileName\" to another app. Only continue if you trust the file and expect another app to open it.';
+  }
+
+  @override
+  String get transactionDialogAttachmentsOpenExternalConfirm =>
+      'Open in another app';
 
   @override
   String get transactionSharedAttachmentsReviewTitle =>
