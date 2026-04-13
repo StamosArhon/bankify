@@ -42,3 +42,8 @@ dart format --set-exit-if-changed .
 dart analyze .
 flutter test
 ```
+
+## Manual Security QA
+
+- Use `MANUAL_SECURITY_QA.md` for release-candidate security and privacy spot checks.
+- Run it after branches that touch auth, transport, notifications, attachments, share intents, logout, or debug-log behavior.

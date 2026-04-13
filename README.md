@@ -68,6 +68,7 @@ The app is built using [Flutter](https://flutter.dev/) and tries to stay close t
 ## Development
 
 The repo is pinned to Flutter `3.35.6` through [`pubspec.yaml`](pubspec.yaml), and GitHub Actions reads that exact version during CI. Local workflow and branch-process notes live in [`CONTRIBUTING.md`](CONTRIBUTING.md).
+Manual security and privacy release checks live in [`MANUAL_SECURITY_QA.md`](MANUAL_SECURITY_QA.md).
 
 ## Local Preview
 

@@ -447,6 +447,7 @@
 - `stamos/phase-4-widget-and-flow-tests`
   Completed on 2026-04-13. Adds widget coverage for login secret-entry behavior, public-HTTP rejection in debug builds, the certificate-trust retry flow, and app-lock timeout selection.
 - `stamos/phase-4-manual-security-qa-checklist`
+  Completed on 2026-04-13. Adds a reusable manual release checklist for transport, login, lock, logout, share, notification, attachment, and debug-log privacy verification.
 
 ## Phase 5: Architecture Decomposition And Maintainability
 
@@ -529,6 +530,6 @@
 
 ## Immediate Next Recommendation
 
-- Next implementation branch should be `stamos/phase-4-manual-security-qa-checklist`.
-- That branch should turn the verified transport, login, notification, share, attachment, and debug-log flows into a reusable manual QA checklist with explicit pass/fail steps for future release checks.
-- After that, Phase 4 can be treated as complete and the roadmap can move on to Phase 5 decomposition work.
+- Phase 4 is complete.
+- Next implementation branch should be `stamos/phase-5-transaction-editor-decomposition`.
+- That branch should begin breaking `TransactionPage` into smaller, testable units before broader UI and feature work resumes.
