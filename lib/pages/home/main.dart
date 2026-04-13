@@ -72,13 +72,12 @@ class _HomeMainState extends State<HomeMain>
           icon: const Icon(Icons.dashboard_customize_outlined),
           tooltip: S.of(context).homeMainDialogSettingsTitle,
           onPressed: () async {
-            final bool? ok = await showDialog<bool>(
-              context: context,
-              builder: (BuildContext context) => const DashboardDialog(),
+            await Navigator.of(context).push(
+              MaterialPageRoute<Widget>(
+                builder:
+                    (BuildContext context) => const DashboardSettingsPage(),
+              ),
             );
-            if (ok == null || !ok) {
-              return;
-            }
           },
         ),
       ]);

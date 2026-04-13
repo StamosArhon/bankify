@@ -549,7 +549,7 @@
 - `stamos/phase-6-onboarding-and-connection-health`
   Completed on 2026-04-14. Improves first-run and login guidance, adds structured connection diagnostics for common self-hosting failures, and introduces a dedicated connection/certificate settings flow with safer trust reset behavior.
 - `stamos/phase-6-dashboard-and-privacy-center`
-  Expands dashboard customization and adds a dedicated privacy center for notification-listener, debug-log, and share/file-permission controls.
+  Completed on 2026-04-14. Expands dashboard customization into a richer full-screen editor, consolidates privacy-sensitive controls into a dedicated privacy center, and separates app info from debug-log management.
 - `stamos/phase-6-multi-profile-and-cache-foundation`
   Introduces the account/session model required for multi-profile support and only then layers in a read-only startup or offline cache for core lists.
 
@@ -577,6 +577,6 @@
 ## Immediate Next Recommendation
 
 - Phase 6 is in progress.
-- The transaction-editor UX, navigation/screen-state, transaction-flow productivity, share/detail flow, and onboarding/connection-health slices are complete, so the next dependency-aware step is dashboard customization plus a dedicated privacy center.
+- The transaction-editor UX, navigation/screen-state, transaction-flow productivity, share/detail flow, onboarding/connection-health, and dashboard/privacy-center slices are complete, so the final dependency-aware step is the multi-profile/session foundation plus the first read-only cache boundary.
 - Architecture work is now in a safer place for UX and feature iteration: transaction payload/editor logic is split out, shell/session state is typed, domain fetch logic has service seams, and logout now preserves non-secret preferences while still clearing persisted auth material.
-- Next implementation work should continue with `stamos/phase-6-dashboard-and-privacy-center`.
+- Next implementation work should continue with `stamos/phase-6-multi-profile-and-cache-foundation`.
