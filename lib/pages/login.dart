@@ -78,8 +78,8 @@ class _LoginPageState extends State<LoginPage> {
 
   String get _hostHelperText =>
       allowsLocalDevelopmentHttp
-          ? "HTTPS by default. Debug builds also allow local HTTP hosts."
-          : "HTTPS only";
+          ? "HTTPS is recommended. Debug builds also allow explicit http:// URLs for localhost and private LAN hosts."
+          : "HTTPS is required.";
 
   String? _hostValidationError(String value) {
     final String trimmed = value.trim();
@@ -148,6 +148,7 @@ class _LoginPageState extends State<LoginPage> {
                       decoration: InputDecoration(
                         filled: true,
                         labelText: S.of(context).loginFormLabelHost,
+                        hintText: "https://firefly.example.com",
                         helperText: _hostHelperText,
                         suffixIcon: _hostErrorIcon,
                         errorText: _hostError,
@@ -194,6 +195,7 @@ class _LoginPageState extends State<LoginPage> {
                       decoration: InputDecoration(
                         filled: true,
                         labelText: S.of(context).loginFormLabelAPIKey,
+                        hintText: "Paste your Firefly personal access token",
                         suffixIcon: SizedBox(
                           width: 96,
                           child: Row(

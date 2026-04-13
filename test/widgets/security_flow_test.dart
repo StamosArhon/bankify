@@ -3,10 +3,12 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:plugin_platform_interface/plugin_platform_interface.dart';
 import 'package:provider/provider.dart';
 import 'package:quick_actions_platform_interface/quick_actions_platform_interface.dart';
+import 'package:version/version.dart';
 import 'package:bankify/app_lock_policy.dart';
 import 'package:bankify/auth.dart';
 import 'package:bankify/generated/l10n/app_localizations.dart';
 import 'package:bankify/pages/login.dart';
+import 'package:bankify/pages/settings/connection.dart';
 import 'package:bankify/pages/settings.dart';
 import 'package:bankify/pages/splash.dart';
 
@@ -32,12 +34,21 @@ class _FakeQuickActionsPlatform extends QuickActionsPlatform
 }
 
 class _FakeFireflyService extends FireflyService {
-  _FakeFireflyService({this.handleSignIn});
+  _FakeFireflyService({
+    this.handleSignIn,
+    this.initialConnectedHost,
+    this.storedTrustedCertificate,
+    this.apiVersionOverride,
+  });
 
   final Future<bool> Function(String host, String apiKey, int attempt)?
   handleSignIn;
+  final String? initialConnectedHost;
+  final TrustedServerCertificate? storedTrustedCertificate;
+  final Version? apiVersionOverride;
 
   int signInAttempts = 0;
+  int signOutCalls = 0;
   TrustedServerCertificate? trustedCertificate;
   String? _lastTriedHost;
   bool _signedIn = false;
@@ -47,6 +58,12 @@ class _FakeFireflyService extends FireflyService {
 
   @override
   bool get signedIn => _signedIn;
+
+  @override
+  String? get connectedHost => initialConnectedHost;
+
+  @override
+  Version? get apiVersion => apiVersionOverride;
 
   @override
   Object? get storageSignInException => null;
@@ -66,6 +83,18 @@ class _FakeFireflyService extends FireflyService {
     TrustedServerCertificate certificate,
   ) async {
     trustedCertificate = certificate;
+  }
+
+  @override
+  Future<TrustedServerCertificate?>
+  readTrustedCertificateForCurrentConnection() async {
+    return storedTrustedCertificate;
+  }
+
+  @override
+  Future<void> signOut() async {
+    signOutCalls += 1;
+    _signedIn = false;
   }
 }
 
@@ -190,11 +219,7 @@ void main() {
       await tester.pump();
 
       expect(find.text('Trust certificate'), findsOneWidget);
-      expect(find.textContaining('SHA-256: AA:BB:CC'), findsOneWidget);
-      expect(
-        find.textContaining('Host: https://192.168.1.6:8084'),
-        findsOneWidget,
-      );
+      expect(find.text('Certificate verification required'), findsOneWidget);
 
       final Finder trustPageButton = find.widgetWithText(
         FilledButton,
@@ -204,6 +229,7 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.text('Trust this certificate?'), findsOneWidget);
+      expect(find.textContaining('SHA-256: AA:BB:CC'), findsOneWidget);
       expect(find.textContaining('Subject: CN=bankify.local'), findsWidgets);
 
       final Finder trustDialogButton = find.widgetWithText(
@@ -217,6 +243,65 @@ void main() {
       expect(fireflyService.trustedCertificate, same(certificate));
     },
   );
+
+  testWidgets('splash page explains https protocol mismatches clearly', (
+    WidgetTester tester,
+  ) async {
+    _setLargeSurface(tester);
+    final _FakeFireflyService fireflyService = _FakeFireflyService(
+      handleSignIn: (String host, String apiKey, int attempt) {
+        throw const AuthErrorInvalidHttpsEndpoint();
+      },
+    );
+
+    await tester.pumpWidget(
+      _buildTestApp(
+        const SplashPage(host: 'https://192.168.1.6:8084', apiKey: 'token'),
+        fireflyService: fireflyService,
+      ),
+    );
+    await tester.pump();
+    await tester.pump();
+
+    expect(find.text('HTTPS is not available on this port'), findsOneWidget);
+    expect(find.textContaining('plain HTTP instead of HTTPS'), findsOneWidget);
+    expect(find.textContaining('explicit http:// prefix'), findsOneWidget);
+  });
+
+  testWidgets('connection settings page shows stored certificate details', (
+    WidgetTester tester,
+  ) async {
+    _setLargeSurface(tester);
+    final TrustedServerCertificate certificate = TrustedServerCertificate(
+      authority: '192.168.1.6:8084',
+      sha256Fingerprint: 'AA:BB:CC',
+      subject: 'CN=bankify.local',
+      issuer: 'CN=bankify.local',
+      validFrom: DateTime.utc(2026, 1, 1),
+      validTo: DateTime.utc(2027, 1, 1),
+    );
+    final _FakeFireflyService fireflyService = _FakeFireflyService(
+      initialConnectedHost: 'https://192.168.1.6:8084',
+      storedTrustedCertificate: certificate,
+      apiVersionOverride: Version(6, 4, 0),
+    );
+
+    await tester.pumpWidget(
+      _buildTestApp(
+        const ConnectionSettingsPage(),
+        fireflyService: fireflyService,
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('Connection & certificates'), findsOneWidget);
+    expect(find.textContaining('https://192.168.1.6:8084'), findsOneWidget);
+    expect(
+      find.textContaining('Custom HTTPS certificate trusted'),
+      findsWidgets,
+    );
+    expect(find.textContaining('SHA-256: AA:BB:CC'), findsOneWidget);
+  });
 
   testWidgets('app lock timeout dialog returns the selected timeout', (
     WidgetTester tester,

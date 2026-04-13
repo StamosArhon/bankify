@@ -92,5 +92,63 @@ void main() {
       );
       expect(tlsAuthorityForUri(Uri.parse('http://127.0.0.1')), '127.0.0.1:80');
     });
+
+    test(
+      'diagnoses certificate approval and https protocol mismatch errors',
+      () {
+        final TrustedServerCertificate certificate = TrustedServerCertificate(
+          authority: '192.168.1.6:8084',
+          sha256Fingerprint: 'AA:BB:CC',
+          subject: 'CN=bankify.local',
+          issuer: 'CN=bankify.local',
+          validFrom: DateTime.utc(2026, 1, 1),
+          validTo: DateTime.utc(2027, 1, 1),
+        );
+
+        final ConnectionFailureDetails approvalDiagnosis =
+            diagnoseConnectionFailure(
+              AuthErrorCertificateApprovalRequired(certificate),
+              host: 'https://192.168.1.6:8084',
+            );
+        final ConnectionFailureDetails protocolDiagnosis =
+            diagnoseConnectionFailure(
+              const AuthErrorInvalidHttpsEndpoint(),
+              host: 'https://192.168.1.6:8084',
+            );
+
+        expect(
+          approvalDiagnosis.kind,
+          ConnectionFailureKind.certificateApprovalRequired,
+        );
+        expect(approvalDiagnosis.canTrustPresentedCertificate, isTrue);
+        expect(approvalDiagnosis.certificate, same(certificate));
+
+        expect(
+          protocolDiagnosis.kind,
+          ConnectionFailureKind.invalidHttpsEndpoint,
+        );
+        expect(protocolDiagnosis.canTrustPresentedCertificate, isFalse);
+      },
+    );
+
+    test('diagnoses status, version, and network failures', () {
+      expect(
+        diagnoseConnectionFailure(
+          const AuthErrorStatusCode(401),
+          host: 'https://firefly.example.com',
+        ).kind,
+        ConnectionFailureKind.unexpectedStatusCode,
+      );
+      expect(
+        diagnoseConnectionFailure(
+          AuthErrorVersionTooLow(minApiVersion),
+        ).requiredVersion,
+        minApiVersion,
+      );
+      expect(
+        diagnoseConnectionFailure(Exception('boom')).kind,
+        ConnectionFailureKind.unknown,
+      );
+    });
   });
 }

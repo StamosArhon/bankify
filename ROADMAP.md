@@ -547,7 +547,7 @@
 - `stamos/phase-6-share-and-detail-flows`
   Completed on 2026-04-14. Restores share-while-open intake, deduplicates repeated shared-file paths safely, hardens bill transaction detail opens, and moves piggy-bank details into a richer full-screen flow with an explicit refresh contract.
 - `stamos/phase-6-onboarding-and-connection-health`
-  Improves first-run and login guidance, adds connection diagnostics, and introduces safer certificate-management UX for advanced users.
+  Completed on 2026-04-14. Improves first-run and login guidance, adds structured connection diagnostics for common self-hosting failures, and introduces a dedicated connection/certificate settings flow with safer trust reset behavior.
 - `stamos/phase-6-dashboard-and-privacy-center`
   Expands dashboard customization and adds a dedicated privacy center for notification-listener, debug-log, and share/file-permission controls.
 - `stamos/phase-6-multi-profile-and-cache-foundation`
@@ -577,6 +577,6 @@
 ## Immediate Next Recommendation
 
 - Phase 6 is in progress.
-- The transaction-editor UX, navigation/screen-state, transaction-flow productivity, and share/detail flow slices are complete, so the next dependency-aware step is to improve onboarding, connection diagnostics, and advanced certificate-management UX.
+- The transaction-editor UX, navigation/screen-state, transaction-flow productivity, share/detail flow, and onboarding/connection-health slices are complete, so the next dependency-aware step is dashboard customization plus a dedicated privacy center.
 - Architecture work is now in a safer place for UX and feature iteration: transaction payload/editor logic is split out, shell/session state is typed, domain fetch logic has service seams, and logout now preserves non-secret preferences while still clearing persisted auth material.
-- Next implementation work should continue with `stamos/phase-6-onboarding-and-connection-health`.
+- Next implementation work should continue with `stamos/phase-6-dashboard-and-privacy-center`.

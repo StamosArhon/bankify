@@ -656,13 +656,13 @@ class SUk extends S {
 
   @override
   String get loginAbout =>
-      'To use Bankify productively you need your own server with a Firefly III instance or the Firefly III add-on for Home Assistant.\n\nPlease enter the full URL as well as a personal access token (Settings -> Profile -> OAuth -> Personal Access Token) below.';
+      'To use Bankify you need your own Firefly III server or the Firefly III add-on for Home Assistant.\n\nBefore you log in:\n- enter the full Firefly III base URL\n- generate a Personal Access Token in Firefly III (Settings -> Profile -> OAuth -> Personal Access Tokens)\n- use HTTPS whenever possible\n- if your server uses a custom HTTPS certificate, Bankify will ask you to verify the fingerprint before trusting it';
 
   @override
-  String get loginFormLabelAPIKey => 'Valid API Key';
+  String get loginFormLabelAPIKey => 'Personal access token';
 
   @override
-  String get loginFormLabelHost => 'Host URL';
+  String get loginFormLabelHost => 'Firefly URL';
 
   @override
   String get loginWelcome => 'Welcome to Bankify';

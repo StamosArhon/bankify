@@ -14,6 +14,7 @@ import 'package:bankify/auth.dart';
 import 'package:bankify/extensions.dart';
 import 'package:bankify/generated/l10n/app_localizations.dart';
 import 'package:bankify/notificationlistener.dart';
+import 'package:bankify/pages/settings/connection.dart';
 import 'package:bankify/pages/settings/debug.dart';
 import 'package:bankify/pages/settings/notifications.dart';
 import 'package:bankify/settings.dart';
@@ -265,6 +266,51 @@ class SettingsPageState extends State<SettingsPage>
                     onTap: () => openContainer(),
                   ),
               onClosed: (_) => setState(() {}),
+            );
+          },
+        ),
+        const Divider(),
+        FutureBuilder<TrustedServerCertificate?>(
+          future:
+              context
+                  .read<FireflyService>()
+                  .readTrustedCertificateForCurrentConnection(),
+          builder: (
+            BuildContext context,
+            AsyncSnapshot<TrustedServerCertificate?> snapshot,
+          ) {
+            final FireflyService firefly = context.read<FireflyService>();
+            final String? host = firefly.connectedHost ?? firefly.lastTriedHost;
+            final Uri? hostUri = host == null ? null : Uri.tryParse(host);
+            final String subtitle;
+            if (host == null || host.isEmpty) {
+              subtitle =
+                  "Review the saved host, API version, and certificate trust.";
+            } else if (allowsLocalDevelopmentHttpUri(hostUri!)) {
+              subtitle = "$host\nLocal HTTP (debug only)";
+            } else if (snapshot.connectionState != ConnectionState.done) {
+              subtitle = "$host\nChecking certificate trust…";
+            } else if (snapshot.data != null) {
+              subtitle = "$host\nCustom HTTPS certificate trusted";
+            } else {
+              subtitle = "$host\nSystem-trusted HTTPS";
+            }
+            return ListTile(
+              title: const Text("Connection & certificates"),
+              subtitle: Text(subtitle, maxLines: 3),
+              isThreeLine: true,
+              leading: const CircleAvatar(
+                child: Icon(Icons.verified_user_outlined),
+              ),
+              onTap: () {
+                Navigator.of(context).push(
+                  MaterialPageRoute<Widget>(
+                    builder:
+                        (BuildContext context) =>
+                            const ConnectionSettingsPage(),
+                  ),
+                );
+              },
             );
           },
         ),
