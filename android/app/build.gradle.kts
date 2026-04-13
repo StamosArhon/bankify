@@ -97,11 +97,13 @@ flutter {
     source = "../.."
 }
 
-// Added: flutter_local_notifications
+val desugarJdkLibsVersion = "2.1.5"
+val windowManagerVersion = "1.5.1"
+
 dependencies {
-    coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.1.4")
-    implementation("androidx.window:window:1.0.0")
-    implementation("androidx.window:window-java:1.0.0")
+    coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:$desugarJdkLibsVersion")
+    implementation("androidx.window:window:$windowManagerVersion")
+    implementation("androidx.window:window-java:$windowManagerVersion")
 }
 
 val abiCodes = mapOf("x86_64" to 1, "armeabi-v7a" to 2, "arm64-v8a" to 3)

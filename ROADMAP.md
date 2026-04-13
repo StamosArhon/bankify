@@ -370,6 +370,10 @@
   - Adjusted Bankify's notification initialization and `show()` calls for the `flutter_local_notifications` 20.x named-parameter API so the app compiles cleanly on the pinned toolchain.
   - Confirmed a clean debug APK build after a full `flutter clean`, which also flushed a stale generated Android plugin registrant file from the repo working tree.
   - Intentionally held `file_picker` 11.x, `flutter_local_notifications` 21.x, `package_info_plus` 10.x, `json_annotation` 4.11.x, `chopper` 8.5.x, and `syncfusion_flutter_charts` 33.x for later slices because they either require a newer Dart/toolchain floor or would broaden this branch into codegen/UI churn beyond the native-hosted package hardening scope.
+- Implemented on `stamos/phase-3-native-dependency-refresh`:
+  - Updated the explicitly managed Android native dependencies in `android/app/build.gradle.kts`, moving `androidx.window:window` and `androidx.window:window-java` from `1.0.0` to `1.5.1`.
+  - Updated `coreLibraryDesugaring` from `com.android.tools:desugar_jdk_libs:2.1.4` to `2.1.5`, keeping the project on the current 2.1.x line compatible with the repo's AGP 8.x baseline.
+  - Centralized those versions as local Gradle constants so future native dependency refreshes are easier to review and update intentionally.
 
 ### Task Slices
 
@@ -518,6 +522,6 @@
 
 ## Immediate Next Recommendation
 
-- Next implementation branch should be `stamos/phase-3-native-dependency-refresh`.
-- That branch should update the explicitly managed Android dependencies in Gradle, especially `androidx.window` / `window-java` and `desugar_jdk_libs`, then rerun the pinned toolchain baseline.
-- After that, continue with `stamos/phase-3-attack-surface-reduction`.
+- Next implementation branch should be `stamos/phase-3-attack-surface-reduction`.
+- That branch should reassess whether notification listener, installed-app inspection, arbitrary file open, and share-intent support all need to remain enabled in the default Bankify product.
+- After that, continue with `stamos/phase-4-security-unit-tests`.
