@@ -1077,6 +1077,72 @@
     "@transactionDialogAttachmentsTitle": {
         "description": "Dialog Title: Attachments Dialog"
     },
+    "transactionSharedAttachmentsReviewTitle": "Review shared attachments",
+    "@transactionSharedAttachmentsReviewTitle": {
+        "description": "Dialog title shown before shared files are attached to a new transaction"
+    },
+    "transactionSharedAttachmentsReviewBody": "Bankify only accepts images and PDF files shared from local storage. Review these files before adding them to this transaction.",
+    "@transactionSharedAttachmentsReviewBody": {
+        "description": "Dialog body that explains how inbound shared files are validated before they become attachments"
+    },
+    "transactionSharedAttachmentsAcceptedTitle": "Ready to add",
+    "@transactionSharedAttachmentsAcceptedTitle": {
+        "description": "Section title for shared files that passed validation"
+    },
+    "transactionSharedAttachmentsRejectedTitle": "Not added",
+    "@transactionSharedAttachmentsRejectedTitle": {
+        "description": "Section title for shared files that were rejected during validation"
+    },
+    "transactionSharedAttachmentsTemporaryCopy": "Temporary app copy",
+    "@transactionSharedAttachmentsTemporaryCopy": {
+        "description": "Label shown for shared files that were copied into the app sandbox for temporary handling"
+    },
+    "transactionSharedAttachmentsAccept": "Add attachments",
+    "@transactionSharedAttachmentsAccept": {
+        "description": "Button label to confirm valid shared files should become transaction attachments"
+    },
+    "transactionSharedAttachmentsDiscard": "Discard",
+    "@transactionSharedAttachmentsDiscard": {
+        "description": "Button label to discard shared files instead of attaching them"
+    },
+    "transactionSharedAttachmentsClose": "Close",
+    "@transactionSharedAttachmentsClose": {
+        "description": "Button label to close the review dialog when there are no valid shared files"
+    },
+    "transactionSharedAttachmentsRejectedEmpty": "The shared item did not contain a usable file path.",
+    "@transactionSharedAttachmentsRejectedEmpty": {
+        "description": "Reason shown when the share intent contained an empty or missing file path"
+    },
+    "transactionSharedAttachmentsRejectedUnsupportedType": "Only images and PDF files can be shared to Bankify.",
+    "@transactionSharedAttachmentsRejectedUnsupportedType": {
+        "description": "Reason shown when the shared file type or MIME type is not allowed"
+    },
+    "transactionSharedAttachmentsRejectedOrigin": "The shared item did not resolve to a trusted local file.",
+    "@transactionSharedAttachmentsRejectedOrigin": {
+        "description": "Reason shown when the shared item did not resolve to a local file path from an allowed origin"
+    },
+    "transactionSharedAttachmentsRejectedMissingFile": "Bankify could not read the shared file anymore.",
+    "@transactionSharedAttachmentsRejectedMissingFile": {
+        "description": "Reason shown when the shared file no longer exists by the time validation runs"
+    },
+    "transactionSharedAttachmentsRejectedTooLarge": "The shared file is larger than {maxSize}.",
+    "@transactionSharedAttachmentsRejectedTooLarge": {
+        "description": "Reason shown when a shared file is larger than the configured acceptance limit",
+        "placeholders": {
+            "maxSize": {
+                "type": "String"
+            }
+        }
+    },
+    "transactionSharedAttachmentsRejectedLimit": "Only the first {maxCount} shared files are accepted at once.",
+    "@transactionSharedAttachmentsRejectedLimit": {
+        "description": "Reason shown when more files are shared than Bankify accepts in one batch",
+        "placeholders": {
+            "maxCount": {
+                "type": "int"
+            }
+        }
+    },
     "transactionDialogBillNoBill": "No subscription",
     "@transactionDialogBillNoBill": {
         "description": "Button Label: no subscription to be used"

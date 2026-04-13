@@ -1392,6 +1392,90 @@ abstract class S {
   /// **'Attachments'**
   String get transactionDialogAttachmentsTitle;
 
+  /// Dialog title shown before shared files are attached to a new transaction
+  ///
+  /// In en, this message translates to:
+  /// **'Review shared attachments'**
+  String get transactionSharedAttachmentsReviewTitle;
+
+  /// Dialog body that explains how inbound shared files are validated before they become attachments
+  ///
+  /// In en, this message translates to:
+  /// **'Bankify only accepts images and PDF files shared from local storage. Review these files before adding them to this transaction.'**
+  String get transactionSharedAttachmentsReviewBody;
+
+  /// Section title for shared files that passed validation
+  ///
+  /// In en, this message translates to:
+  /// **'Ready to add'**
+  String get transactionSharedAttachmentsAcceptedTitle;
+
+  /// Section title for shared files that were rejected during validation
+  ///
+  /// In en, this message translates to:
+  /// **'Not added'**
+  String get transactionSharedAttachmentsRejectedTitle;
+
+  /// Label shown for shared files that were copied into the app sandbox for temporary handling
+  ///
+  /// In en, this message translates to:
+  /// **'Temporary app copy'**
+  String get transactionSharedAttachmentsTemporaryCopy;
+
+  /// Button label to confirm valid shared files should become transaction attachments
+  ///
+  /// In en, this message translates to:
+  /// **'Add attachments'**
+  String get transactionSharedAttachmentsAccept;
+
+  /// Button label to discard shared files instead of attaching them
+  ///
+  /// In en, this message translates to:
+  /// **'Discard'**
+  String get transactionSharedAttachmentsDiscard;
+
+  /// Button label to close the review dialog when there are no valid shared files
+  ///
+  /// In en, this message translates to:
+  /// **'Close'**
+  String get transactionSharedAttachmentsClose;
+
+  /// Reason shown when the share intent contained an empty or missing file path
+  ///
+  /// In en, this message translates to:
+  /// **'The shared item did not contain a usable file path.'**
+  String get transactionSharedAttachmentsRejectedEmpty;
+
+  /// Reason shown when the shared file type or MIME type is not allowed
+  ///
+  /// In en, this message translates to:
+  /// **'Only images and PDF files can be shared to Bankify.'**
+  String get transactionSharedAttachmentsRejectedUnsupportedType;
+
+  /// Reason shown when the shared item did not resolve to a local file path from an allowed origin
+  ///
+  /// In en, this message translates to:
+  /// **'The shared item did not resolve to a trusted local file.'**
+  String get transactionSharedAttachmentsRejectedOrigin;
+
+  /// Reason shown when the shared file no longer exists by the time validation runs
+  ///
+  /// In en, this message translates to:
+  /// **'Bankify could not read the shared file anymore.'**
+  String get transactionSharedAttachmentsRejectedMissingFile;
+
+  /// Reason shown when a shared file is larger than the configured acceptance limit
+  ///
+  /// In en, this message translates to:
+  /// **'The shared file is larger than {maxSize}.'**
+  String transactionSharedAttachmentsRejectedTooLarge(String maxSize);
+
+  /// Reason shown when more files are shared than Bankify accepts in one batch
+  ///
+  /// In en, this message translates to:
+  /// **'Only the first {maxCount} shared files are accepted at once.'**
+  String transactionSharedAttachmentsRejectedLimit(int maxCount);
+
   /// Button Label: no subscription to be used
   ///
   /// In en, this message translates to:

@@ -167,6 +167,7 @@ class _BankifyAppState extends State<BankifyApp> {
       log.config("App was opened via file sharing");
       log.finest(() => "shared file count: ${value.length}");
       _filesSharedToApp = value;
+      FlutterSharingIntent.instance.reset();
     });
   }
 
@@ -319,6 +320,17 @@ class _BankifyAppState extends State<BankifyApp> {
                           ? TransactionPage(
                             notification: _notificationPayload,
                             files: _filesSharedToApp,
+                            onSharedFilesConsumed:
+                                (_filesSharedToApp?.isNotEmpty ?? false)
+                                    ? () {
+                                      if (!mounted) {
+                                        return;
+                                      }
+                                      setState(() {
+                                        _filesSharedToApp = null;
+                                      });
+                                    }
+                                    : null,
                           )
                           : const NavPage()
                       : const LoginPage(),

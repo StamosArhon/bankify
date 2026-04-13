@@ -6,13 +6,14 @@ import 'package:async/async.dart';
 import 'package:badges/badges.dart' as badges;
 import 'package:chopper/chopper.dart' show HttpMethod, Response;
 import 'package:collection/collection.dart';
+import 'package:filesize/filesize.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_sharing_intent/model/sharing_file.dart';
 import 'package:http/http.dart' as http;
-import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
 import 'package:logging/logging.dart';
+import 'package:path_provider/path_provider.dart';
 import 'package:provider/provider.dart';
 import 'package:timezone/timezone.dart' as tz;
 import 'package:bankify/animations.dart';
@@ -28,6 +29,7 @@ import 'package:bankify/pages/transaction/currencies.dart';
 import 'package:bankify/pages/transaction/delete.dart';
 import 'package:bankify/pages/transaction/piggy.dart';
 import 'package:bankify/pages/transaction/tags.dart';
+import 'package:bankify/shared_attachment_intake.dart';
 import 'package:bankify/settings.dart';
 import 'package:bankify/stock.dart';
 import 'package:bankify/timezonehandler.dart';
@@ -47,6 +49,7 @@ class TransactionPage extends StatefulWidget {
     this.files,
     this.clone = false,
     this.accountId,
+    this.onSharedFilesConsumed,
   });
 
   final TransactionRead? transaction;
@@ -54,6 +57,7 @@ class TransactionPage extends StatefulWidget {
   final List<SharedFile>? files;
   final bool clone;
   final String? accountId;
+  final VoidCallback? onSharedFilesConsumed;
 
   @override
   State<TransactionPage> createState() => _TransactionPageState();
@@ -127,6 +131,8 @@ class _TransactionPageState extends State<TransactionPage>
   bool _split = false;
   bool _hasAttachments = false;
   List<AttachmentRead>? _attachments;
+  final Set<String> _managedSharedAttachmentPaths = <String>{};
+  List<String> _managedSharedAttachmentRoots = <String>[];
   bool _txTypeChipExtended = false;
   bool _showSourceAccountSelection = false;
   bool _showDestinationAccountSelection = false;
@@ -148,6 +154,12 @@ class _TransactionPageState extends State<TransactionPage>
     _newTX = widget.transaction == null || widget.clone;
 
     _tzHandler = context.read<FireflyService>().tzHandler;
+
+    if (widget.files?.isNotEmpty ?? false) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        widget.onSharedFilesConsumed?.call();
+      });
+    }
 
     // opening an existing transaction, extract information
     if (widget.transaction != null) {
@@ -470,28 +482,7 @@ class _TransactionPageState extends State<TransactionPage>
         }
         // Created from a file share to app
         if (widget.files != null && widget.files!.isNotEmpty) {
-          _attachments = <AttachmentRead>[];
-          for (SharedFile file in widget.files!) {
-            if (file.value == null || file.value!.isEmpty) {
-              continue;
-            }
-            final XFile xfile = XFile(file.value!);
-            _attachments!.add(
-              AttachmentRead(
-                type: "attachments",
-                id: _attachments!.length.toString(),
-                attributes: AttachmentProperties(
-                  attachableType: AttachableType.transactionjournal,
-                  attachableId: "FAKE",
-                  filename: xfile.name,
-                  uploadUrl: xfile.path,
-                  size: await xfile.length(),
-                ),
-                links: const ObjectLink(),
-              ),
-            );
-          }
-          _hasAttachments = _attachments!.isNotEmpty;
+          await _prepareSharedAttachments(widget.files!);
         }
       });
     }
@@ -508,8 +499,105 @@ class _TransactionPageState extends State<TransactionPage>
     }
   }
 
+  Future<List<String>> _resolveManagedSharedAttachmentRoots() async {
+    final List<String> roots = <String>[
+      (await getTemporaryDirectory()).path,
+      (await getApplicationSupportDirectory()).path,
+    ];
+
+    try {
+      roots.add((await getApplicationDocumentsDirectory()).path);
+    } on MissingPlatformDirectoryException {
+      log.fine('application documents directory is not available');
+    }
+
+    return roots;
+  }
+
+  AttachmentRead _sharedAttachmentToDraft(
+    SharedAttachmentCandidate candidate,
+    int index,
+  ) {
+    return AttachmentRead(
+      type: "attachments",
+      id: index.toString(),
+      attributes: AttachmentProperties(
+        attachableType: AttachableType.transactionjournal,
+        attachableId: "FAKE",
+        filename: candidate.filename,
+        uploadUrl: candidate.path,
+        size: candidate.size,
+      ),
+      links: const ObjectLink(),
+    );
+  }
+
+  Future<void> _prepareSharedAttachments(List<SharedFile> files) async {
+    final List<String> managedRoots =
+        await _resolveManagedSharedAttachmentRoots();
+    final SharedAttachmentValidationResult result =
+        await validateSharedAttachments(files, appOwnedRoots: managedRoots);
+    if (!mounted || !result.hasAny) {
+      return;
+    }
+
+    log.info(
+      () =>
+          'shared attachment review: ${result.accepted.length} accepted, ${result.rejected.length} rejected',
+    );
+
+    final SharedAttachmentReviewAction? action =
+        await showDialog<SharedAttachmentReviewAction>(
+          context: context,
+          barrierDismissible: false,
+          builder:
+              (BuildContext context) =>
+                  SharedAttachmentReviewDialog(result: result),
+        );
+    if (!mounted) {
+      return;
+    }
+
+    if (action == SharedAttachmentReviewAction.accept) {
+      setState(() {
+        _attachments ??= <AttachmentRead>[];
+        _managedSharedAttachmentRoots = managedRoots;
+        for (final SharedAttachmentCandidate candidate in result.accepted) {
+          _attachments!.add(
+            _sharedAttachmentToDraft(candidate, _attachments!.length),
+          );
+          if (candidate.isAppOwnedCopy) {
+            _managedSharedAttachmentPaths.add(candidate.path);
+          }
+        }
+        _hasAttachments = _attachments?.isNotEmpty ?? false;
+      });
+      return;
+    }
+
+    for (final SharedAttachmentCandidate candidate in result.accepted) {
+      await deleteSharedAttachmentIfOwnedCopy(candidate.path, managedRoots);
+    }
+  }
+
+  Future<void> _cleanupManagedSharedAttachments() async {
+    if (_managedSharedAttachmentPaths.isEmpty) {
+      return;
+    }
+
+    final List<String> paths = _managedSharedAttachmentPaths.toList();
+    _managedSharedAttachmentPaths.clear();
+    for (final String path in paths) {
+      await deleteSharedAttachmentIfOwnedCopy(
+        path,
+        _managedSharedAttachmentRoots,
+      );
+    }
+  }
+
   @override
   void dispose() {
+    unawaited(_cleanupManagedSharedAttachments());
     _titleTextController.dispose();
     _titleFocusNode.dispose();
     _sourceAccountTextController.dispose();
@@ -2668,6 +2756,143 @@ class _TransactionBudgetState extends State<TransactionBudget> {
           ),
         ),
       ],
+    );
+  }
+}
+
+enum SharedAttachmentReviewAction { accept, discard }
+
+class SharedAttachmentReviewDialog extends StatelessWidget {
+  const SharedAttachmentReviewDialog({super.key, required this.result});
+
+  final SharedAttachmentValidationResult result;
+
+  String _acceptedSubtitle(
+    BuildContext context,
+    SharedAttachmentCandidate candidate,
+  ) {
+    final List<String> parts = <String>[
+      candidate.mimeType,
+      filesize(candidate.size),
+    ];
+    if (candidate.isAppOwnedCopy) {
+      parts.add(S.of(context).transactionSharedAttachmentsTemporaryCopy);
+    }
+    return parts.join(' • ');
+  }
+
+  String _rejectedReason(
+    BuildContext context,
+    RejectedSharedAttachment rejected,
+  ) {
+    final S l10n = S.of(context);
+    switch (rejected.reason) {
+      case RejectedSharedAttachmentReason.emptyValue:
+        return l10n.transactionSharedAttachmentsRejectedEmpty;
+      case RejectedSharedAttachmentReason.unsupportedType:
+        return l10n.transactionSharedAttachmentsRejectedUnsupportedType;
+      case RejectedSharedAttachmentReason.invalidOrigin:
+        return l10n.transactionSharedAttachmentsRejectedOrigin;
+      case RejectedSharedAttachmentReason.missingFile:
+        return l10n.transactionSharedAttachmentsRejectedMissingFile;
+      case RejectedSharedAttachmentReason.tooLarge:
+        return l10n.transactionSharedAttachmentsRejectedTooLarge(
+          filesize(maxInboundSharedAttachmentBytes),
+        );
+      case RejectedSharedAttachmentReason.overLimit:
+        return l10n.transactionSharedAttachmentsRejectedLimit(
+          maxInboundSharedAttachmentCount,
+        );
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final S l10n = S.of(context);
+    final List<Widget> content = <Widget>[
+      Text(l10n.transactionSharedAttachmentsReviewBody),
+    ];
+
+    if (result.accepted.isNotEmpty) {
+      content.add(const SizedBox(height: 16));
+      content.add(
+        Text(
+          l10n.transactionSharedAttachmentsAcceptedTitle,
+          style: Theme.of(context).textTheme.titleSmall,
+        ),
+      );
+      content.add(const SizedBox(height: 8));
+      content.addAll(
+        result.accepted.map(
+          (SharedAttachmentCandidate candidate) => ListTile(
+            dense: true,
+            contentPadding: EdgeInsets.zero,
+            leading: const Icon(Icons.attach_file),
+            title: Text(candidate.filename),
+            subtitle: Text(_acceptedSubtitle(context, candidate)),
+          ),
+        ),
+      );
+    }
+
+    if (result.rejected.isNotEmpty) {
+      content.add(const SizedBox(height: 16));
+      content.add(
+        Text(
+          l10n.transactionSharedAttachmentsRejectedTitle,
+          style: Theme.of(context).textTheme.titleSmall,
+        ),
+      );
+      content.add(const SizedBox(height: 8));
+      content.addAll(
+        result.rejected.map(
+          (RejectedSharedAttachment rejected) => ListTile(
+            dense: true,
+            contentPadding: EdgeInsets.zero,
+            leading: const Icon(Icons.block),
+            title: Text(rejected.displayName),
+            subtitle: Text(_rejectedReason(context, rejected)),
+          ),
+        ),
+      );
+    }
+
+    return AlertDialog(
+      title: Text(l10n.transactionSharedAttachmentsReviewTitle),
+      content: SingleChildScrollView(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: content,
+        ),
+      ),
+      actions:
+          result.accepted.isNotEmpty
+              ? <Widget>[
+                TextButton(
+                  onPressed:
+                      () => Navigator.of(
+                        context,
+                      ).pop(SharedAttachmentReviewAction.discard),
+                  child: Text(l10n.transactionSharedAttachmentsDiscard),
+                ),
+                FilledButton(
+                  onPressed:
+                      () => Navigator.of(
+                        context,
+                      ).pop(SharedAttachmentReviewAction.accept),
+                  child: Text(l10n.transactionSharedAttachmentsAccept),
+                ),
+              ]
+              : <Widget>[
+                FilledButton(
+                  onPressed:
+                      () => Navigator.of(
+                        context,
+                      ).pop(SharedAttachmentReviewAction.discard),
+                  child: Text(l10n.transactionSharedAttachmentsClose),
+                ),
+              ],
     );
   }
 }

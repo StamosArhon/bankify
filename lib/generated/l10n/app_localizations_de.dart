@@ -841,6 +841,58 @@ class SDe extends S {
   String get transactionDialogAttachmentsTitle => 'Anhänge';
 
   @override
+  String get transactionSharedAttachmentsReviewTitle =>
+      'Review shared attachments';
+
+  @override
+  String get transactionSharedAttachmentsReviewBody =>
+      'Bankify only accepts images and PDF files shared from local storage. Review these files before adding them to this transaction.';
+
+  @override
+  String get transactionSharedAttachmentsAcceptedTitle => 'Ready to add';
+
+  @override
+  String get transactionSharedAttachmentsRejectedTitle => 'Not added';
+
+  @override
+  String get transactionSharedAttachmentsTemporaryCopy => 'Temporary app copy';
+
+  @override
+  String get transactionSharedAttachmentsAccept => 'Add attachments';
+
+  @override
+  String get transactionSharedAttachmentsDiscard => 'Discard';
+
+  @override
+  String get transactionSharedAttachmentsClose => 'Close';
+
+  @override
+  String get transactionSharedAttachmentsRejectedEmpty =>
+      'The shared item did not contain a usable file path.';
+
+  @override
+  String get transactionSharedAttachmentsRejectedUnsupportedType =>
+      'Only images and PDF files can be shared to Bankify.';
+
+  @override
+  String get transactionSharedAttachmentsRejectedOrigin =>
+      'The shared item did not resolve to a trusted local file.';
+
+  @override
+  String get transactionSharedAttachmentsRejectedMissingFile =>
+      'Bankify could not read the shared file anymore.';
+
+  @override
+  String transactionSharedAttachmentsRejectedTooLarge(String maxSize) {
+    return 'The shared file is larger than $maxSize.';
+  }
+
+  @override
+  String transactionSharedAttachmentsRejectedLimit(int maxCount) {
+    return 'Only the first $maxCount shared files are accepted at once.';
+  }
+
+  @override
   String get transactionDialogBillNoBill => 'Kein Abonnement';
 
   @override

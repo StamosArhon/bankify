@@ -304,6 +304,11 @@
 - Implemented on `stamos/phase-2-backup-and-prefs-privacy`:
   - Expanded Android backup exclusions so secure storage, secure-storage config, legacy Flutter shared preferences, and the DataStore-backed preference file do not roam through cloud backup or device transfer.
   - Added Android 12+ data extraction rules so modern device-to-device restore follows the same privacy policy as legacy full-backup rules.
+- Implemented on `stamos/phase-2-share-intent-validation`:
+  - Narrowed Android share-entry MIME filters to images and PDFs instead of accepting arbitrary file types.
+  - Added centralized inbound shared-file validation for MIME allowlisting, local-file origin checks, file-size limits, and per-batch limits, with regression tests for the acceptance rules.
+  - Inserted a review dialog so shared files must be explicitly confirmed before they become transaction attachments, and temporary app-owned copies are cleaned up when discarded.
+  - Reset consumed share intents after handoff so a single inbound share does not keep reopening the transaction composer on rebuilds.
 
 ### Task Slices
 
@@ -483,20 +488,19 @@
 
 ## Recommended Execution Order
 
-1. `stamos/phase-2-share-intent-validation`
-2. `stamos/phase-2-lock-timeout-settings`
-3. `stamos/phase-3-git-dependency-pinning`
-4. `stamos/phase-3-hosted-package-upgrades`
-5. `stamos/phase-3-native-dependency-refresh`
-6. `stamos/phase-3-attack-surface-reduction`
-7. `stamos/phase-4-security-unit-tests`
-8. `stamos/phase-4-widget-and-flow-tests`
-9. `stamos/phase-4-manual-security-qa-checklist`
-10. `stamos/phase-5-transaction-editor-decomposition`
-11. Phase 6 work only after the hardening baseline is closed.
+1. `stamos/phase-2-lock-timeout-settings`
+2. `stamos/phase-3-git-dependency-pinning`
+3. `stamos/phase-3-hosted-package-upgrades`
+4. `stamos/phase-3-native-dependency-refresh`
+5. `stamos/phase-3-attack-surface-reduction`
+6. `stamos/phase-4-security-unit-tests`
+7. `stamos/phase-4-widget-and-flow-tests`
+8. `stamos/phase-4-manual-security-qa-checklist`
+9. `stamos/phase-5-transaction-editor-decomposition`
+10. Phase 6 work only after the hardening baseline is closed.
 
 ## Immediate Next Recommendation
 
-- Next implementation branch should be `stamos/phase-2-share-intent-validation`.
-- That branch should narrow the accepted inbound MIME types, add file-size and file-origin validation, and make the confirmation flow clearer before Bankify retains or uploads shared files.
-- After that, continue with `stamos/phase-2-lock-timeout-settings`.
+- Next implementation branch should be `stamos/phase-2-lock-timeout-settings`.
+- That branch should replace the fixed 10-minute app-lock window with a user-configurable timeout, while keeping the secure default conservative and documenting the behavior clearly.
+- After that, continue with `stamos/phase-3-git-dependency-pinning`.
