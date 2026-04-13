@@ -787,6 +787,26 @@
     "@homeTransactionsDialogFilterTitle": {
         "description": "Title of Filter Dialog"
     },
+    "homeTransactionsPresetSectionTitle": "Saved presets",
+    "@homeTransactionsPresetSectionTitle": {
+        "description": "Section title for saved transaction filter presets"
+    },
+    "homeTransactionsPresetSaveAction": "Save preset",
+    "@homeTransactionsPresetSaveAction": {
+        "description": "Action label for saving the current filter selection as a preset"
+    },
+    "homeTransactionsPresetSaveTitle": "Save filter preset",
+    "@homeTransactionsPresetSaveTitle": {
+        "description": "Dialog title when naming a saved transaction filter preset"
+    },
+    "homeTransactionsPresetNameLabel": "Preset name",
+    "@homeTransactionsPresetNameLabel": {
+        "description": "Input label for naming a saved transaction filter preset"
+    },
+    "homeTransactionsActionNewFromTemplate": "New from template",
+    "@homeTransactionsActionNewFromTemplate": {
+        "description": "Action label for launching a new transaction from a saved template"
+    },
     "homeTransactionsEmpty": "No transactions found.",
     "@homeTransactionsEmpty": {
         "description": "Message when no transactions are found."
@@ -1409,6 +1429,46 @@
     "transactionTitleEdit": "Edit Transaction",
     "@transactionTitleEdit": {
         "description": "Title: Edit existing transaction"
+    },
+    "transactionTemplateApplyAction": "Use template",
+    "@transactionTemplateApplyAction": {
+        "description": "Action label for applying a saved transaction template"
+    },
+    "transactionTemplateDeleteAction": "Delete template",
+    "@transactionTemplateDeleteAction": {
+        "description": "Action label for deleting a saved transaction template"
+    },
+    "transactionTemplateDialogTitle": "Transaction templates",
+    "@transactionTemplateDialogTitle": {
+        "description": "Dialog title for saved transaction templates"
+    },
+    "transactionTemplateEmpty": "Save a template from a transaction to reuse common fields later.",
+    "@transactionTemplateEmpty": {
+        "description": "Empty state shown when no transaction templates exist yet"
+    },
+    "transactionTemplateNameLabel": "Template name",
+    "@transactionTemplateNameLabel": {
+        "description": "Input label used when saving a transaction template"
+    },
+    "transactionTemplateSaveAction": "Save as template",
+    "@transactionTemplateSaveAction": {
+        "description": "Action label for saving the current transaction as a reusable template"
+    },
+    "transactionDraftResumeTitle": "Resume saved draft?",
+    "@transactionDraftResumeTitle": {
+        "description": "Dialog title asking whether to restore a saved transaction draft"
+    },
+    "transactionDraftResumeBody": "Bankify found an unfinished transaction draft from an earlier session.",
+    "@transactionDraftResumeBody": {
+        "description": "Dialog body explaining that a saved transaction draft is available"
+    },
+    "transactionDraftResumeAction": "Resume draft",
+    "@transactionDraftResumeAction": {
+        "description": "Action label for restoring a saved transaction draft"
+    },
+    "transactionDraftDiscardAction": "Discard draft",
+    "@transactionDraftDiscardAction": {
+        "description": "Action label for deleting a saved transaction draft"
     },
     "transactionTypeDeposit": "Deposit",
     "@transactionTypeDeposit": {

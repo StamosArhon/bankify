@@ -543,7 +543,7 @@
 - `stamos/phase-6-navigation-and-screen-states`
   Completed on 2026-04-14. Makes Settings behave like a real top-level shell destination, introduces a reusable screen-state view, and standardizes loading, empty, and error presentation across accounts, bills, balance, and piggy-bank screens.
 - `stamos/phase-6-transaction-flow-productivity`
-  Adds saved filter presets, draft autosave, and transaction templates / shortcuts for repeat workflows.
+  Completed on 2026-04-14. Adds saved transaction filter presets, autosaved transaction drafts, reusable transaction templates, and a new-from-template shortcut for repeat-entry workflows.
 - `stamos/phase-6-share-and-detail-flows`
   Finishes share-while-open behavior and upgrades bills and piggy-bank detail flows into richer dedicated screens where they provide better context.
 - `stamos/phase-6-onboarding-and-connection-health`
@@ -577,6 +577,6 @@
 ## Immediate Next Recommendation
 
 - Phase 6 is in progress.
-- The transaction-editor UX and navigation/screen-state slices are complete, so the next dependency-aware step is to reduce repeated transaction-entry work with saved filters, drafts, and templates.
+- The transaction-editor UX, navigation/screen-state, and transaction-flow productivity slices are complete, so the next dependency-aware step is to tighten share-while-open behavior and upgrade bill / piggy-bank details into richer flows.
 - Architecture work is now in a safer place for UX and feature iteration: transaction payload/editor logic is split out, shell/session state is typed, domain fetch logic has service seams, and logout now preserves non-secret preferences while still clearing persisted auth material.
-- Next implementation work should continue with `stamos/phase-6-transaction-flow-productivity`.
+- Next implementation work should continue with `stamos/phase-6-share-and-detail-flows`.

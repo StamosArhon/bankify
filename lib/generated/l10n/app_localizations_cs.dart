@@ -617,6 +617,21 @@ class SCs extends S {
   String get homeTransactionsDialogFilterTitle => 'Vybrat filtry';
 
   @override
+  String get homeTransactionsPresetSectionTitle => 'Saved presets';
+
+  @override
+  String get homeTransactionsPresetSaveAction => 'Save preset';
+
+  @override
+  String get homeTransactionsPresetSaveTitle => 'Save filter preset';
+
+  @override
+  String get homeTransactionsPresetNameLabel => 'Preset name';
+
+  @override
+  String get homeTransactionsActionNewFromTemplate => 'New from template';
+
+  @override
   String get homeTransactionsEmpty => 'Nebyly nalezeny žádné transakce.';
 
   @override
@@ -1110,6 +1125,38 @@ class SCs extends S {
 
   @override
   String get transactionTitleEdit => 'Upravit transakci';
+
+  @override
+  String get transactionTemplateApplyAction => 'Use template';
+
+  @override
+  String get transactionTemplateDeleteAction => 'Delete template';
+
+  @override
+  String get transactionTemplateDialogTitle => 'Transaction templates';
+
+  @override
+  String get transactionTemplateEmpty =>
+      'Save a template from a transaction to reuse common fields later.';
+
+  @override
+  String get transactionTemplateNameLabel => 'Template name';
+
+  @override
+  String get transactionTemplateSaveAction => 'Save as template';
+
+  @override
+  String get transactionDraftResumeTitle => 'Resume saved draft?';
+
+  @override
+  String get transactionDraftResumeBody =>
+      'Bankify found an unfinished transaction draft from an earlier session.';
+
+  @override
+  String get transactionDraftResumeAction => 'Resume draft';
+
+  @override
+  String get transactionDraftDiscardAction => 'Discard draft';
 
   @override
   String get transactionTypeDeposit => 'Vklad';

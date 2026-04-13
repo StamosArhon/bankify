@@ -25,11 +25,13 @@ import 'package:bankify/pages/transaction/attachments.dart';
 import 'package:bankify/pages/transaction/bill.dart';
 import 'package:bankify/pages/transaction/currencies.dart';
 import 'package:bankify/pages/transaction/delete.dart';
+import 'package:bankify/pages/transaction/editor_state_store.dart';
 import 'package:bankify/pages/transaction/notification_prefill.dart';
 import 'package:bankify/pages/transaction/payload.dart';
 import 'package:bankify/pages/transaction/piggy.dart';
 import 'package:bankify/pages/transaction/shared_attachments.dart';
 import 'package:bankify/pages/transaction/tags.dart';
+import 'package:bankify/pages/transaction/template_dialogs.dart';
 import 'package:bankify/shared_attachment_intake.dart';
 import 'package:bankify/settings.dart';
 import 'package:bankify/stock.dart';
@@ -40,7 +42,7 @@ import 'package:bankify/widgets/materialiconbutton.dart';
 
 final Logger log = Logger("Pages.Transaction");
 
-bool _savingInProgress = false;
+enum _TransactionToolbarAction { useTemplate, saveTemplate }
 
 class TransactionPage extends StatefulWidget {
   const TransactionPage({
@@ -51,6 +53,7 @@ class TransactionPage extends StatefulWidget {
     this.clone = false,
     this.accountId,
     this.onSharedFilesConsumed,
+    this.templateSnapshot,
   });
 
   final TransactionRead? transaction;
@@ -59,16 +62,19 @@ class TransactionPage extends StatefulWidget {
   final bool clone;
   final String? accountId;
   final VoidCallback? onSharedFilesConsumed;
+  final TransactionEditorStateSnapshot? templateSnapshot;
 
   @override
   State<TransactionPage> createState() => _TransactionPageState();
 }
 
 class _TransactionPageState extends State<TransactionPage>
-    with TickerProviderStateMixin {
+    with TickerProviderStateMixin, WidgetsBindingObserver {
   final Logger log = Logger("Pages.Transaction.Page");
 
   final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
+  final TransactionEditorStateStore _editorStateStore =
+      TransactionEditorStateStore();
 
   // Common values
   late TransactionTypeProperty _transactionType;
@@ -138,6 +144,9 @@ class _TransactionPageState extends State<TransactionPage>
   bool _showSourceAccountSelection = false;
   bool _showDestinationAccountSelection = false;
   bool _attachmentLoadRequested = false;
+  bool _savingInProgress = false;
+  bool _clearDraftOnDispose = false;
+  Timer? _draftSaveDebounce;
 
   late bool _newTX;
 
@@ -152,10 +161,12 @@ class _TransactionPageState extends State<TransactionPage>
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
 
     _newTX = widget.transaction == null || widget.clone;
 
     _tzHandler = context.read<FireflyService>().tzHandler;
+    _registerSharedDraftListeners();
 
     if (widget.files?.isNotEmpty ?? false) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -345,6 +356,8 @@ class _TransactionPageState extends State<TransactionPage>
         );
       }
 
+      _registerCurrentSplitDraftListeners();
+
       // Individual for split transactions, show common for single transaction
       WidgetsBinding.instance.addPostFrameCallback((_) {
         updateTransactionAmounts();
@@ -370,6 +383,10 @@ class _TransactionPageState extends State<TransactionPage>
 
       WidgetsBinding.instance.addPostFrameCallback((_) async {
         splitTransactionAdd();
+
+        if (widget.templateSnapshot != null) {
+          _applyEditorStateSnapshot(widget.templateSnapshot!);
+        }
 
         // Extract notification
         if (widget.notification != null) {
@@ -400,6 +417,9 @@ class _TransactionPageState extends State<TransactionPage>
         if (widget.files != null && widget.files!.isNotEmpty) {
           await _prepareSharedAttachments(widget.files!);
         }
+        if (_canUseDraftAutosave) {
+          await _maybeRestoreDraftIfAvailable();
+        }
       });
     }
 
@@ -413,6 +433,449 @@ class _TransactionPageState extends State<TransactionPage>
       );
       _hasAttachments = false;
     }
+  }
+
+  bool get _canUseDraftAutosave =>
+      _newTX &&
+      widget.notification == null &&
+      (widget.files?.isEmpty ?? true) &&
+      widget.accountId == null &&
+      !widget.clone &&
+      widget.templateSnapshot == null;
+
+  void _registerSharedDraftListeners() {
+    _titleTextController.addListener(_scheduleDraftSave);
+    _sourceAccountTextController.addListener(_scheduleDraftSave);
+    _destinationAccountTextController.addListener(_scheduleDraftSave);
+    _localAmountTextController.addListener(_scheduleDraftSave);
+  }
+
+  void _registerCurrentSplitDraftListeners() {
+    for (final TextEditingController controller in <TextEditingController>[
+      ..._categoryTextControllers,
+      ..._budgetTextControllers,
+      ..._tagsTextControllers,
+      ..._noteTextControllers,
+      ..._titleTextControllers,
+      ..._sourceAccountTextControllers,
+      ..._destinationAccountTextControllers,
+      ..._localAmountTextControllers,
+      ..._foreignAmountTextControllers,
+    ]) {
+      controller.addListener(_scheduleDraftSave);
+    }
+  }
+
+  void _scheduleDraftSave() {
+    if (!_canUseDraftAutosave || _savingInProgress) {
+      return;
+    }
+
+    _draftSaveDebounce?.cancel();
+    _draftSaveDebounce = Timer(const Duration(milliseconds: 600), () {
+      unawaited(_persistDraftIfEligible());
+    });
+  }
+
+  TransactionEditorCurrencySnapshot? _toCurrencySnapshot(
+    CurrencyRead? currency,
+  ) {
+    if (currency == null) {
+      return null;
+    }
+    return TransactionEditorCurrencySnapshot(
+      id: currency.id,
+      code: currency.attributes.code,
+      symbol: currency.attributes.symbol,
+      decimalPlaces: currency.attributes.decimalPlaces,
+    );
+  }
+
+  String _formatDraftAmount(double amount, int decimals) {
+    if (amount == 0) {
+      return '';
+    }
+    return amount.toStringAsFixed(decimals);
+  }
+
+  TransactionEditorStateSnapshot _captureEditorStateSnapshot() {
+    final List<TransactionEditorSplitSnapshot> splits = List<
+      TransactionEditorSplitSnapshot
+    >.generate(_localAmounts.length, (int i) {
+      final CurrencyRead? foreignCurrency = _foreignCurrencies[i];
+      return TransactionEditorSplitSnapshot(
+        title:
+            _split ? _titleTextControllers[i].text : _titleTextController.text,
+        sourceName:
+            _sourceAccountTextControllers[i].text.isNotEmpty
+                ? _sourceAccountTextControllers[i].text
+                : _sourceAccountTextController.text,
+        sourceType: _sourceAccountType,
+        destinationName:
+            _destinationAccountTextControllers[i].text.isNotEmpty
+                ? _destinationAccountTextControllers[i].text
+                : _destinationAccountTextController.text,
+        destinationType: _destinationAccountType,
+        localAmount: _localAmounts[i],
+        foreignAmount: _foreignAmounts[i],
+        foreignCurrency: _toCurrencySnapshot(foreignCurrency),
+        categoryName: _categoryTextControllers[i].text,
+        budgetName: _budgetTextControllers[i].text,
+        notes: _noteTextControllers[i].text,
+        tags: List<String>.from(_tags[i].tags),
+        billId: _bills[i]?.id,
+        billName: _bills[i]?.attributes.name,
+        piggyBankId: _piggy[i]?.id,
+        piggyBankName: _piggy[i]?.attributes.name,
+      );
+    });
+
+    return TransactionEditorStateSnapshot(
+      title: _titleTextController.text,
+      ownAccountId: _ownAccountId,
+      transactionType: _transactionType,
+      date: _date,
+      localCurrency: _toCurrencySnapshot(_localCurrency),
+      reconciled: _reconciled,
+      splitMode: _split,
+      showSourceAccountSelection: _showSourceAccountSelection,
+      showDestinationAccountSelection: _showDestinationAccountSelection,
+      splits: splits,
+    );
+  }
+
+  Future<void> _persistDraftIfEligible() async {
+    if (!_canUseDraftAutosave) {
+      return;
+    }
+    await _editorStateStore.saveDraft(_captureEditorStateSnapshot());
+  }
+
+  Future<void> _maybeRestoreDraftIfAvailable() async {
+    final TransactionEditorDraftEnvelope? draft =
+        await _editorStateStore.loadDraft();
+    if (!mounted || draft == null || !draft.snapshot.hasMeaningfulData) {
+      return;
+    }
+
+    final bool? shouldResume = await showDialog<bool>(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          icon: const Icon(Icons.history),
+          title: Text(S.of(context).transactionDraftResumeTitle),
+          clipBehavior: Clip.hardEdge,
+          content: Text(S.of(context).transactionDraftResumeBody),
+          actions: <Widget>[
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(false),
+              child: Text(S.of(context).transactionDraftDiscardAction),
+            ),
+            FilledButton(
+              onPressed: () => Navigator.of(context).pop(true),
+              child: Text(S.of(context).transactionDraftResumeAction),
+            ),
+          ],
+        );
+      },
+    );
+    if (!mounted) {
+      return;
+    }
+
+    if (shouldResume ?? false) {
+      setState(() {
+        _applyEditorStateSnapshot(draft.snapshot);
+      });
+      return;
+    }
+
+    await _editorStateStore.clearDraft();
+  }
+
+  Future<void> _saveCurrentTemplate() async {
+    final TransactionEditorStateSnapshot snapshot =
+        _captureEditorStateSnapshot();
+    if (!snapshot.hasMeaningfulData || !mounted) {
+      return;
+    }
+
+    final String? templateName = await showTransactionTemplateNameDialog(
+      context,
+      initialName:
+          _titleTextController.text.trim().isEmpty
+              ? null
+              : _titleTextController.text.trim(),
+    );
+    if (!mounted || templateName == null) {
+      return;
+    }
+
+    final List<StoredTransactionEditorTemplate> templates =
+        await _editorStateStore.loadTemplates();
+    String? existingId;
+    for (final StoredTransactionEditorTemplate template in templates) {
+      if (template.name.toLowerCase() == templateName.toLowerCase()) {
+        existingId = template.id;
+        break;
+      }
+    }
+
+    await _editorStateStore.saveTemplate(
+      StoredTransactionEditorTemplate(
+        id: existingId ?? DateTime.now().microsecondsSinceEpoch.toString(),
+        name: templateName,
+        snapshot: snapshot,
+        updatedAt: DateTime.now(),
+      ),
+    );
+  }
+
+  Future<void> _applyTemplateFromPicker() async {
+    final List<StoredTransactionEditorTemplate> templates =
+        await _editorStateStore.loadTemplates();
+    if (!mounted) {
+      return;
+    }
+
+    final StoredTransactionEditorTemplate? template =
+        await showTransactionTemplatePickerDialog(
+          context,
+          templates: templates,
+        );
+    if (!mounted || template == null) {
+      return;
+    }
+
+    setState(() {
+      _applyEditorStateSnapshot(template.snapshot);
+    });
+  }
+
+  void _disposeSplitCollections() {
+    for (final TextEditingController controller
+        in _sourceAccountTextControllers) {
+      controller.dispose();
+    }
+    for (final FocusNode focusNode in _sourceAccountFocusNodes) {
+      focusNode.dispose();
+    }
+    for (final TextEditingController controller
+        in _destinationAccountTextControllers) {
+      controller.dispose();
+    }
+    for (final FocusNode focusNode in _destinationAccountFocusNodes) {
+      focusNode.dispose();
+    }
+    for (final TextEditingController controller in _categoryTextControllers) {
+      controller.dispose();
+    }
+    for (final FocusNode focusNode in _categoryFocusNodes) {
+      focusNode.dispose();
+    }
+    for (final TextEditingController controller in _budgetTextControllers) {
+      controller.dispose();
+    }
+    for (final FocusNode focusNode in _budgetFocusNodes) {
+      focusNode.dispose();
+    }
+    for (final TextEditingController controller in _tagsTextControllers) {
+      controller.dispose();
+    }
+    for (final TextEditingController controller in _noteTextControllers) {
+      controller.dispose();
+    }
+    for (final TextEditingController controller in _titleTextControllers) {
+      controller.dispose();
+    }
+    for (final FocusNode focusNode in _titleFocusNodes) {
+      focusNode.dispose();
+    }
+    for (final TextEditingController controller
+        in _localAmountTextControllers) {
+      controller.dispose();
+    }
+    for (final TextEditingController controller
+        in _foreignAmountTextControllers) {
+      controller.dispose();
+    }
+    for (final AnimationController controller in _cardsAnimationController) {
+      controller.dispose();
+    }
+
+    _sourceAccountTextControllers.clear();
+    _sourceAccountFocusNodes.clear();
+    _destinationAccountTextControllers.clear();
+    _destinationAccountFocusNodes.clear();
+    _categoryTextControllers.clear();
+    _categoryFocusNodes.clear();
+    _budgetTextControllers.clear();
+    _budgetFocusNodes.clear();
+    _tags.clear();
+    _tagsTextControllers.clear();
+    _noteTextControllers.clear();
+    _bills.clear();
+    _piggy.clear();
+    _titleTextControllers.clear();
+    _titleFocusNodes.clear();
+    _localAmounts.clear();
+    _localAmountTextControllers.clear();
+    _foreignAmounts.clear();
+    _foreignAmountTextControllers.clear();
+    _foreignCurrencies.clear();
+    _transactionJournalIDs.clear();
+    _deletedSplitIDs.clear();
+    _cardsAnimationController.clear();
+    _cardsAnimation.clear();
+  }
+
+  void _appendSplitFromSnapshot(TransactionEditorSplitSnapshot split) {
+    final int localDecimals = _localCurrency?.attributes.decimalPlaces ?? 2;
+
+    _categoryTextControllers.add(
+      TextEditingController(text: split.categoryName),
+    );
+    _categoryFocusNodes.add(FocusNode());
+    _budgetTextControllers.add(TextEditingController(text: split.budgetName));
+    _budgetFocusNodes.add(FocusNode());
+    _tags.add(Tags(List<String>.from(split.tags)));
+    _tagsTextControllers.add(
+      TextEditingController(text: split.tags.isNotEmpty ? " " : ""),
+    );
+    _noteTextControllers.add(TextEditingController(text: split.notes));
+    _bills.add(
+      (split.billId?.isNotEmpty ?? false)
+          ? BillRead(
+            type: 'bill',
+            id: split.billId!,
+            attributes: BillProperties(
+              name: split.billName ?? '',
+              amountMin: '0',
+              amountMax: '0',
+              date: DateTime.now(),
+              repeatFreq: BillRepeatFrequency.swaggerGeneratedUnknown,
+            ),
+          )
+          : null,
+    );
+    _piggy.add(
+      (split.piggyBankId?.isNotEmpty ?? false)
+          ? PiggyBankRead(
+            id: split.piggyBankId!,
+            type: 'piggy_banks',
+            attributes: PiggyBankProperties(name: split.piggyBankName ?? ''),
+            links: const ObjectLink(),
+          )
+          : null,
+    );
+    _titleTextControllers.add(TextEditingController(text: split.title));
+    _titleFocusNodes.add(FocusNode());
+    _sourceAccountTextControllers.add(
+      TextEditingController(text: split.sourceName),
+    );
+    _sourceAccountFocusNodes.add(FocusNode());
+    _destinationAccountTextControllers.add(
+      TextEditingController(text: split.destinationName),
+    );
+    _destinationAccountFocusNodes.add(FocusNode());
+    _localAmounts.add(split.localAmount);
+    _localAmountTextControllers.add(
+      TextEditingController(
+        text: _formatDraftAmount(split.localAmount, localDecimals),
+      ),
+    );
+    _foreignAmounts.add(split.foreignAmount);
+    _foreignCurrencies.add(split.foreignCurrency?.toCurrencyRead());
+    _foreignAmountTextControllers.add(
+      TextEditingController(
+        text: _formatDraftAmount(
+          split.foreignAmount,
+          split.foreignCurrency?.decimalPlaces ?? localDecimals,
+        ),
+      ),
+    );
+    _transactionJournalIDs.add(null);
+    _cardsAnimationController.add(
+      AnimationController(
+        value: 1.0,
+        duration: animDurationEmphasizedDecelerate,
+        reverseDuration: animDurationEmphasizedDecelerate,
+        vsync: this,
+      ),
+    );
+    final int index = _cardsAnimationController.length - 1;
+    _cardsAnimationController.last.addStatusListener(
+      (AnimationStatus status) => deleteCardAnimated(index)(status),
+    );
+    _cardsAnimation.add(
+      CurvedAnimation(
+        parent: _cardsAnimationController.last,
+        curve: animCurveEmphasizedDecelerate,
+        reverseCurve: animCurveEmphasizedAccelerate,
+      ),
+    );
+  }
+
+  void _applyEditorStateSnapshot(TransactionEditorStateSnapshot snapshot) {
+    _titleTextController.text = snapshot.title;
+    _ownAccountId = snapshot.ownAccountId;
+    _transactionType = snapshot.transactionType;
+    _date = tz.TZDateTime.from(snapshot.date, _date.location);
+    _localCurrency = snapshot.localCurrency?.toCurrencyRead() ?? _localCurrency;
+    _reconciled = snapshot.reconciled;
+    _initiallyReconciled = false;
+    _showSourceAccountSelection = snapshot.showSourceAccountSelection;
+    _showDestinationAccountSelection = snapshot.showDestinationAccountSelection;
+    _hasAttachments = false;
+    _attachments = null;
+    _managedSharedAttachmentPaths.clear();
+    _managedSharedAttachmentRoots = <String>[];
+    _attachmentLoadRequested = false;
+    _disposeSplitCollections();
+
+    final List<TransactionEditorSplitSnapshot> splits =
+        snapshot.splits.isEmpty
+            ? const <TransactionEditorSplitSnapshot>[
+              TransactionEditorSplitSnapshot(
+                title: '',
+                sourceName: '',
+                sourceType: AccountTypeProperty.swaggerGeneratedUnknown,
+                destinationName: '',
+                destinationType: AccountTypeProperty.swaggerGeneratedUnknown,
+                localAmount: 0,
+                foreignAmount: 0,
+                foreignCurrency: null,
+                categoryName: '',
+                budgetName: '',
+                notes: '',
+                tags: <String>[],
+                billId: null,
+                billName: null,
+                piggyBankId: null,
+                piggyBankName: null,
+              ),
+            ]
+            : snapshot.splits;
+    for (final TransactionEditorSplitSnapshot split in splits) {
+      _appendSplitFromSnapshot(split);
+    }
+    _registerCurrentSplitDraftListeners();
+
+    final TransactionEditorSplitSnapshot firstSplit = splits.first;
+    _sourceAccountTextController.text = firstSplit.sourceName;
+    _destinationAccountTextController.text = firstSplit.destinationName;
+    _sourceAccountType = firstSplit.sourceType;
+    _destinationAccountType = firstSplit.destinationType;
+    _localAmountTextController.text = _formatDraftAmount(
+      firstSplit.localAmount,
+      _localCurrency?.attributes.decimalPlaces ?? 2,
+    );
+    _split = snapshot.splitMode || splits.length > 1;
+
+    updateTransactionAmounts();
+    splitTransactionCheckAccounts();
+    checkTXType();
+    _scheduleDraftSave();
   }
 
   Future<void> _prepareSharedAttachments(List<SharedFile> files) async {
@@ -568,7 +1031,30 @@ class _TransactionPageState extends State<TransactionPage>
   }
 
   @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    switch (state) {
+      case AppLifecycleState.inactive:
+      case AppLifecycleState.hidden:
+      case AppLifecycleState.paused:
+        unawaited(_persistDraftIfEligible());
+        break;
+      case AppLifecycleState.resumed:
+      case AppLifecycleState.detached:
+        break;
+    }
+  }
+
+  @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    _draftSaveDebounce?.cancel();
+    if (_canUseDraftAutosave) {
+      if (_clearDraftOnDispose) {
+        unawaited(_editorStateStore.clearDraft());
+      } else {
+        unawaited(_persistDraftIfEligible());
+      }
+    }
     unawaited(_cleanupManagedSharedAttachments());
     _titleTextController.dispose();
     _titleFocusNode.dispose();
@@ -578,52 +1064,7 @@ class _TransactionPageState extends State<TransactionPage>
     _destinationAccountFocusNode.dispose();
     _localAmountTextController.dispose();
 
-    for (TextEditingController t in _sourceAccountTextControllers) {
-      t.dispose();
-    }
-    for (FocusNode f in _sourceAccountFocusNodes) {
-      f.dispose();
-    }
-    for (TextEditingController t in _destinationAccountTextControllers) {
-      t.dispose();
-    }
-    for (FocusNode f in _destinationAccountFocusNodes) {
-      f.dispose();
-    }
-    for (TextEditingController t in _categoryTextControllers) {
-      t.dispose();
-    }
-    for (FocusNode f in _categoryFocusNodes) {
-      f.dispose();
-    }
-    for (TextEditingController t in _budgetTextControllers) {
-      t.dispose();
-    }
-    for (FocusNode f in _budgetFocusNodes) {
-      f.dispose();
-    }
-    for (TextEditingController t in _tagsTextControllers) {
-      t.dispose();
-    }
-    for (TextEditingController t in _noteTextControllers) {
-      t.dispose();
-    }
-    for (TextEditingController t in _titleTextControllers) {
-      t.dispose();
-    }
-    for (FocusNode f in _titleFocusNodes) {
-      f.dispose();
-    }
-    for (TextEditingController t in _localAmountTextControllers) {
-      t.dispose();
-    }
-    for (TextEditingController t in _foreignAmountTextControllers) {
-      t.dispose();
-    }
-
-    for (AnimationController a in _cardsAnimationController) {
-      a.dispose();
-    }
+    _disposeSplitCollections();
 
     super.dispose();
   }
@@ -737,6 +1178,7 @@ class _TransactionPageState extends State<TransactionPage>
       _initiallyReconciled = false;
       _split = (_localAmounts.length > 1);
     });
+    _scheduleDraftSave();
   }
 
   void splitTransactionAdd() {
@@ -751,29 +1193,38 @@ class _TransactionPageState extends State<TransactionPage>
         text: _sourceAccountTextControllers.firstOrNull?.text,
       ),
     );
+    _sourceAccountTextControllers.last.addListener(_scheduleDraftSave);
     _sourceAccountFocusNodes.add(FocusNode());
     _destinationAccountTextControllers.add(
       TextEditingController(
         text: _destinationAccountTextControllers.firstOrNull?.text,
       ),
     );
+    _destinationAccountTextControllers.last.addListener(_scheduleDraftSave);
     _destinationAccountFocusNodes.add(FocusNode());
     _categoryTextControllers.add(TextEditingController());
+    _categoryTextControllers.last.addListener(_scheduleDraftSave);
     _categoryFocusNodes.add(FocusNode());
     _budgetTextControllers.add(TextEditingController());
+    _budgetTextControllers.last.addListener(_scheduleDraftSave);
     _budgetFocusNodes.add(FocusNode());
     _tags.add(Tags());
     _tagsTextControllers.add(TextEditingController());
+    _tagsTextControllers.last.addListener(_scheduleDraftSave);
     _noteTextControllers.add(TextEditingController());
+    _noteTextControllers.last.addListener(_scheduleDraftSave);
     _bills.add(null);
     _piggy.add(null);
 
     _titleTextControllers.add(TextEditingController());
+    _titleTextControllers.last.addListener(_scheduleDraftSave);
     _titleFocusNodes.add(FocusNode());
     _localAmounts.add(0);
     _localAmountTextControllers.add(TextEditingController());
+    _localAmountTextControllers.last.addListener(_scheduleDraftSave);
     _foreignAmounts.add(0);
     _foreignAmountTextControllers.add(TextEditingController());
+    _foreignAmountTextControllers.last.addListener(_scheduleDraftSave);
     _foreignCurrencies.add(_foreignCurrencies.firstOrNull);
     _transactionJournalIDs.add(null);
 
@@ -810,6 +1261,7 @@ class _TransactionPageState extends State<TransactionPage>
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _cardsAnimationController.last.forward();
     });
+    _scheduleDraftSave();
   }
 
   void splitTransactionCalculateAmount() {
@@ -997,8 +1449,36 @@ class _TransactionPageState extends State<TransactionPage>
               : S.of(context).transactionTitleEdit,
         ),
         actions: <Widget>[
+          PopupMenuButton<_TransactionToolbarAction>(
+            onSelected: (_TransactionToolbarAction action) async {
+              switch (action) {
+                case _TransactionToolbarAction.useTemplate:
+                  await _applyTemplateFromPicker();
+                  break;
+                case _TransactionToolbarAction.saveTemplate:
+                  await _saveCurrentTemplate();
+                  break;
+              }
+            },
+            itemBuilder: (BuildContext context) {
+              return <PopupMenuEntry<_TransactionToolbarAction>>[
+                if (_newTX)
+                  PopupMenuItem<_TransactionToolbarAction>(
+                    value: _TransactionToolbarAction.useTemplate,
+                    child: Text(S.of(context).transactionTemplateApplyAction),
+                  ),
+                PopupMenuItem<_TransactionToolbarAction>(
+                  value: _TransactionToolbarAction.saveTemplate,
+                  child: Text(S.of(context).transactionTemplateSaveAction),
+                ),
+              ];
+            },
+          ),
           if (!_newTX) ...<Widget>[
-            TransactionDeleteButton(transactionId: widget.transaction?.id),
+            TransactionDeleteButton(
+              transactionId: widget.transaction?.id,
+              disabled: _savingInProgress,
+            ),
             const SizedBox(width: 8),
           ],
           FilledButton(
@@ -1142,6 +1622,8 @@ class _TransactionPageState extends State<TransactionPage>
                       }
 
                       // Done saving
+                      _clearDraftOnDispose = true;
+                      await _editorStateStore.clearDraft();
                       setState(() => _savingInProgress = false);
 
                       if (nav.canPop()) {
@@ -1235,11 +1717,13 @@ class _TransactionPageState extends State<TransactionPage>
                   child: TransactionTitle(
                     textController: _titleTextController,
                     focusNode: _titleFocusNode,
+                    disabled: _savingInProgress,
                   ),
                 ),
                 const SizedBox(width: 12),
                 AttachmentButton(
                   attachments: _attachments,
+                  disabled: _savingInProgress,
                   onPressed: () async {
                     final List<AttachmentRead> dialogAttachments =
                         _attachments ?? <AttachmentRead>[];
@@ -1303,10 +1787,12 @@ class _TransactionPageState extends State<TransactionPage>
                 ),
                 DateTimePicker(
                   initialDateTime: _date,
+                  disabled: _savingInProgress,
                   onDateTimeChanged: (tz.TZDateTime newDateTime) {
                     setState(() {
                       _date = newDateTime;
                     });
+                    _scheduleDraftSave();
                   },
                 ),
               ],
@@ -1741,6 +2227,7 @@ class _TransactionPageState extends State<TransactionPage>
                                   child: TransactionTitle(
                                     textController: _titleTextControllers[i],
                                     focusNode: _titleFocusNodes[i],
+                                    disabled: _savingInProgress,
                                   ),
                                 ),
                               ],
@@ -1912,6 +2399,7 @@ class _TransactionPageState extends State<TransactionPage>
                   TransactionCategory(
                     textController: _categoryTextControllers[i],
                     focusNode: _categoryFocusNodes[i],
+                    disabled: _savingInProgress,
                   ),
                   hDivider,
                   // Budget (for withdrawals)
@@ -1921,6 +2409,7 @@ class _TransactionPageState extends State<TransactionPage>
                             ? TransactionBudget(
                               textController: _budgetTextControllers[i],
                               focusNode: _budgetFocusNodes[i],
+                              disabled: _savingInProgress,
                             )
                             : const SizedBox.shrink(),
                   ),
@@ -2039,7 +2528,10 @@ class _TransactionPageState extends State<TransactionPage>
                   ),
                   // Note (always)
                   hDivider,
-                  TransactionNote(textController: _noteTextControllers[i]),
+                  TransactionNote(
+                    textController: _noteTextControllers[i],
+                    disabled: _savingInProgress,
+                  ),
                 ],
               ),
             ),
@@ -2099,6 +2591,7 @@ class _TransactionPageState extends State<TransactionPage>
                                     setState(() {
                                       _bills[i] = newBill;
                                     });
+                                    _scheduleDraftSave();
                                   }
                                 },
                         tooltip: S.of(context).transactionDialogBillTitle,
@@ -2142,6 +2635,7 @@ class _TransactionPageState extends State<TransactionPage>
                                   setState(() {
                                     _foreignCurrencies[i] = newCurrency;
                                   });
+                                  _scheduleDraftSave();
                                 }
                                 : null,
                         tooltip:
@@ -2184,6 +2678,7 @@ class _TransactionPageState extends State<TransactionPage>
                                       setState(() {
                                         _piggy[i] = newPiggy;
                                       });
+                                      _scheduleDraftSave();
                                     }
                                   },
                           tooltip: S.of(context).transactionDialogPiggyTitle,
@@ -2214,6 +2709,7 @@ class _TransactionPageState extends State<TransactionPage>
                                         setState(() {
                                           _showSourceAccountSelection = true;
                                         });
+                                        _scheduleDraftSave();
                                       }
                                       : null,
                               tooltip:
@@ -2252,6 +2748,7 @@ class _TransactionPageState extends State<TransactionPage>
                                           _showDestinationAccountSelection =
                                               true;
                                         });
+                                        _scheduleDraftSave();
                                       }
                                       : null,
                               tooltip:
@@ -2296,9 +2793,14 @@ class _TransactionPageState extends State<TransactionPage>
 }
 
 class TransactionDeleteButton extends StatelessWidget {
-  const TransactionDeleteButton({super.key, required this.transactionId});
+  const TransactionDeleteButton({
+    super.key,
+    required this.transactionId,
+    required this.disabled,
+  });
 
   final String? transactionId;
+  final bool disabled;
 
   @override
   Widget build(BuildContext context) {
@@ -2306,7 +2808,7 @@ class TransactionDeleteButton extends StatelessWidget {
       icon: const Icon(Icons.delete),
       tooltip: MaterialLocalizations.of(context).deleteButtonTooltip,
       onPressed:
-          _savingInProgress
+          disabled
               ? null
               : () async {
                 final FireflyIii api = context.read<FireflyService>().api;
@@ -2332,10 +2834,12 @@ class TransactionTitle extends StatelessWidget {
     super.key,
     required this.textController,
     required this.focusNode,
+    required this.disabled,
   });
 
   final TextEditingController textController;
   final FocusNode focusNode;
+  final bool disabled;
 
   @override
   Widget build(BuildContext context) {
@@ -2345,7 +2849,7 @@ class TransactionTitle extends StatelessWidget {
 
     log.finest(() => "build()");
     return AutoCompleteText<String>(
-      disabled: _savingInProgress,
+      disabled: disabled,
       labelText: S.of(context).transactionFormLabelTitle,
       labelIcon: Icons.receipt_long,
       textController: textController,
@@ -2382,9 +2886,14 @@ class TransactionTitle extends StatelessWidget {
 }
 
 class TransactionNote extends StatelessWidget {
-  const TransactionNote({super.key, required this.textController});
+  const TransactionNote({
+    super.key,
+    required this.textController,
+    required this.disabled,
+  });
 
   final TextEditingController textController;
+  final bool disabled;
 
   @override
   Widget build(BuildContext context) {
@@ -2395,14 +2904,14 @@ class TransactionNote extends StatelessWidget {
       children: <Widget>[
         Expanded(
           child: TextFormField(
-            enabled: !_savingInProgress,
+            enabled: !disabled,
             controller: textController,
             maxLines: null,
             decoration: InputDecoration(
               border: const OutlineInputBorder(),
               labelText: S.of(context).transactionFormLabelNotes,
               icon: const Icon(Icons.description),
-              filled: _savingInProgress,
+              filled: disabled,
             ),
           ),
         ),
@@ -2416,10 +2925,12 @@ class TransactionCategory extends StatelessWidget {
     super.key,
     required this.textController,
     required this.focusNode,
+    required this.disabled,
   });
 
   final TextEditingController textController;
   final FocusNode focusNode;
+  final bool disabled;
 
   @override
   Widget build(BuildContext context) {
@@ -2432,7 +2943,7 @@ class TransactionCategory extends StatelessWidget {
       children: <Widget>[
         Expanded(
           child: AutoCompleteText<String>(
-            disabled: _savingInProgress,
+            disabled: disabled,
             labelText: S.of(context).generalCategory,
             labelIcon: Icons.assignment,
             textController: textController,
@@ -2480,10 +2991,12 @@ class TransactionBudget extends StatefulWidget {
     super.key,
     required this.textController,
     required this.focusNode,
+    required this.disabled,
   });
 
   final TextEditingController textController;
   final FocusNode focusNode;
+  final bool disabled;
 
   @override
   State<TransactionBudget> createState() => _TransactionBudgetState();
@@ -2543,7 +3056,7 @@ class _TransactionBudgetState extends State<TransactionBudget> {
       children: <Widget>[
         Expanded(
           child: AutoCompleteText<AutocompleteBudget>(
-            disabled: _savingInProgress,
+            disabled: widget.disabled,
             labelText: S.of(context).generalBudget,
             labelIcon: Icons.payments,
             textController: widget.textController,
@@ -2842,11 +3355,13 @@ class TransactionSectionCard extends StatelessWidget {
 class AttachmentButton extends StatefulWidget {
   final List<AttachmentRead>? attachments;
   final Future<void> Function() onPressed;
+  final bool disabled;
 
   const AttachmentButton({
     super.key,
     required this.attachments,
     required this.onPressed,
+    required this.disabled,
   });
 
   @override
@@ -2890,7 +3405,7 @@ class _AttachmentButtonState extends State<AttachmentButton> {
       child: MaterialIconButton(
         icon: Icons.attach_file,
         tooltip: S.of(context).transactionAttachments,
-        onPressed: _savingInProgress ? null : widget.onPressed,
+        onPressed: widget.disabled ? null : widget.onPressed,
       ),
     );
   }
@@ -2901,10 +3416,12 @@ class DateTimePicker extends StatefulWidget {
     super.key,
     required this.initialDateTime,
     required this.onDateTimeChanged,
+    required this.disabled,
   });
 
   final tz.TZDateTime initialDateTime;
   final ValueChanged<tz.TZDateTime> onDateTimeChanged;
+  final bool disabled;
 
   @override
   State<DateTimePicker> createState() => _DateTimePickerState();
@@ -2988,12 +3505,12 @@ class _DateTimePickerState extends State<DateTimePicker> {
       children: <Widget>[
         IntrinsicWidth(
           child: TextFormField(
-            enabled: !_savingInProgress,
+            enabled: !widget.disabled,
             controller: _dateTextController,
             decoration: InputDecoration(
               //prefixIcon: Icon(Icons.calendar_month),
               border: const OutlineInputBorder(),
-              filled: _savingInProgress,
+              filled: widget.disabled,
             ),
             readOnly: true,
             onTap: _pickDate,
@@ -3002,11 +3519,11 @@ class _DateTimePickerState extends State<DateTimePicker> {
         const SizedBox(width: 16),
         IntrinsicWidth(
           child: TextFormField(
-            enabled: !_savingInProgress,
+            enabled: !widget.disabled,
             controller: _timeTextController,
             decoration: InputDecoration(
               border: const OutlineInputBorder(),
-              filled: _savingInProgress,
+              filled: widget.disabled,
             ),
             readOnly: true,
             onTap: _pickTime,

@@ -15,8 +15,11 @@ import 'package:bankify/generated/l10n/app_localizations.dart';
 import 'package:bankify/generated/swagger_fireflyiii_api/firefly_iii.swagger.dart';
 import 'package:bankify/pages/home.dart';
 import 'package:bankify/pages/home/transactions/filter.dart';
+import 'package:bankify/pages/home/transactions/filter_state.dart';
 import 'package:bankify/pages/transaction.dart';
 import 'package:bankify/pages/transaction/delete.dart';
+import 'package:bankify/pages/transaction/editor_state_store.dart';
+import 'package:bankify/pages/transaction/template_dialogs.dart';
 import 'package:bankify/settings.dart';
 import 'package:bankify/stock.dart';
 import 'package:bankify/timezonehandler.dart';
@@ -75,6 +78,11 @@ class _HomeTransactionsState extends State<HomeTransactions>
     if (widget.filters == null) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         context.read<PageActions>().set(widget.key!, <Widget>[
+          IconButton(
+            icon: const Icon(Icons.note_add_outlined),
+            tooltip: S.of(context).homeTransactionsActionNewFromTemplate,
+            onPressed: _openTemplateShortcut,
+          ),
           ValueListenableBuilder<bool>(
             valueListenable: _tagsHidden,
             builder:
@@ -106,55 +114,34 @@ class _HomeTransactionsState extends State<HomeTransactions>
                   isSelected: context.watch<TransactionFilters>().hasFilters,
                   tooltip: S.of(context).homeTransactionsActionFilter,
                   onPressed: () async {
-                    final TransactionFilters oldFilters = _filters.copyWith();
+                    final TransactionFilterSnapshot oldSnapshot =
+                        _filters.toSnapshot();
                     final SettingsProvider settings =
                         context.read<SettingsProvider>();
                     final bool oldShowFutureTXs = settings.showFutureTXs;
                     final TransactionDateFilter oldTransactionDateFilter =
                         settings.transactionDateFilter;
-                    final bool? ok = await showDialog<bool>(
-                      context: context,
-                      builder:
-                          (BuildContext context) => FilterDialog(
-                            // passed by reference -> auto updated
-                            filters: _filters,
-                          ),
-                    );
-                    if (ok == null || !ok) {
-                      if (settings.showFutureTXs != oldShowFutureTXs) {
-                        settings.showFutureTXs = oldShowFutureTXs;
-                        _txSum = TransactionSum();
-                        setState(() {
-                          _pagingState = _pagingState.reset();
-                        });
-                      }
-                      if (settings.transactionDateFilter !=
-                          oldTransactionDateFilter) {
-                        await settings.setTransactionDateFilter(
-                          oldTransactionDateFilter,
+                    final TransactionFilterDialogResult? result =
+                        await showDialog<TransactionFilterDialogResult>(
+                          context: context,
+                          builder:
+                              (BuildContext context) => FilterDialog(
+                                initialFilters: _filters,
+                                initialShowFutureTransactions: oldShowFutureTXs,
+                                initialDateFilter: oldTransactionDateFilter,
+                              ),
                         );
-                        _txSum = TransactionSum();
-                        setState(() {
-                          _pagingState = _pagingState.reset();
-                        });
-                      }
-                      _filters.account = oldFilters.account;
-                      _filters.budget = oldFilters.budget;
-                      _filters.category = oldFilters.category;
-                      _filters.currency = oldFilters.currency;
-                      _filters.text = oldFilters.text;
-                      _filters.bill = oldFilters.bill;
-                      _filters.tags = oldFilters.tags;
-
+                    if (result == null) {
                       return;
                     }
-                    if (oldFilters == _filters &&
-                        settings.showFutureTXs == oldShowFutureTXs &&
-                        settings.transactionDateFilter ==
-                            oldTransactionDateFilter) {
+                    if (oldSnapshot == result.snapshot &&
+                        result.showFutureTransactions == oldShowFutureTXs &&
+                        result.dateFilter == oldTransactionDateFilter) {
                       return;
                     }
-                    _filters.updateFilters();
+                    _filters.applySnapshot(result.snapshot);
+                    settings.showFutureTXs = result.showFutureTransactions;
+                    await settings.setTransactionDateFilter(result.dateFilter);
                     _rowsWithDate = <int>[];
                     _lastDate = null;
                     _txSum = TransactionSum();
@@ -180,6 +167,46 @@ class _HomeTransactionsState extends State<HomeTransactions>
   }
 
   void notifRefresh() {
+    setState(() {
+      _lastCalculatedBalance = null;
+      _pagingState = _pagingState.reset();
+    });
+  }
+
+  Future<void> _openTemplateShortcut() async {
+    final List<StoredTransactionEditorTemplate> templates =
+        await TransactionEditorStateStore().loadTemplates();
+    if (!mounted) {
+      return;
+    }
+
+    final StoredTransactionEditorTemplate? template =
+        await showTransactionTemplatePickerDialog(
+          context,
+          templates: templates,
+        );
+    if (!mounted || template == null) {
+      return;
+    }
+
+    final bool? refresh = await Navigator.of(context).push<bool>(
+      MaterialPageRoute<bool>(
+        builder:
+            (BuildContext context) =>
+                TransactionPage(templateSnapshot: template.snapshot),
+      ),
+    );
+    if (!(refresh ?? false)) {
+      return;
+    }
+
+    if (!mounted) {
+      return;
+    }
+    _rowsWithDate = <int>[];
+    _lastDate = null;
+    _txSum = TransactionSum();
+    context.read<FireflyService>().transStock!.clear();
     setState(() {
       _lastCalculatedBalance = null;
       _pagingState = _pagingState.reset();

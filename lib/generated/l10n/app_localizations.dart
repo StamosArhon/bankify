@@ -1032,6 +1032,36 @@ abstract class S {
   /// **'Select filters'**
   String get homeTransactionsDialogFilterTitle;
 
+  /// Section title for saved transaction filter presets
+  ///
+  /// In en, this message translates to:
+  /// **'Saved presets'**
+  String get homeTransactionsPresetSectionTitle;
+
+  /// Action label for saving the current filter selection as a preset
+  ///
+  /// In en, this message translates to:
+  /// **'Save preset'**
+  String get homeTransactionsPresetSaveAction;
+
+  /// Dialog title when naming a saved transaction filter preset
+  ///
+  /// In en, this message translates to:
+  /// **'Save filter preset'**
+  String get homeTransactionsPresetSaveTitle;
+
+  /// Input label for naming a saved transaction filter preset
+  ///
+  /// In en, this message translates to:
+  /// **'Preset name'**
+  String get homeTransactionsPresetNameLabel;
+
+  /// Action label for launching a new transaction from a saved template
+  ///
+  /// In en, this message translates to:
+  /// **'New from template'**
+  String get homeTransactionsActionNewFromTemplate;
+
   /// Message when no transactions are found.
   ///
   /// In en, this message translates to:
@@ -1853,6 +1883,66 @@ abstract class S {
   /// In en, this message translates to:
   /// **'Edit Transaction'**
   String get transactionTitleEdit;
+
+  /// Action label for applying a saved transaction template
+  ///
+  /// In en, this message translates to:
+  /// **'Use template'**
+  String get transactionTemplateApplyAction;
+
+  /// Action label for deleting a saved transaction template
+  ///
+  /// In en, this message translates to:
+  /// **'Delete template'**
+  String get transactionTemplateDeleteAction;
+
+  /// Dialog title for saved transaction templates
+  ///
+  /// In en, this message translates to:
+  /// **'Transaction templates'**
+  String get transactionTemplateDialogTitle;
+
+  /// Empty state shown when no transaction templates exist yet
+  ///
+  /// In en, this message translates to:
+  /// **'Save a template from a transaction to reuse common fields later.'**
+  String get transactionTemplateEmpty;
+
+  /// Input label used when saving a transaction template
+  ///
+  /// In en, this message translates to:
+  /// **'Template name'**
+  String get transactionTemplateNameLabel;
+
+  /// Action label for saving the current transaction as a reusable template
+  ///
+  /// In en, this message translates to:
+  /// **'Save as template'**
+  String get transactionTemplateSaveAction;
+
+  /// Dialog title asking whether to restore a saved transaction draft
+  ///
+  /// In en, this message translates to:
+  /// **'Resume saved draft?'**
+  String get transactionDraftResumeTitle;
+
+  /// Dialog body explaining that a saved transaction draft is available
+  ///
+  /// In en, this message translates to:
+  /// **'Bankify found an unfinished transaction draft from an earlier session.'**
+  String get transactionDraftResumeBody;
+
+  /// Action label for restoring a saved transaction draft
+  ///
+  /// In en, this message translates to:
+  /// **'Resume draft'**
+  String get transactionDraftResumeAction;
+
+  /// Action label for deleting a saved transaction draft
+  ///
+  /// In en, this message translates to:
+  /// **'Discard draft'**
+  String get transactionDraftDiscardAction;
 
   /// Deposit transaction type
   ///
