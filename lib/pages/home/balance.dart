@@ -11,6 +11,7 @@ import 'package:bankify/generated/swagger_fireflyiii_api/firefly_iii.swagger.dar
 import 'package:bankify/pages/home/transactions.dart';
 import 'package:bankify/pages/home/transactions/filter.dart';
 import 'package:bankify/widgets/fabs.dart';
+import 'package:bankify/widgets/screen_state_view.dart';
 
 class HomeBalance extends StatefulWidget {
   const HomeBalance({super.key});
@@ -53,14 +54,25 @@ class _HomeBalanceState extends State<HomeBalance>
         builder: (BuildContext context, AsyncSnapshot<AccountArray> snapshot) {
           if (snapshot.connectionState == ConnectionState.done &&
               snapshot.hasData) {
+            final List<AccountRead> activeAccounts =
+                snapshot.data!.data
+                    .where(
+                      (AccountRead account) =>
+                          account.attributes.active ?? false,
+                    )
+                    .toList();
+            if (activeAccounts.isEmpty) {
+              return ScreenStateView(
+                icon: Icons.balance_outlined,
+                title: S.of(context).homeBalanceEmptyTitle,
+                message: S.of(context).homeBalanceEmptySubtitle,
+              );
+            }
             return ListView(
               cacheExtent: 1000,
               padding: const EdgeInsets.all(8),
               children: <Widget>[
-                ...snapshot.data!.data.map((AccountRead account) {
-                  if (!(account.attributes.active ?? false)) {
-                    return const SizedBox.shrink();
-                  }
+                ...activeAccounts.map((AccountRead account) {
                   final double balance = double.parse(
                     account.attributes.currentBalance ?? "",
                   );
@@ -164,11 +176,19 @@ class _HomeBalanceState extends State<HomeBalance>
               snapshot.error,
               snapshot.stackTrace,
             );
-            return Text(snapshot.error!.toString());
+            return ScreenStateView(
+              icon: Icons.error_outline,
+              title: S.of(context).generalError,
+              message: snapshot.error!.toString(),
+              action: FilledButton(
+                onPressed: _refreshStats,
+                child: Text(S.of(context).generalRetry),
+              ),
+            );
           } else {
-            return const Padding(
-              padding: EdgeInsets.all(8),
-              child: Center(child: CircularProgressIndicator()),
+            return ScreenStateView.loading(
+              title: S.of(context).generalLoading,
+              message: S.of(context).homeBalanceEmptySubtitle,
             );
           }
         },

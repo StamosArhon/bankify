@@ -83,6 +83,13 @@ class SCa extends S {
   String get billsErrorLoading => 'Error carregant les factures.';
 
   @override
+  String get billsEmptyTitle => 'No subscriptions to show.';
+
+  @override
+  String get billsEmptySubtitle =>
+      'Try changing the filters or add subscriptions in Firefly III.';
+
+  @override
   String billsExactAmountAndFrequency(
     String value,
     String frequency,
@@ -364,6 +371,15 @@ class SCa extends S {
   String get generalError => 'Error';
 
   @override
+  String get generalLoading => 'Loading';
+
+  @override
+  String get generalNothingToShow => 'Nothing to show yet';
+
+  @override
+  String get generalRetry => 'Retry';
+
+  @override
   String get generalExpenses => 'Despeses';
 
   @override
@@ -501,6 +517,17 @@ class SCa extends S {
 
   @override
   String get homePiggyNoAccountsSubtitle => 'Crea\'n una a la interfície web!';
+
+  @override
+  String get homeBalanceEmptyTitle => 'No asset accounts to show.';
+
+  @override
+  String get homeBalanceEmptySubtitle =>
+      'Accounts with balances will appear here.';
+
+  @override
+  String get accountsEmptySubtitle =>
+      'Accounts in this category will appear here once they exist in Firefly III.';
 
   @override
   String homePiggyRemaining(String amount) {

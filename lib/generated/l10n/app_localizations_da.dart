@@ -82,6 +82,13 @@ class SDa extends S {
   String get billsErrorLoading => 'Fejl ved indlæsning af abonnementer.';
 
   @override
+  String get billsEmptyTitle => 'No subscriptions to show.';
+
+  @override
+  String get billsEmptySubtitle =>
+      'Try changing the filters or add subscriptions in Firefly III.';
+
+  @override
   String billsExactAmountAndFrequency(
     String value,
     String frequency,
@@ -361,6 +368,15 @@ class SDa extends S {
   String get generalError => 'Fejl';
 
   @override
+  String get generalLoading => 'Loading';
+
+  @override
+  String get generalNothingToShow => 'Nothing to show yet';
+
+  @override
+  String get generalRetry => 'Retry';
+
+  @override
   String get generalExpenses => 'Udgifter';
 
   @override
@@ -497,6 +513,17 @@ class SDa extends S {
 
   @override
   String get homePiggyNoAccountsSubtitle => 'Opret nogle i webgrænsefladen!';
+
+  @override
+  String get homeBalanceEmptyTitle => 'No asset accounts to show.';
+
+  @override
+  String get homeBalanceEmptySubtitle =>
+      'Accounts with balances will appear here.';
+
+  @override
+  String get accountsEmptySubtitle =>
+      'Accounts in this category will appear here once they exist in Firefly III.';
 
   @override
   String homePiggyRemaining(String amount) {

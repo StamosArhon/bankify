@@ -82,6 +82,13 @@ class SZh extends S {
   String get billsErrorLoading => '加载账单时出错。';
 
   @override
+  String get billsEmptyTitle => 'No subscriptions to show.';
+
+  @override
+  String get billsEmptySubtitle =>
+      'Try changing the filters or add subscriptions in Firefly III.';
+
+  @override
   String billsExactAmountAndFrequency(
     String value,
     String frequency,
@@ -356,6 +363,15 @@ class SZh extends S {
   String get generalError => '错误';
 
   @override
+  String get generalLoading => 'Loading';
+
+  @override
+  String get generalNothingToShow => 'Nothing to show yet';
+
+  @override
+  String get generalRetry => 'Retry';
+
+  @override
   String get generalExpenses => '支出';
 
   @override
@@ -492,6 +508,17 @@ class SZh extends S {
 
   @override
   String get homePiggyNoAccountsSubtitle => '在网络界面中创建一些！';
+
+  @override
+  String get homeBalanceEmptyTitle => 'No asset accounts to show.';
+
+  @override
+  String get homeBalanceEmptySubtitle =>
+      'Accounts with balances will appear here.';
+
+  @override
+  String get accountsEmptySubtitle =>
+      'Accounts in this category will appear here once they exist in Firefly III.';
 
   @override
   String homePiggyRemaining(String amount) {

@@ -541,7 +541,7 @@
 - `stamos/phase-6-transaction-editor-ux`
   Completed on 2026-04-14. Reworks the transaction editor into clearer overview/accounts/line-item sections, adds inline pre-save guidance for missing essentials, and removes attachment-count fetch side effects from the render path.
 - `stamos/phase-6-navigation-and-screen-states`
-  Normalizes top-level navigation and standardizes loading, empty, and error presentation across the main screens.
+  Completed on 2026-04-14. Makes Settings behave like a real top-level shell destination, introduces a reusable screen-state view, and standardizes loading, empty, and error presentation across accounts, bills, balance, and piggy-bank screens.
 - `stamos/phase-6-transaction-flow-productivity`
   Adds saved filter presets, draft autosave, and transaction templates / shortcuts for repeat workflows.
 - `stamos/phase-6-share-and-detail-flows`
@@ -577,6 +577,6 @@
 ## Immediate Next Recommendation
 
 - Phase 6 is in progress.
-- The transaction-editor UX slice is complete, and the next dependency-aware step is to normalize the shell and screen-state contract before layering in saved filter presets, drafts, and templates.
+- The transaction-editor UX and navigation/screen-state slices are complete, so the next dependency-aware step is to reduce repeated transaction-entry work with saved filters, drafts, and templates.
 - Architecture work is now in a safer place for UX and feature iteration: transaction payload/editor logic is split out, shell/session state is typed, domain fetch logic has service seams, and logout now preserves non-secret preferences while still clearing persisted auth material.
-- Next implementation work should continue with `stamos/phase-6-navigation-and-screen-states`.
+- Next implementation work should continue with `stamos/phase-6-transaction-flow-productivity`.

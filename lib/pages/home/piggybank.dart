@@ -16,6 +16,7 @@ import 'package:bankify/pages/home/piggybank/chart.dart';
 import 'package:bankify/services/piggy_bank_service.dart';
 import 'package:bankify/widgets/input_number.dart';
 import 'package:bankify/widgets/materialiconbutton.dart';
+import 'package:bankify/widgets/screen_state_view.dart';
 
 class HomePiggybank extends StatefulWidget {
   const HomePiggybank({super.key});
@@ -117,6 +118,21 @@ class _HomePiggybankState extends State<HomePiggybank>
           animateTransitions: true,
           transitionDuration: animDurationStandard,
           invisibleItemsThreshold: 10,
+          firstPageProgressIndicatorBuilder:
+              (BuildContext context) => ScreenStateView.loading(
+                title: S.of(context).generalLoading,
+                message: S.of(context).homePiggyNoAccountsSubtitle,
+              ),
+          firstPageErrorIndicatorBuilder:
+              (BuildContext context) => ScreenStateView(
+                icon: Icons.error_outline,
+                title: S.of(context).generalError,
+                message: S.of(context).homePiggyNoAccountsSubtitle,
+                action: FilledButton(
+                  onPressed: _fetchPage,
+                  child: Text(S.of(context).generalRetry),
+                ),
+              ),
           itemBuilder: (BuildContext context, PiggyBankRead piggy, int index) {
             Widget? groupHeader;
             final int groupId =
@@ -266,22 +282,10 @@ class _HomePiggybankState extends State<HomePiggybank>
             );
           },
           noItemsFoundIndicatorBuilder:
-              (BuildContext context) => Center(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.center,
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: <Widget>[
-                    Text(
-                      S.of(context).homePiggyNoAccounts,
-                      style: Theme.of(context).textTheme.titleLarge,
-                    ),
-                    const Icon(Icons.savings_outlined, size: 200),
-                    Text(
-                      S.of(context).homePiggyNoAccountsSubtitle,
-                      style: Theme.of(context).textTheme.bodyLarge,
-                    ),
-                  ],
-                ),
+              (BuildContext context) => ScreenStateView(
+                icon: Icons.savings_outlined,
+                title: S.of(context).homePiggyNoAccounts,
+                message: S.of(context).homePiggyNoAccountsSubtitle,
               ),
         ),
       ),

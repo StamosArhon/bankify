@@ -85,6 +85,14 @@
     "@billsErrorLoading": {
         "description": "Generic error message when subscriptions can't be loaded (shouldn't occur)"
     },
+    "billsEmptyTitle": "No subscriptions to show.",
+    "@billsEmptyTitle": {
+        "description": "Empty-state title shown when the bills screen has nothing to display"
+    },
+    "billsEmptySubtitle": "Try changing the filters or add subscriptions in Firefly III.",
+    "@billsEmptySubtitle": {
+        "description": "Empty-state subtitle shown when the bills screen has nothing to display"
+    },
     "billsExactAmountAndFrequency": "Subscription matches transactions of {value}. Repeats {frequency, select, weekly{weekly} monthly{monthly} quarterly{quarterly} halfyear{half-yearly} yearly{yearly} other{unknown}}{skip, plural, =0{} other{, skips over {skip}}}.",
     "@billsExactAmountAndFrequency": {
         "description": "Subscription match for exact amount and frequency",
@@ -429,6 +437,18 @@
     "@generalError": {
         "description": "Error (title in dialogs etc.)"
     },
+    "generalLoading": "Loading",
+    "@generalLoading": {
+        "description": "Short loading label shown in reusable loading states"
+    },
+    "generalNothingToShow": "Nothing to show yet",
+    "@generalNothingToShow": {
+        "description": "Generic empty-state title for screens without content yet"
+    },
+    "generalRetry": "Retry",
+    "@generalRetry": {
+        "description": "Button label used to retry a failed load"
+    },
     "generalExpenses": "Expenses",
     "@generalExpenses": {
         "description": "(Account) Expenses"
@@ -624,6 +644,18 @@
     "homePiggyNoAccountsSubtitle": "Create some in the webinterface!",
     "@homePiggyNoAccountsSubtitle": {
         "description": "Subtitle if no piggy banks are existing, hinting to use the webinterface to create some."
+    },
+    "homeBalanceEmptyTitle": "No asset accounts to show.",
+    "@homeBalanceEmptyTitle": {
+        "description": "Empty-state title shown when the balance screen has no asset accounts to display"
+    },
+    "homeBalanceEmptySubtitle": "Accounts with balances will appear here.",
+    "@homeBalanceEmptySubtitle": {
+        "description": "Empty-state subtitle shown when the balance screen has no asset accounts to display"
+    },
+    "accountsEmptySubtitle": "Accounts in this category will appear here once they exist in Firefly III.",
+    "@accountsEmptySubtitle": {
+        "description": "Generic empty-state subtitle for account category tabs"
     },
     "homePiggyRemaining": "Left to save: {amount}",
     "@homePiggyRemaining": {

@@ -228,6 +228,18 @@ abstract class S {
   /// **'Error loading subscriptions.'**
   String get billsErrorLoading;
 
+  /// Empty-state title shown when the bills screen has nothing to display
+  ///
+  /// In en, this message translates to:
+  /// **'No subscriptions to show.'**
+  String get billsEmptyTitle;
+
+  /// Empty-state subtitle shown when the bills screen has nothing to display
+  ///
+  /// In en, this message translates to:
+  /// **'Try changing the filters or add subscriptions in Firefly III.'**
+  String get billsEmptySubtitle;
+
   /// Subscription match for exact amount and frequency
   ///
   /// In en, this message translates to:
@@ -642,6 +654,24 @@ abstract class S {
   /// **'Error'**
   String get generalError;
 
+  /// Short loading label shown in reusable loading states
+  ///
+  /// In en, this message translates to:
+  /// **'Loading'**
+  String get generalLoading;
+
+  /// Generic empty-state title for screens without content yet
+  ///
+  /// In en, this message translates to:
+  /// **'Nothing to show yet'**
+  String get generalNothingToShow;
+
+  /// Button label used to retry a failed load
+  ///
+  /// In en, this message translates to:
+  /// **'Retry'**
+  String get generalRetry;
+
   /// (Account) Expenses
   ///
   /// In en, this message translates to:
@@ -833,6 +863,24 @@ abstract class S {
   /// In en, this message translates to:
   /// **'Create some in the webinterface!'**
   String get homePiggyNoAccountsSubtitle;
+
+  /// Empty-state title shown when the balance screen has no asset accounts to display
+  ///
+  /// In en, this message translates to:
+  /// **'No asset accounts to show.'**
+  String get homeBalanceEmptyTitle;
+
+  /// Empty-state subtitle shown when the balance screen has no asset accounts to display
+  ///
+  /// In en, this message translates to:
+  /// **'Accounts with balances will appear here.'**
+  String get homeBalanceEmptySubtitle;
+
+  /// Generic empty-state subtitle for account category tabs
+  ///
+  /// In en, this message translates to:
+  /// **'Accounts in this category will appear here once they exist in Firefly III.'**
+  String get accountsEmptySubtitle;
 
   /// How much money is left to save
   ///

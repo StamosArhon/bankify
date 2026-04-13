@@ -12,6 +12,7 @@ import 'package:bankify/pages/navigation.dart';
 import 'package:bankify/services/bills_service.dart';
 import 'package:bankify/settings.dart';
 import 'package:bankify/timezonehandler.dart';
+import 'package:bankify/widgets/screen_state_view.dart';
 
 class BillsPage extends StatefulWidget {
   const BillsPage({super.key});
@@ -102,7 +103,10 @@ class _BillsPageState extends State<BillsPage>
           AsyncSnapshot<Map<String, List<BillRead>>> snapshot,
         ) {
           if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(child: CircularProgressIndicator());
+            return ScreenStateView.loading(
+              title: S.of(context).generalLoading,
+              message: S.of(context).billsEmptySubtitle,
+            );
           }
           if (snapshot.hasError || !snapshot.hasData || snapshot.data == null) {
             log.severe(
@@ -110,13 +114,24 @@ class _BillsPageState extends State<BillsPage>
               snapshot.error,
               snapshot.stackTrace,
             );
-            return Center(
-              child: Text(
-                S.of(context).billsErrorLoading,
-                style: Theme.of(context).textTheme.headlineLarge?.copyWith(
-                  color: Theme.of(context).colorScheme.error,
-                ),
+            return ScreenStateView(
+              icon: Icons.error_outline,
+              title: S.of(context).billsErrorLoading,
+              message: snapshot.error?.toString(),
+              action: FilledButton(
+                onPressed: () => setState(() {}),
+                child: Text(S.of(context).generalRetry),
               ),
+            );
+          }
+          if (snapshot.data!.isEmpty ||
+              snapshot.data!.values.every(
+                (List<BillRead> bills) => bills.isEmpty,
+              )) {
+            return ScreenStateView(
+              icon: Icons.receipt_long_outlined,
+              title: S.of(context).billsEmptyTitle,
+              message: S.of(context).billsEmptySubtitle,
             );
           }
           return Padding(

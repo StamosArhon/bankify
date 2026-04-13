@@ -11,6 +11,7 @@ import 'package:bankify/pages/home/accounts/row.dart';
 import 'package:bankify/pages/home/accounts/search.dart';
 import 'package:bankify/pages/navigation.dart';
 import 'package:bankify/services/accounts_service.dart';
+import 'package:bankify/widgets/screen_state_view.dart';
 
 final Logger log = Logger("Pages.Accounts");
 
@@ -203,6 +204,27 @@ class _AccountDetailsState extends State<AccountDetails>
           animateTransitions: true,
           transitionDuration: animDurationStandard,
           invisibleItemsThreshold: 10,
+          firstPageProgressIndicatorBuilder:
+              (BuildContext context) => ScreenStateView.loading(
+                title: S.of(context).generalLoading,
+                message: S.of(context).accountsEmptySubtitle,
+              ),
+          firstPageErrorIndicatorBuilder:
+              (BuildContext context) => ScreenStateView(
+                icon: Icons.error_outline,
+                title: S.of(context).generalError,
+                message: S.of(context).accountsEmptySubtitle,
+                action: FilledButton(
+                  onPressed: _fetchPage,
+                  child: Text(S.of(context).generalRetry),
+                ),
+              ),
+          noItemsFoundIndicatorBuilder:
+              (BuildContext context) => ScreenStateView(
+                icon: Icons.account_balance_wallet_outlined,
+                title: S.of(context).generalNothingToShow,
+                message: S.of(context).accountsEmptySubtitle,
+              ),
           itemBuilder:
               (BuildContext context, AccountRead item, int index) =>
                   accountRowBuilder(

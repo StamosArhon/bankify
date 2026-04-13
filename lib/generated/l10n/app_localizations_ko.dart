@@ -82,6 +82,13 @@ class SKo extends S {
   String get billsErrorLoading => '구독을 불러오는 중 오류가 발생했습니다.';
 
   @override
+  String get billsEmptyTitle => 'No subscriptions to show.';
+
+  @override
+  String get billsEmptySubtitle =>
+      'Try changing the filters or add subscriptions in Firefly III.';
+
+  @override
   String billsExactAmountAndFrequency(
     String value,
     String frequency,
@@ -359,6 +366,15 @@ class SKo extends S {
   String get generalError => '오류';
 
   @override
+  String get generalLoading => 'Loading';
+
+  @override
+  String get generalNothingToShow => 'Nothing to show yet';
+
+  @override
+  String get generalRetry => 'Retry';
+
+  @override
   String get generalExpenses => '지출';
 
   @override
@@ -495,6 +511,17 @@ class SKo extends S {
 
   @override
   String get homePiggyNoAccountsSubtitle => '웹 인터페이스 만들기!';
+
+  @override
+  String get homeBalanceEmptyTitle => 'No asset accounts to show.';
+
+  @override
+  String get homeBalanceEmptySubtitle =>
+      'Accounts with balances will appear here.';
+
+  @override
+  String get accountsEmptySubtitle =>
+      'Accounts in this category will appear here once they exist in Firefly III.';
 
   @override
   String homePiggyRemaining(String amount) {

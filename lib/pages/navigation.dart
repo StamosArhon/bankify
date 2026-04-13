@@ -117,6 +117,7 @@ class NavPageState extends State<NavPage> {
   int screenIndex = 0;
   late List<NavDestination> navDestinations;
   bool _handledInitialLaunch = false;
+  NavigationChromeController? _chrome;
 
   @override
   void didChangeDependencies() {
@@ -155,9 +156,19 @@ class NavPageState extends State<NavPage> {
       ),
     ];
 
+    _chrome ??= NavigationChromeController(
+      title: Text(navDestinations[screenIndex].label),
+    );
+
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _maybeHandleInitialLaunch();
     });
+  }
+
+  @override
+  void dispose() {
+    _chrome?.dispose();
+    super.dispose();
   }
 
   void _maybeHandleInitialLaunch() {
@@ -182,6 +193,18 @@ class NavPageState extends State<NavPage> {
     );
   }
 
+  void _selectDestination(int index) {
+    if (screenIndex == index) {
+      return;
+    }
+
+    _chrome?.resetForDestination(title: Text(navDestinations[index].label));
+    setState(() {
+      screenIndex = index;
+      _handledInitialLaunch = true;
+    });
+  }
+
   @override
   void didUpdateWidget(covariant NavPage oldWidget) {
     super.didUpdateWidget(oldWidget);
@@ -198,10 +221,8 @@ class NavPageState extends State<NavPage> {
     final NavDestination currentPage = navDestinations[screenIndex];
     log.finest(() => "nav build(page: $screenIndex)");
 
-    return ChangeNotifierProvider<NavigationChromeController>(
-      create:
-          (_) =>
-              NavigationChromeController(title: Text(navDestinations[0].label)),
+    return ChangeNotifierProvider<NavigationChromeController>.value(
+      value: _chrome!,
       builder:
           (BuildContext context, _) => Scaffold(
             appBar: AppBar(
@@ -217,32 +238,7 @@ class NavPageState extends State<NavPage> {
               selectedIndex: screenIndex,
               onDestinationSelected: (int index) {
                 Navigator.pop(context); // closes the drawer
-                if (screenIndex == index) {
-                  return;
-                }
-                if (navDestinations[index].pageHandler is SettingsPage) {
-                  Navigator.of(context).push(
-                    MaterialPageRoute<void>(
-                      builder:
-                          (BuildContext context) => Scaffold(
-                            appBar: AppBar(
-                              title: Text(navDestinations[index].label),
-                            ),
-                            body: const SettingsPage(),
-                          ),
-                    ),
-                  );
-                } else {
-                  context
-                      .read<NavigationChromeController>()
-                      .resetForDestination(
-                        title: Text(navDestinations[index].label),
-                      );
-                  setState(() {
-                    screenIndex = index;
-                    _handledInitialLaunch = true;
-                  });
-                }
+                _selectDestination(index);
               },
               children: <Widget>[
                 Padding(
