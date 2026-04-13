@@ -936,7 +936,7 @@ packages:
     source: hosted
     version: "3.1.6"
   plugin_platform_interface:
-    dependency: transitive
+    dependency: "direct dev"
     description:
       name: plugin_platform_interface
       sha256: "4820fbfdb9478b1ebae27888254d445073732dae3d6ea81f0b7e06d5dedc3f02"
@@ -1016,7 +1016,7 @@ packages:
     source: hosted
     version: "1.2.3"
   quick_actions_platform_interface:
-    dependency: transitive
+    dependency: "direct dev"
     description:
       name: quick_actions_platform_interface
       sha256: "1fec7068db5122cd019e9340d3d7be5d36eab099695ef3402c7059ee058329a4"

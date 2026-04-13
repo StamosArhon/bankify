@@ -445,6 +445,7 @@
 - `stamos/phase-4-security-unit-tests`
   Completed on 2026-04-13. Adds expanded transport-policy coverage, attachment filename sanitization tests, shared-attachment cleanup tests, and notification draft expiry/malformed payload regression coverage.
 - `stamos/phase-4-widget-and-flow-tests`
+  Completed on 2026-04-13. Adds widget coverage for login secret-entry behavior, public-HTTP rejection in debug builds, the certificate-trust retry flow, and app-lock timeout selection.
 - `stamos/phase-4-manual-security-qa-checklist`
 
 ## Phase 5: Architecture Decomposition And Maintainability
@@ -528,6 +529,6 @@
 
 ## Immediate Next Recommendation
 
-- Next implementation branch should be `stamos/phase-4-widget-and-flow-tests`.
-- That branch should add focused widget and flow coverage for login secret-entry behavior, the certificate-trust path, and lock-timeout settings while keeping expectations around logout retention explicit.
-- After that, continue with `stamos/phase-4-manual-security-qa-checklist`.
+- Next implementation branch should be `stamos/phase-4-manual-security-qa-checklist`.
+- That branch should turn the verified transport, login, notification, share, attachment, and debug-log flows into a reusable manual QA checklist with explicit pass/fail steps for future release checks.
+- After that, Phase 4 can be treated as complete and the roadmap can move on to Phase 5 decomposition work.
