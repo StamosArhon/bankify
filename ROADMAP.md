@@ -486,6 +486,7 @@
 ### Suggested Branches
 
 - `stamos/phase-5-transaction-editor-decomposition`
+  Completed on 2026-04-13. Extracts transaction payload mapping, notification-prefill translation, shared-attachment intake helpers, and attachment-upload orchestration out of `TransactionPage`, with focused payload regression tests.
 - `stamos/phase-5-shell-state-refactor`
 - `stamos/phase-5-domain-service-extraction`
 - `stamos/phase-5-logout-preference-retention`
@@ -526,10 +527,14 @@
 6. `stamos/phase-4-widget-and-flow-tests`
 7. `stamos/phase-4-manual-security-qa-checklist`
 8. `stamos/phase-5-transaction-editor-decomposition`
-9. Phase 6 work only after the hardening baseline is closed.
+9. `stamos/phase-5-shell-state-refactor`
+10. `stamos/phase-5-domain-service-extraction`
+11. `stamos/phase-5-logout-preference-retention`
+12. Phase 6 work only after the hardening baseline is closed.
 
 ## Immediate Next Recommendation
 
-- Phase 4 is complete.
-- Next implementation branch should be `stamos/phase-5-transaction-editor-decomposition`.
-- That branch should begin breaking `TransactionPage` into smaller, testable units before broader UI and feature work resumes.
+- Phase 5 is in progress.
+- The transaction-editor decomposition slice is complete.
+- Next implementation branch should be `stamos/phase-5-shell-state-refactor`.
+- That branch should extract launch/session intent and shell ownership out of the mutable root widget flow before broader domain-service work continues.

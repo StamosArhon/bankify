@@ -1,19 +1,16 @@
 import 'dart:async';
 import 'dart:convert';
-import 'dart:io';
 
 import 'package:async/async.dart';
 import 'package:badges/badges.dart' as badges;
-import 'package:chopper/chopper.dart' show HttpMethod, Response;
+import 'package:chopper/chopper.dart' show Response;
 import 'package:collection/collection.dart';
 import 'package:filesize/filesize.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_sharing_intent/model/sharing_file.dart';
-import 'package:http/http.dart' as http;
 import 'package:intl/intl.dart';
 import 'package:logging/logging.dart';
-import 'package:path_provider/path_provider.dart';
 import 'package:provider/provider.dart';
 import 'package:timezone/timezone.dart' as tz;
 import 'package:bankify/animations.dart';
@@ -23,11 +20,15 @@ import 'package:bankify/generated/l10n/app_localizations.dart';
 import 'package:bankify/generated/swagger_fireflyiii_api/firefly_iii.swagger.dart';
 import 'package:bankify/notificationlistener.dart';
 import 'package:bankify/pages/navigation.dart';
+import 'package:bankify/pages/transaction/attachment_upload_service.dart';
 import 'package:bankify/pages/transaction/attachments.dart';
 import 'package:bankify/pages/transaction/bill.dart';
 import 'package:bankify/pages/transaction/currencies.dart';
 import 'package:bankify/pages/transaction/delete.dart';
+import 'package:bankify/pages/transaction/notification_prefill.dart';
+import 'package:bankify/pages/transaction/payload.dart';
 import 'package:bankify/pages/transaction/piggy.dart';
+import 'package:bankify/pages/transaction/shared_attachments.dart';
 import 'package:bankify/pages/transaction/tags.dart';
 import 'package:bankify/shared_attachment_intake.dart';
 import 'package:bankify/settings.dart';
@@ -371,93 +372,7 @@ class _TransactionPageState extends State<TransactionPage>
 
         // Extract notification
         if (widget.notification != null) {
-          final FireflyIii api = context.read<FireflyService>().api;
-          final SettingsProvider settings = context.read<SettingsProvider>();
-
-          log.info("Got notification payload for transaction creation");
-          _transactionType = TransactionTypeProperty.withdrawal;
-          final CurrencyRead defaultCurrency =
-              context.read<FireflyService>().defaultCurrency;
-          late CurrencyRead? currency;
-          late double amount;
-
-          (currency, amount) = await parseNotificationText(
-            api,
-            widget.notification!.body,
-            _localCurrency!,
-          );
-
-          // Fallback solution
-          currency ??= defaultCurrency;
-
-          // Title & Note
-          final NotificationAppSettings appSettings = await settings
-              .notificationGetAppSettings(widget.notification!.appName);
-          if (appSettings.includeTitle) {
-            _titleTextController.text = widget.notification!.title;
-          } else {
-            _titleTextController.text = "";
-            _noteTextControllers[0].text =
-                "${widget.notification!.title} - ${_noteTextControllers[0].text}";
-          }
-
-          if (!appSettings.emptyNote) {
-            _noteTextControllers[0].text = widget.notification!.body;
-          }
-
-          // Check account
-          final Response<AccountArray> response = await api.v1AccountsGet(
-            type: AccountTypeFilter.assetAccount,
-          );
-          if (!response.isSuccessful || response.body == null) {
-            log.warning("api account fetch failed");
-            return;
-          }
-          final String settingAppId = appSettings.defaultAccountId ?? "0";
-          for (AccountRead acc in response.body!.data) {
-            if (acc.id == settingAppId ||
-                widget.notification!.body.containsIgnoreCase(
-                  acc.attributes.name,
-                )) {
-              _sourceAccountTextController.text = acc.attributes.name;
-              _ownAccountId = acc.id;
-              _sourceAccountType = AccountTypeProperty.assetAccount;
-              if (currency.id == acc.attributes.currencyId) {
-                _localCurrency = currency;
-              } else {
-                _localCurrency = CurrencyRead(
-                  type: "currencies",
-                  id: acc.attributes.currencyId!,
-                  attributes: CurrencyProperties(
-                    code: acc.attributes.currencyCode!,
-                    name: "",
-                    symbol: acc.attributes.currencySymbol!,
-                    decimalPlaces: acc.attributes.currencyDecimalPlaces,
-                  ),
-                );
-                _foreignCurrencies[0] = currency;
-              }
-              break;
-            }
-          }
-
-          // Check currency
-          if (currency == _localCurrency) {
-            _localAmounts[0] = amount;
-            _localAmountTextController.text = amount.toStringAsFixed(
-              currency.attributes.decimalPlaces ?? 2,
-            );
-          } else {
-            _foreignCurrencies[0] = currency;
-            _foreignAmounts[0] = amount;
-            _foreignAmountTextControllers[0].text = amount.toStringAsFixed(
-              currency.attributes.decimalPlaces ?? 2,
-            );
-          }
-
-          setState(() {
-            checkTXType();
-          });
+          await _applyNotificationPrefill();
         }
         // Created from account screen, set account already
         if (widget.accountId != null && mounted) {
@@ -499,42 +414,9 @@ class _TransactionPageState extends State<TransactionPage>
     }
   }
 
-  Future<List<String>> _resolveManagedSharedAttachmentRoots() async {
-    final List<String> roots = <String>[
-      (await getTemporaryDirectory()).path,
-      (await getApplicationSupportDirectory()).path,
-    ];
-
-    try {
-      roots.add((await getApplicationDocumentsDirectory()).path);
-    } on MissingPlatformDirectoryException {
-      log.fine('application documents directory is not available');
-    }
-
-    return roots;
-  }
-
-  AttachmentRead _sharedAttachmentToDraft(
-    SharedAttachmentCandidate candidate,
-    int index,
-  ) {
-    return AttachmentRead(
-      type: "attachments",
-      id: index.toString(),
-      attributes: AttachmentProperties(
-        attachableType: AttachableType.transactionjournal,
-        attachableId: "FAKE",
-        filename: candidate.filename,
-        uploadUrl: candidate.path,
-        size: candidate.size,
-      ),
-      links: const ObjectLink(),
-    );
-  }
-
   Future<void> _prepareSharedAttachments(List<SharedFile> files) async {
     final List<String> managedRoots =
-        await _resolveManagedSharedAttachmentRoots();
+        await resolveManagedSharedAttachmentRoots();
     final SharedAttachmentValidationResult result =
         await validateSharedAttachments(files, appOwnedRoots: managedRoots);
     if (!mounted || !result.hasAny) {
@@ -564,7 +446,7 @@ class _TransactionPageState extends State<TransactionPage>
         _managedSharedAttachmentRoots = managedRoots;
         for (final SharedAttachmentCandidate candidate in result.accepted) {
           _attachments!.add(
-            _sharedAttachmentToDraft(candidate, _attachments!.length),
+            sharedAttachmentToDraft(candidate, _attachments!.length),
           );
           if (candidate.isAppOwnedCopy) {
             _managedSharedAttachmentPaths.add(candidate.path);
@@ -587,12 +469,101 @@ class _TransactionPageState extends State<TransactionPage>
 
     final List<String> paths = _managedSharedAttachmentPaths.toList();
     _managedSharedAttachmentPaths.clear();
-    for (final String path in paths) {
-      await deleteSharedAttachmentIfOwnedCopy(
-        path,
-        _managedSharedAttachmentRoots,
+    await cleanupManagedSharedAttachments(paths, _managedSharedAttachmentRoots);
+  }
+
+  List<TransactionEditorSplitDraft> _buildSplitDrafts({
+    required bool trimDate,
+  }) {
+    return List<TransactionEditorSplitDraft>.generate(_localAmounts.length, (
+      int i,
+    ) {
+      String sourceName = _sourceAccountTextControllers[i].text;
+      if (sourceName.isEmpty) {
+        sourceName = _sourceAccountTextController.text;
+      }
+
+      String destinationName = _destinationAccountTextControllers[i].text;
+      if (destinationName.isEmpty) {
+        destinationName = _destinationAccountTextController.text;
+      }
+
+      return TransactionEditorSplitDraft(
+        amount: _localAmounts[i],
+        billId: _bills[i]?.id ?? "0",
+        budgetName:
+            (_transactionType == TransactionTypeProperty.withdrawal)
+                ? _budgetTextControllers[i].text
+                : "",
+        categoryName: _categoryTextControllers[i].text,
+        date:
+            trimDate
+                ? _date.copyWith(second: 0, millisecond: 0, microsecond: 0)
+                : _date,
+        description:
+            _split ? _titleTextControllers[i].text : _titleTextController.text,
+        destinationName: destinationName,
+        foreignAmount: _foreignCurrencies[i] != null ? _foreignAmounts[i] : 0,
+        foreignCurrencyId: _foreignCurrencies[i]?.id,
+        notes: _noteTextControllers[i].text,
+        order: i,
+        piggyBankId: (_piggy[i]?.id != null) ? int.parse(_piggy[i]!.id) : null,
+        reconciled: _reconciled,
+        sourceName: sourceName,
+        tags: _tags[i].tags,
+        transactionJournalId: _transactionJournalIDs.elementAtOrNull(i),
+        type: _transactionType,
       );
+    });
+  }
+
+  Future<void> _applyNotificationPrefill() async {
+    final FireflyIii api = context.read<FireflyService>().api;
+    final SettingsProvider settings = context.read<SettingsProvider>();
+    final CurrencyRead defaultCurrency =
+        context.read<FireflyService>().defaultCurrency;
+    _localCurrency ??= defaultCurrency;
+
+    final TransactionNotificationPrefillDraft? prefill =
+        await TransactionNotificationPrefillAdapter.build(
+          api: api,
+          settings: settings,
+          notification: widget.notification!,
+          initialLocalCurrency: _localCurrency!,
+          defaultCurrency: defaultCurrency,
+        );
+    if (!mounted || prefill == null) {
+      return;
     }
+
+    log.info("Got notification payload for transaction creation");
+    _transactionType = prefill.type;
+    _titleTextController.text = prefill.title;
+    _noteTextControllers[0].text = prefill.note;
+    _sourceAccountTextController.text = prefill.sourceAccountName;
+    _sourceAccountType = prefill.sourceAccountType;
+    _ownAccountId = prefill.ownAccountId;
+    _localCurrency = prefill.localCurrency;
+    _localAmounts[0] = prefill.localAmount;
+    _foreignCurrencies[0] = prefill.foreignCurrency;
+    _foreignAmounts[0] = prefill.foreignAmount;
+
+    _localAmountTextController.text =
+        prefill.localAmount > 0
+            ? prefill.localAmount.toStringAsFixed(
+              _localCurrency?.attributes.decimalPlaces ?? 2,
+            )
+            : "";
+    _foreignAmountTextControllers[0].text =
+        prefill.foreignCurrency != null
+            ? prefill.foreignAmount.toStringAsFixed(
+              prefill.foreignCurrency!.attributes.decimalPlaces ?? 2,
+            )
+            : "";
+
+    setState(() {
+      checkTXType();
+    });
   }
 
   @override
@@ -997,78 +968,21 @@ class _TransactionPageState extends State<TransactionPage>
                         _savingInProgress = true;
                       });
                       late Response<TransactionSingle> resp;
+                      final List<TransactionEditorSplitDraft> drafts =
+                          _buildSplitDrafts(trimDate: _newTX);
 
                       // Update existing transaction
                       if (!_newTX) {
                         final String id = widget.transaction!.id;
-                        final List<TransactionSplitUpdate> txS =
-                            <TransactionSplitUpdate>[];
-                        for (int i = 0; i < _localAmounts.length; i++) {
-                          late String sourceName, destinationName;
-
-                          sourceName = _sourceAccountTextControllers[i].text;
-                          if (sourceName.isEmpty) {
-                            sourceName = _sourceAccountTextController.text;
-                          }
-                          destinationName =
-                              _destinationAccountTextControllers[i].text;
-                          if (destinationName.isEmpty) {
-                            destinationName =
-                                _destinationAccountTextController.text;
-                          }
-                          final TransactionSplitUpdate
-                          txSs = TransactionSplitUpdate(
-                            amount: _localAmounts[i].toString(),
-                            billId: _bills[i]?.id ?? "0",
-                            budgetName:
-                                (_transactionType ==
-                                        TransactionTypeProperty.withdrawal)
-                                    ? _budgetTextControllers[i].text
-                                    : "",
-                            categoryName: _categoryTextControllers[i].text,
-                            date: _date,
-                            description:
-                                _split
-                                    ? _titleTextControllers[i].text
-                                    : _titleTextController.text,
-                            destinationName: destinationName,
-                            // :HAX: Since nulled fields are not submitted, we set
-                            // the value to 0 so the foreign currency is gone...
-                            foreignAmount:
-                                _foreignCurrencies[i] != null
-                                    ? _foreignAmounts[i].toString()
-                                    : "0",
-                            foreignCurrencyId: _foreignCurrencies[i]?.id,
-                            notes: _noteTextControllers[i].text,
-                            order: i,
-                            sourceName: sourceName,
-                            tags: _tags[i].tags,
-                            transactionJournalId: _transactionJournalIDs
-                                .elementAtOrNull(i),
-                            type: _transactionType,
-                            reconciled: _reconciled,
-                          );
-
-                          final TransactionSplit? oldSplit = widget
-                              .transaction
-                              ?.attributes
-                              .transactions
-                              .firstWhereOrNull(
-                                (TransactionSplit e) =>
-                                    e.transactionJournalId != null &&
-                                    e.transactionJournalId ==
-                                        txSs.transactionJournalId,
-                              );
-                          if (oldSplit != null) {
-                            txS.add(txFilterSameFields(txSs, oldSplit));
-                          } else {
-                            txS.add(txSs);
-                          }
-                        }
-                        final TransactionUpdate txUpdate = TransactionUpdate(
-                          groupTitle: _split ? _titleTextController.text : null,
-                          transactions: txS,
-                        );
+                        final TransactionUpdate txUpdate =
+                            TransactionEditorPayloadMapper.buildUpdate(
+                              drafts: drafts,
+                              existingSplits:
+                                  widget.transaction?.attributes.transactions ??
+                                  const <TransactionSplit>[],
+                              groupTitle:
+                                  _split ? _titleTextController.text : null,
+                            );
                         // Delete old splits
                         final List<Future<Response<dynamic>>> futures =
                             _deletedSplitIDs
@@ -1089,69 +1003,12 @@ class _TransactionPageState extends State<TransactionPage>
                         );
                       } else {
                         // New transaction
-                        final List<TransactionSplitStore> txS =
-                            <TransactionSplitStore>[];
-                        for (int i = 0; i < _localAmounts.length; i++) {
-                          late String sourceName, destinationName;
-
-                          sourceName = _sourceAccountTextControllers[i].text;
-                          if (sourceName.isEmpty) {
-                            sourceName = _sourceAccountTextController.text;
-                          }
-                          destinationName =
-                              _destinationAccountTextControllers[i].text;
-                          if (destinationName.isEmpty) {
-                            destinationName =
-                                _destinationAccountTextController.text;
-                          }
-
-                          txS.add(
-                            TransactionSplitStore(
-                              type: _transactionType,
-                              date: _date.copyWith(
-                                second: 0,
-                                millisecond: 0,
-                                microsecond: 0,
-                              ),
-                              amount: _localAmounts[i].toString(),
-                              description:
-                                  _split
-                                      ? _titleTextControllers[i].text
-                                      : _titleTextController.text,
-                              billId: _bills[i]?.id ?? "0",
-                              piggyBankId:
-                                  (_piggy[i]?.id != null)
-                                      ? (int.parse(_piggy[i]!.id))
-                                      : null,
-                              budgetName:
-                                  (_transactionType ==
-                                          TransactionTypeProperty.withdrawal)
-                                      ? _budgetTextControllers[i].text
-                                      : "",
-                              categoryName: _categoryTextControllers[i].text,
-                              destinationName: destinationName,
-                              // :HAX: Since nulled fields are not submitted, we set
-                              // the value to 0 so the foreign currency is gone...
-                              foreignAmount:
-                                  _foreignCurrencies[i] != null
-                                      ? _foreignAmounts[i].toString()
-                                      : "0",
-                              foreignCurrencyId: _foreignCurrencies[i]?.id,
-                              notes: _noteTextControllers[i].text,
-                              order: i,
-                              sourceName: sourceName,
-                              tags: _tags[i].tags,
-                              reconciled: _reconciled,
-                            ),
-                          );
-                        }
-                        final TransactionStore newTx = TransactionStore(
-                          groupTitle: _split ? _titleTextController.text : null,
-                          transactions: txS,
-                          applyRules: true,
-                          fireWebhooks: true,
-                          errorIfDuplicateHash: true,
-                        );
+                        final TransactionStore newTx =
+                            TransactionEditorPayloadMapper.buildStore(
+                              drafts: drafts,
+                              groupTitle:
+                                  _split ? _titleTextController.text : null,
+                            );
                         resp = await api.v1TransactionsPost(body: newTx);
                       }
 
@@ -1194,88 +1051,16 @@ class _TransactionPageState extends State<TransactionPage>
                       await stock!.setTransaction(resp.body!.data);
 
                       // Upload attachments if required
-                      if ((_attachments?.isNotEmpty ?? false) &&
-                          _transactionJournalIDs.firstWhereOrNull(
-                                (String? e) => e != null,
-                              ) ==
-                              null) {
-                        log.fine(
-                          () => "uploading ${_attachments!.length} attachments",
+                      if (_attachments?.isNotEmpty ?? false) {
+                        await TransactionAttachmentUploadService(
+                          api: api,
+                          user: user!,
+                          logger: log,
+                        ).uploadDraftAttachments(
+                          attachments: _attachments!,
+                          transaction: resp.body!,
+                          transactionJournalIds: _transactionJournalIDs,
                         );
-                        final TransactionSplit? tx = resp
-                            .body
-                            ?.data
-                            .attributes
-                            .transactions
-                            .firstWhereOrNull(
-                              (TransactionSplit e) =>
-                                  e.transactionJournalId != null,
-                            );
-                        if (tx != null) {
-                          final String txId = tx.transactionJournalId!;
-                          log.finest(() => "uploading to txId $txId");
-                          for (AttachmentRead attachment in _attachments!) {
-                            log.finest(
-                              () =>
-                                  "uploading attachment ${attachment.id}: ${attachment.attributes.filename}",
-                            );
-                            final Response<AttachmentSingle> respAttachment =
-                                await api.v1AttachmentsPost(
-                                  body: AttachmentStore(
-                                    filename: attachment.attributes.filename!,
-                                    attachableType:
-                                        AttachableType.transactionjournal,
-                                    attachableId: txId,
-                                  ),
-                                );
-                            if (!respAttachment.isSuccessful ||
-                                respAttachment.body == null) {
-                              log.warning(() => "error uploading attachment");
-                              continue;
-                            }
-                            final AttachmentRead newAttachment =
-                                respAttachment.body!.data;
-                            log.finest(
-                              () => "attachment id is ${newAttachment.id}",
-                            );
-
-                            final File file = File(
-                              attachment.attributes.uploadUrl!,
-                            );
-
-                            final http.StreamedRequest request =
-                                http.StreamedRequest(
-                                  HttpMethod.Post,
-                                  fireflyAttachmentUploadUri(
-                                    user!,
-                                    newAttachment.id,
-                                  ),
-                                );
-                            request.headers.addAll(user.headers());
-                            disallowRedirects(request);
-                            request.headers[HttpHeaders.contentTypeHeader] =
-                                ContentType.binary.mimeType;
-                            request.contentLength = await file.length();
-                            log.fine(
-                              () =>
-                                  "AttachmentUpload: Starting Upload ${newAttachment.id}",
-                            );
-
-                            file.openRead().listen(
-                              (List<int> data) {
-                                log.finest(() => "sent ${data.length} bytes");
-                                request.sink.add(data);
-                              },
-                              onDone: () {
-                                request.sink.close();
-                              },
-                            );
-
-                            await user.httpClient.send(request);
-
-                            log.fine(() => "done uploading attachment");
-                          }
-                        }
                       }
 
                       // Done saving
@@ -2404,58 +2189,6 @@ class _TransactionPageState extends State<TransactionPage>
       ),
     );
   }
-}
-
-TransactionSplitUpdate txFilterSameFields(
-  TransactionSplitUpdate txU,
-  TransactionSplit tx,
-) {
-  /* https://github.com/firefly-iii/firefly-iii/blob/main/app/Validation/GroupValidation.php#L105
-     $forbidden = ['amount', 'foreign_amount', 'currency_code', 'currency_id', 'foreign_currency_code', 'foreign_currency_id',
-       'source_id', 'source_name', 'source_number', 'source_iban',
-       'destination_id', 'destination_name', 'destination_number', 'destination_iban',
-     ];
-       */
-  final String? amount =
-      (txU.amount == null ||
-              double.parse(tx.amount) == double.parse(txU.amount!))
-          ? null
-          : txU.amount;
-  String? foreignAmount;
-  if (txU.foreignAmount != null) {
-    if (tx.foreignAmount == null) {
-      foreignAmount = txU.foreignAmount;
-    } else if (double.parse(tx.foreignAmount!) ==
-        double.parse(txU.foreignAmount!)) {
-      foreignAmount = null;
-    } else {
-      foreignAmount = txU.foreignAmount;
-    }
-  }
-
-  // Undo "HAX" from above if not needed (foreign currency was zero, is zero)
-  if (tx.foreignCurrencyId == null &&
-      txU.foreignCurrencyId == null &&
-      foreignAmount == "0") {
-    foreignAmount = null;
-  }
-
-  return txU.copyWithWrapped(
-    amount: Wrapped<String?>.value(amount),
-    foreignAmount: Wrapped<String?>.value(foreignAmount),
-    foreignCurrencyId:
-        tx.foreignCurrencyId == txU.foreignCurrencyId
-            ? const Wrapped<String?>.value(null)
-            : Wrapped<String?>.value(txU.foreignCurrencyId),
-    sourceName:
-        tx.sourceName == txU.sourceName
-            ? const Wrapped<String?>.value(null)
-            : Wrapped<String?>.value(txU.sourceName),
-    destinationName:
-        tx.destinationName == txU.destinationName
-            ? const Wrapped<String?>.value(null)
-            : Wrapped<String?>.value(txU.destinationName),
-  );
 }
 
 class TransactionDeleteButton extends StatelessWidget {
