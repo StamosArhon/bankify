@@ -1,6 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <full-backup-content>
+    <exclude domain="sharedpref" path="FlutterSecureStorage" />
+    <exclude domain="sharedpref" path="FlutterSecureStorageConfiguration" />
+    <exclude domain="sharedpref" path="FlutterSharedPreferences" />
     <exclude
-        domain="sharedpref"
-        path="FlutterSecureStorage" />
+        domain="file"
+        path="datastore/FlutterSharedPreferences.preferences_pb" />
 </full-backup-content>

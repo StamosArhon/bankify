@@ -301,6 +301,9 @@
   - Replaced raw third-party notification JSON in local-notification payloads with opaque draft IDs backed by a short-lived app-local temp store.
   - Changed Bankify-generated notification copy to generic review/create messaging instead of echoing third-party app titles on the lock screen.
   - Set Bankify-generated notification visibility to `private` and added focused tests for opaque payload storage and Android visibility defaults.
+- Implemented on `stamos/phase-2-backup-and-prefs-privacy`:
+  - Expanded Android backup exclusions so secure storage, secure-storage config, legacy Flutter shared preferences, and the DataStore-backed preference file do not roam through cloud backup or device transfer.
+  - Added Android 12+ data extraction rules so modern device-to-device restore follows the same privacy policy as legacy full-backup rules.
 
 ### Task Slices
 
@@ -480,21 +483,20 @@
 
 ## Recommended Execution Order
 
-1. `stamos/phase-2-backup-and-prefs-privacy`
-2. `stamos/phase-2-share-intent-validation`
-3. `stamos/phase-2-lock-timeout-settings`
-4. `stamos/phase-3-git-dependency-pinning`
-5. `stamos/phase-3-hosted-package-upgrades`
-6. `stamos/phase-3-native-dependency-refresh`
-7. `stamos/phase-3-attack-surface-reduction`
-8. `stamos/phase-4-security-unit-tests`
-9. `stamos/phase-4-widget-and-flow-tests`
-10. `stamos/phase-4-manual-security-qa-checklist`
-11. `stamos/phase-5-transaction-editor-decomposition`
-12. Phase 6 work only after the hardening baseline is closed.
+1. `stamos/phase-2-share-intent-validation`
+2. `stamos/phase-2-lock-timeout-settings`
+3. `stamos/phase-3-git-dependency-pinning`
+4. `stamos/phase-3-hosted-package-upgrades`
+5. `stamos/phase-3-native-dependency-refresh`
+6. `stamos/phase-3-attack-surface-reduction`
+7. `stamos/phase-4-security-unit-tests`
+8. `stamos/phase-4-widget-and-flow-tests`
+9. `stamos/phase-4-manual-security-qa-checklist`
+10. `stamos/phase-5-transaction-editor-decomposition`
+11. Phase 6 work only after the hardening baseline is closed.
 
 ## Immediate Next Recommendation
 
-- Next implementation branch should be `stamos/phase-2-backup-and-prefs-privacy`.
-- That branch should define which settings and cached data should never roam through Android backup, and tighten persistence for privacy-sensitive notification/debug preferences where needed.
-- After that, continue with `stamos/phase-2-share-intent-validation`.
+- Next implementation branch should be `stamos/phase-2-share-intent-validation`.
+- That branch should narrow the accepted inbound MIME types, add file-size and file-origin validation, and make the confirmation flow clearer before Bankify retains or uploads shared files.
+- After that, continue with `stamos/phase-2-lock-timeout-settings`.
