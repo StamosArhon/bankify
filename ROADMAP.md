@@ -309,6 +309,11 @@
   - Added centralized inbound shared-file validation for MIME allowlisting, local-file origin checks, file-size limits, and per-batch limits, with regression tests for the acceptance rules.
   - Inserted a review dialog so shared files must be explicitly confirmed before they become transaction attachments, and temporary app-owned copies are cleaned up when discarded.
   - Reset consumed share intents after handoff so a single inbound share does not keep reopening the transaction composer on rebuilds.
+- Implemented on `stamos/phase-2-lock-timeout-settings`:
+  - Replaced the fixed 10-minute relock window with a configurable timeout that supports immediate, 1-minute, 5-minute, 10-minute, and 30-minute options.
+  - Preserved existing locked installs on the legacy 10-minute behavior when no timeout had been saved yet, while giving new lock setups a more conservative 1-minute default.
+  - Fixed the background timestamp logic so repeated quick pause/resume cycles do not keep counting from the first pause event.
+  - Added focused policy tests for timeout restoration defaults and relock-threshold behavior.
 
 ### Task Slices
 
@@ -488,19 +493,18 @@
 
 ## Recommended Execution Order
 
-1. `stamos/phase-2-lock-timeout-settings`
-2. `stamos/phase-3-git-dependency-pinning`
-3. `stamos/phase-3-hosted-package-upgrades`
-4. `stamos/phase-3-native-dependency-refresh`
-5. `stamos/phase-3-attack-surface-reduction`
-6. `stamos/phase-4-security-unit-tests`
-7. `stamos/phase-4-widget-and-flow-tests`
-8. `stamos/phase-4-manual-security-qa-checklist`
-9. `stamos/phase-5-transaction-editor-decomposition`
-10. Phase 6 work only after the hardening baseline is closed.
+1. `stamos/phase-3-git-dependency-pinning`
+2. `stamos/phase-3-hosted-package-upgrades`
+3. `stamos/phase-3-native-dependency-refresh`
+4. `stamos/phase-3-attack-surface-reduction`
+5. `stamos/phase-4-security-unit-tests`
+6. `stamos/phase-4-widget-and-flow-tests`
+7. `stamos/phase-4-manual-security-qa-checklist`
+8. `stamos/phase-5-transaction-editor-decomposition`
+9. Phase 6 work only after the hardening baseline is closed.
 
 ## Immediate Next Recommendation
 
-- Next implementation branch should be `stamos/phase-2-lock-timeout-settings`.
-- That branch should replace the fixed 10-minute app-lock window with a user-configurable timeout, while keeping the secure default conservative and documenting the behavior clearly.
-- After that, continue with `stamos/phase-3-git-dependency-pinning`.
+- Next implementation branch should be `stamos/phase-3-git-dependency-pinning`.
+- That branch should pin the remaining Git-sourced packages to immutable commits or vendored references so future lockfile refreshes cannot drift to a moving upstream head.
+- After that, continue with `stamos/phase-3-hosted-package-upgrades`.

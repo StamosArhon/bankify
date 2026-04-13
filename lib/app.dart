@@ -9,6 +9,7 @@ import 'package:logging/logging.dart';
 import 'package:provider/provider.dart';
 import 'package:provider/single_child_widget.dart';
 import 'package:quick_actions/quick_actions.dart';
+import 'package:bankify/app_lock_policy.dart';
 import 'package:bankify/auth.dart';
 import 'package:bankify/generated/l10n/app_localizations.dart';
 import 'package:bankify/notificationlistener.dart';
@@ -41,6 +42,7 @@ class _BankifyAppState extends State<BankifyApp> {
   //late StreamSubscription<List<SharedFile>> _intentDataStreamSubscription;
   List<SharedFile>? _filesSharedToApp;
   bool _requiresAuth = false;
+  AppLockTimeout _lockTimeout = defaultAppLockTimeout;
   DateTime? _lcLastOpen;
 
   @override
@@ -95,10 +97,10 @@ class _BankifyAppState extends State<BankifyApp> {
     AppLifecycleListener(
       onResume: () {
         if (_requiresAuth &&
-            (_lcLastOpen?.isBefore(
-                  DateTime.now().subtract(const Duration(minutes: 10)),
-                ) ??
-                false)) {
+            shouldRequireAppUnlock(
+              lastPausedAt: _lcLastOpen,
+              timeout: _lockTimeout,
+            )) {
           log.finest(() => "App resuming, last opened: $_lcLastOpen");
           _lcLastOpen = null;
           _authed = false;
@@ -122,9 +124,7 @@ class _BankifyAppState extends State<BankifyApp> {
               }
             } else {
               log.shout(() => "authentication failed");
-              _lcLastOpen = DateTime.now().subtract(
-                const Duration(minutes: 10),
-              );
+              _lcLastOpen = forceExpiredAppLockTimestamp();
               // close app
               SystemChannels.platform.invokeMethod('SystemNavigator.pop');
               if (canPush) {
@@ -136,7 +136,7 @@ class _BankifyAppState extends State<BankifyApp> {
       },
       onPause: () {
         if (_requiresAuth) {
-          _lcLastOpen ??= DateTime.now();
+          _lcLastOpen = DateTime.now();
           log.finest(() => "App pausing now");
         }
       },
@@ -225,6 +225,7 @@ class _BankifyAppState extends State<BankifyApp> {
             late bool signedIn;
             log.finest(() => "_startup = $_startup");
             _requiresAuth = context.watch<SettingsProvider>().lock;
+            _lockTimeout = context.watch<SettingsProvider>().lockTimeout;
             log.finest(() => "_requiresAuth = $_requiresAuth");
             if (_startup) {
               signedIn = false;

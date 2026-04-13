@@ -9,6 +9,7 @@ import 'package:package_info_plus/package_info_plus.dart';
 import 'package:provider/provider.dart';
 import 'package:quick_actions/quick_actions.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:bankify/app_lock_policy.dart';
 import 'package:bankify/auth.dart';
 import 'package:bankify/extensions.dart';
 import 'package:bankify/generated/l10n/app_localizations.dart';
@@ -29,6 +30,22 @@ class SettingsPage extends StatefulWidget {
 class SettingsPageState extends State<SettingsPage>
     with SingleTickerProviderStateMixin {
   final Logger log = Logger("Pages.Settings.Page");
+
+  String _lockTimeoutLabel(BuildContext context, AppLockTimeout timeout) {
+    final S l10n = S.of(context);
+    switch (timeout) {
+      case AppLockTimeout.immediate:
+        return l10n.settingsLockTimeoutImmediate;
+      case AppLockTimeout.oneMinute:
+        return l10n.settingsLockTimeoutOneMinute;
+      case AppLockTimeout.fiveMinutes:
+        return l10n.settingsLockTimeoutFiveMinutes;
+      case AppLockTimeout.tenMinutes:
+        return l10n.settingsLockTimeoutTenMinutes;
+      case AppLockTimeout.thirtyMinutes:
+        return l10n.settingsLockTimeoutThirtyMinutes;
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -172,6 +189,33 @@ class SettingsPageState extends State<SettingsPage>
             settings.lock = value;
           },
         ),
+        if (context.select((SettingsProvider s) => s.lock))
+          ListTile(
+            title: Text(S.of(context).settingsLockTimeout),
+            subtitle: Text(
+              "${_lockTimeoutLabel(context, context.select((SettingsProvider s) => s.lockTimeout))}\n${S.of(context).settingsLockTimeoutHelp}",
+            ),
+            isThreeLine: true,
+            leading: const CircleAvatar(child: Icon(Icons.timer_outlined)),
+            onTap: () async {
+              final AppLockTimeout currentTimeout =
+                  context.read<SettingsProvider>().lockTimeout;
+              final AppLockTimeout? selected = await showDialog<AppLockTimeout>(
+                context: context,
+                builder:
+                    (BuildContext context) => AppLockTimeoutDialog(
+                      selectedTimeout: currentTimeout,
+                      labelBuilder:
+                          (AppLockTimeout timeout) =>
+                              _lockTimeoutLabel(context, timeout),
+                    ),
+              );
+              if (selected == null) {
+                return;
+              }
+              await settings.setLockTimeout(selected);
+            },
+          ),
         const Divider(),
         FutureBuilder<NotificationListenerStatus>(
           future: nlStatus(),
@@ -260,6 +304,42 @@ class SettingsPageState extends State<SettingsPage>
                   ),
             );
           },
+        ),
+      ],
+    );
+  }
+}
+
+class AppLockTimeoutDialog extends StatelessWidget {
+  const AppLockTimeoutDialog({
+    super.key,
+    required this.selectedTimeout,
+    required this.labelBuilder,
+  });
+
+  final AppLockTimeout selectedTimeout;
+  final String Function(AppLockTimeout timeout) labelBuilder;
+
+  @override
+  Widget build(BuildContext context) {
+    return SimpleDialog(
+      title: Text(S.of(context).settingsLockTimeoutDialogTitle),
+      children: <Widget>[
+        RadioGroup<AppLockTimeout>(
+          groupValue: selectedTimeout,
+          onChanged: (AppLockTimeout? value) {
+            Navigator.of(context).pop(value);
+          },
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children:
+                AppLockTimeout.values.map((AppLockTimeout timeout) {
+                  return RadioListTile<AppLockTimeout>(
+                    value: timeout,
+                    title: Text(labelBuilder(timeout)),
+                  );
+                }).toList(),
+          ),
         ),
       ],
     );

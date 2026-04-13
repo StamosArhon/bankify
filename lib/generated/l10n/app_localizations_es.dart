@@ -720,6 +720,31 @@ class SEs extends S {
       'Por favor, autentíquese para activar la pantalla de bloqueo.';
 
   @override
+  String get settingsLockTimeout => 'Lock again after';
+
+  @override
+  String get settingsLockTimeoutHelp =>
+      'How long Bankify may stay in the background before it asks for authentication again.';
+
+  @override
+  String get settingsLockTimeoutDialogTitle => 'Choose lock timeout';
+
+  @override
+  String get settingsLockTimeoutImmediate => 'Immediately';
+
+  @override
+  String get settingsLockTimeoutOneMinute => '1 minute';
+
+  @override
+  String get settingsLockTimeoutFiveMinutes => '5 minutes';
+
+  @override
+  String get settingsLockTimeoutTenMinutes => '10 minutes';
+
+  @override
+  String get settingsLockTimeoutThirtyMinutes => '30 minutes';
+
+  @override
   String get settingsNLAppAccount => 'Cuenta por defecto';
 
   @override

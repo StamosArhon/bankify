@@ -918,6 +918,38 @@
     "@settingsLockscreenInitial": {
         "description": "Prompt to authenticate once to set up the lockscreen"
     },
+    "settingsLockTimeout": "Lock again after",
+    "@settingsLockTimeout": {
+        "description": "Setting title for the timeout before Bankify requires authentication again after being backgrounded"
+    },
+    "settingsLockTimeoutHelp": "How long Bankify may stay in the background before it asks for authentication again.",
+    "@settingsLockTimeoutHelp": {
+        "description": "Description for the configurable app lock timeout"
+    },
+    "settingsLockTimeoutDialogTitle": "Choose lock timeout",
+    "@settingsLockTimeoutDialogTitle": {
+        "description": "Dialog title for selecting the app lock timeout"
+    },
+    "settingsLockTimeoutImmediate": "Immediately",
+    "@settingsLockTimeoutImmediate": {
+        "description": "Label for an app lock timeout that requires authentication every time the app returns from background"
+    },
+    "settingsLockTimeoutOneMinute": "1 minute",
+    "@settingsLockTimeoutOneMinute": {
+        "description": "Label for a one minute app lock timeout"
+    },
+    "settingsLockTimeoutFiveMinutes": "5 minutes",
+    "@settingsLockTimeoutFiveMinutes": {
+        "description": "Label for a five minute app lock timeout"
+    },
+    "settingsLockTimeoutTenMinutes": "10 minutes",
+    "@settingsLockTimeoutTenMinutes": {
+        "description": "Label for a ten minute app lock timeout"
+    },
+    "settingsLockTimeoutThirtyMinutes": "30 minutes",
+    "@settingsLockTimeoutThirtyMinutes": {
+        "description": "Label for a thirty minute app lock timeout"
+    },
     "settingsNLAppAccount": "Default Account",
     "@settingsNLAppAccount": {
         "description": "Default account which will be used for the transaction."

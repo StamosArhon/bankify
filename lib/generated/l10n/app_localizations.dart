@@ -1188,6 +1188,54 @@ abstract class S {
   /// **'Please authenticate to enable the lock screen.'**
   String get settingsLockscreenInitial;
 
+  /// Setting title for the timeout before Bankify requires authentication again after being backgrounded
+  ///
+  /// In en, this message translates to:
+  /// **'Lock again after'**
+  String get settingsLockTimeout;
+
+  /// Description for the configurable app lock timeout
+  ///
+  /// In en, this message translates to:
+  /// **'How long Bankify may stay in the background before it asks for authentication again.'**
+  String get settingsLockTimeoutHelp;
+
+  /// Dialog title for selecting the app lock timeout
+  ///
+  /// In en, this message translates to:
+  /// **'Choose lock timeout'**
+  String get settingsLockTimeoutDialogTitle;
+
+  /// Label for an app lock timeout that requires authentication every time the app returns from background
+  ///
+  /// In en, this message translates to:
+  /// **'Immediately'**
+  String get settingsLockTimeoutImmediate;
+
+  /// Label for a one minute app lock timeout
+  ///
+  /// In en, this message translates to:
+  /// **'1 minute'**
+  String get settingsLockTimeoutOneMinute;
+
+  /// Label for a five minute app lock timeout
+  ///
+  /// In en, this message translates to:
+  /// **'5 minutes'**
+  String get settingsLockTimeoutFiveMinutes;
+
+  /// Label for a ten minute app lock timeout
+  ///
+  /// In en, this message translates to:
+  /// **'10 minutes'**
+  String get settingsLockTimeoutTenMinutes;
+
+  /// Label for a thirty minute app lock timeout
+  ///
+  /// In en, this message translates to:
+  /// **'30 minutes'**
+  String get settingsLockTimeoutThirtyMinutes;
+
   /// Default account which will be used for the transaction.
   ///
   /// In en, this message translates to:

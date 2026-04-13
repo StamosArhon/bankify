@@ -10,6 +10,7 @@ import 'package:package_info_plus/package_info_plus.dart';
 import 'package:path_provider/path_provider.dart' show getTemporaryDirectory;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:syncfusion_flutter_charts/charts.dart';
+import 'package:bankify/app_lock_policy.dart';
 import 'package:bankify/extensions.dart';
 import 'package:bankify/generated/l10n/app_localizations.dart';
 import 'package:bankify/log_privacy.dart';
@@ -127,6 +128,7 @@ class SettingsProvider with ChangeNotifier {
   static const String settingDebug = "DEBUG";
   static const String settingLocale = "LOCALE";
   static const String settingLock = "LOCK";
+  static const String settingLockTimeout = "LOCK_TIMEOUT";
   static const String settingShowFutureTXs = "SHOWFUTURETXS";
   static const String settingNLKnownApps = "NL_KNOWNAPPS";
   static const String settingNLUsedApps = "NL_USEDAPPS";
@@ -164,6 +166,9 @@ class SettingsProvider with ChangeNotifier {
 
   Locale? _locale;
   Locale? get locale => _locale;
+
+  AppLockTimeout _lockTimeout = defaultAppLockTimeout;
+  AppLockTimeout get lockTimeout => _lockTimeout;
 
   StreamSubscription<LogRecord>? _debugLogger;
 
@@ -283,6 +288,11 @@ class SettingsProvider with ChangeNotifier {
         await prefs.setString("$settingNLAppPrefix$packageName", json);
       }
     }
+
+    final int? lockTimeoutIndex = oldPrefs.getInt(settingLockTimeout);
+    if (lockTimeoutIndex != null) {
+      await prefs.setInt(settingLockTimeout, lockTimeoutIndex);
+    }
   }
 
   Future<void> loadSettings() async {
@@ -344,6 +354,15 @@ class SettingsProvider with ChangeNotifier {
 
     _notificationApps =
         await prefs.getStringList(settingNLUsedApps) ?? <String>[];
+
+    final int? lockTimeoutIndex = await prefs.getInt(settingLockTimeout);
+    _lockTimeout = resolveStoredAppLockTimeout(
+      lockTimeoutIndex,
+      lockEnabled: lock,
+    );
+    if (lock && lockTimeoutIndex == null) {
+      await prefs.setInt(settingLockTimeout, _lockTimeout.index);
+    }
 
     final int? billsLayoutIndex = await prefs.getInt(settingBillsDefaultLayout);
     _billsLayout =
@@ -463,7 +482,22 @@ class SettingsProvider with ChangeNotifier {
     }();
   }
 
-  set lock(bool enabled) => _setBool(BoolSettings.lock, enabled);
+  set lock(bool enabled) {
+    if (!_setBool(BoolSettings.lock, enabled)) {
+      return;
+    }
+
+    () async {
+      if (enabled &&
+          !await SharedPreferencesAsync().containsKey(settingLockTimeout)) {
+        await SharedPreferencesAsync().setInt(
+          settingLockTimeout,
+          _lockTimeout.index,
+        );
+      }
+    }();
+  }
+
   set showFutureTXs(bool enabled) =>
       _setBool(BoolSettings.showFutureTXs, enabled);
   set dynamicColors(bool enabled) =>
@@ -774,6 +808,18 @@ class SettingsProvider with ChangeNotifier {
     );
 
     log.finest(() => "notify SettingsProvider->setTransactionDateFilter()");
+    notifyListeners();
+  }
+
+  Future<void> setLockTimeout(AppLockTimeout timeout) async {
+    if (timeout == _lockTimeout) {
+      return;
+    }
+
+    _lockTimeout = timeout;
+    await SharedPreferencesAsync().setInt(settingLockTimeout, timeout.index);
+
+    log.finest(() => "notify SettingsProvider->setLockTimeout()");
     notifyListeners();
   }
 }
