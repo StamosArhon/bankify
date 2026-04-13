@@ -12,13 +12,12 @@ import 'package:chopper/chopper.dart'
         StripStringExtension,
         applyHeaders;
 import 'package:crypto/crypto.dart';
-import 'package:flutter/foundation.dart' show kReleaseMode;
+import 'package:flutter/foundation.dart' show kReleaseMode, visibleForTesting;
 import 'package:flutter/material.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:http/http.dart' as http;
 import 'package:http/io_client.dart';
 import 'package:logging/logging.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import 'package:version/version.dart';
 import 'package:bankify/generated/l10n/app_localizations.dart';
 import 'package:bankify/generated/swagger_fireflyiii_api/firefly_iii.swagger.dart';
@@ -498,6 +497,37 @@ class AuthUser {
   }
 }
 
+abstract interface class AuthSecureStorage {
+  Future<String?> read({required String key});
+  Future<void> write({required String key, required String? value});
+  Future<void> delete({required String key});
+}
+
+class FlutterAuthSecureStorage implements AuthSecureStorage {
+  const FlutterAuthSecureStorage([
+    this._storage = const FlutterSecureStorage(
+      aOptions: AndroidOptions(resetOnError: true),
+    ),
+  ]);
+
+  final FlutterSecureStorage _storage;
+
+  @override
+  Future<String?> read({required String key}) {
+    return _storage.read(key: key);
+  }
+
+  @override
+  Future<void> write({required String key, required String? value}) {
+    return _storage.write(key: key, value: value);
+  }
+
+  @override
+  Future<void> delete({required String key}) {
+    return _storage.delete(key: key);
+  }
+}
+
 class FireflyService with ChangeNotifier {
   static const String storageApiHost = 'api_host';
   static const String storageApiKey = 'api_key';
@@ -507,6 +537,17 @@ class FireflyService with ChangeNotifier {
   static const String storageTlsIssuer = 'api_tls_issuer';
   static const String storageTlsValidFrom = 'api_tls_valid_from';
   static const String storageTlsValidTo = 'api_tls_valid_to';
+  @visibleForTesting
+  static const List<String> persistedSessionSecretKeys = <String>[
+    storageApiHost,
+    storageApiKey,
+    storageTlsAuthority,
+    storageTlsFingerprint,
+    storageTlsSubject,
+    storageTlsIssuer,
+    storageTlsValidFrom,
+    storageTlsValidTo,
+  ];
 
   AuthUser? _currentUser;
   AuthUser? get user => _currentUser;
@@ -543,13 +584,12 @@ class FireflyService with ChangeNotifier {
   late CurrencyRead defaultCurrency;
   late TimeZoneHandler tzHandler;
 
-  final FlutterSecureStorage storage = const FlutterSecureStorage(
-    aOptions: AndroidOptions(resetOnError: true),
-  );
+  final AuthSecureStorage storage;
 
   final Logger log = Logger("Auth.FireflyService");
 
-  FireflyService() {
+  FireflyService({AuthSecureStorage? storage})
+    : storage = storage ?? const FlutterAuthSecureStorage() {
     log.finest(() => "new FireflyService");
   }
 
@@ -624,6 +664,12 @@ class FireflyService with ChangeNotifier {
     await storage.delete(key: storageTlsValidTo);
   }
 
+  Future<void> _clearPersistedSessionSecrets() async {
+    for (final String key in persistedSessionSecretKeys) {
+      await storage.delete(key: key);
+    }
+  }
+
   Future<void> trustServerCertificate(
     TrustedServerCertificate certificate,
   ) async {
@@ -659,11 +705,12 @@ class FireflyService with ChangeNotifier {
     _currentUser?.dispose();
     _currentUser = null;
     _signedIn = false;
+    _lastTriedHost = null;
     _storageSignInException = null;
+    _apiVersion = null;
     _pendingTrustedCertificate = null;
-    await storage.deleteAll();
-    final SharedPreferences prefs = await SharedPreferences.getInstance();
-    await prefs.clear();
+    _transStock = null;
+    await _clearPersistedSessionSecrets();
 
     log.finest(() => "notify FireflyService->signOut");
     notifyListeners();

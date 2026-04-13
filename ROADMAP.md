@@ -492,6 +492,7 @@
 - `stamos/phase-5-domain-service-extraction`
   Completed on 2026-04-13. Extracts dashboard, bills, accounts, and piggy-bank fetch/shaping logic into reusable services so the widgets keep mostly cache state, refresh triggers, and rendering responsibilities.
 - `stamos/phase-5-logout-preference-retention`
+  Completed on 2026-04-13. Narrows logout to explicit secure auth/certificate key cleanup, preserves non-secret user preferences, and adds regression coverage so future refactors do not reintroduce blanket preference wiping.
 
 ## Phase 6: UX And Feature Improvement Backlog
 
@@ -536,7 +537,6 @@
 
 ## Immediate Next Recommendation
 
-- Phase 5 is in progress.
-- The transaction-editor decomposition, shell-state refactor, and domain-service extraction slices are complete.
-- Next implementation branch should be `stamos/phase-5-logout-preference-retention`.
-- That branch should narrow `signOut()` so it clears credentials and session material without wiping non-secret user preferences.
+- Phase 5 is complete.
+- Architecture work is now in a safer place for UX and feature iteration: transaction payload/editor logic is split out, shell/session state is typed, domain fetch logic has service seams, and logout now preserves non-secret preferences while still clearing persisted auth material.
+- Next implementation work can begin in Phase 6, starting with `stamos/phase-6-transaction-editor-ux`.
