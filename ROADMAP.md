@@ -551,7 +551,7 @@
 - `stamos/phase-6-dashboard-and-privacy-center`
   Completed on 2026-04-14. Expands dashboard customization into a richer full-screen editor, consolidates privacy-sensitive controls into a dedicated privacy center, and separates app info from debug-log management.
 - `stamos/phase-6-multi-profile-and-cache-foundation`
-  Introduces the account/session model required for multi-profile support and only then layers in a read-only startup or offline cache for core lists.
+  Completed on 2026-04-14. Introduces explicit profile/session identity, adds profile-scoped read-only cache plumbing, and applies the first offline fallback layer to accounts and bills without overreaching into broader sync behavior.
 
 ## Recommended Execution Order
 
@@ -576,7 +576,7 @@
 
 ## Immediate Next Recommendation
 
-- Phase 6 is in progress.
-- The transaction-editor UX, navigation/screen-state, transaction-flow productivity, share/detail flow, onboarding/connection-health, and dashboard/privacy-center slices are complete, so the final dependency-aware step is the multi-profile/session foundation plus the first read-only cache boundary.
+- Phase 6 is complete.
+- The transaction-editor UX, navigation/screen-state, transaction-flow productivity, share/detail flow, onboarding/connection-health, dashboard/privacy-center, and multi-profile/cache-foundation slices are all complete.
 - Architecture work is now in a safer place for UX and feature iteration: transaction payload/editor logic is split out, shell/session state is typed, domain fetch logic has service seams, and logout now preserves non-secret preferences while still clearing persisted auth material.
-- Next implementation work should continue with `stamos/phase-6-multi-profile-and-cache-foundation`.
+- The next implementation step should be a new roadmap extension or a user-prioritized feature/UI branch built on top of the completed Phase 6 baseline.

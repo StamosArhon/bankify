@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter_sharing_intent/model/sharing_file.dart';
 import 'package:bankify/app_lock_policy.dart';
+import 'package:bankify/app_profile.dart';
 import 'package:bankify/notificationlistener.dart';
 
 const String transactionAddQuickActionType = 'action_transaction_add';
@@ -64,6 +65,7 @@ class AppSessionState {
     this.lockEnabled = false,
     this.lockTimeout = defaultAppLockTimeout,
     this.lastPausedAt,
+    this.profile,
     this.launchRequest = AppLaunchRequest.empty,
   });
 
@@ -72,6 +74,7 @@ class AppSessionState {
   final bool lockEnabled;
   final AppLockTimeout lockTimeout;
   final DateTime? lastPausedAt;
+  final AppProfile? profile;
   final AppLaunchRequest launchRequest;
 
   bool get startupInProgress => startupPhase != AppStartupPhase.ready;
@@ -97,6 +100,8 @@ class AppSessionState {
     AppLockTimeout? lockTimeout,
     DateTime? lastPausedAt,
     bool clearLastPausedAt = false,
+    AppProfile? profile,
+    bool clearProfile = false,
     AppLaunchRequest? launchRequest,
   }) {
     return AppSessionState(
@@ -106,6 +111,7 @@ class AppSessionState {
       lockTimeout: lockTimeout ?? this.lockTimeout,
       lastPausedAt:
           clearLastPausedAt ? null : lastPausedAt ?? this.lastPausedAt,
+      profile: clearProfile ? null : profile ?? this.profile,
       launchRequest: launchRequest ?? this.launchRequest,
     );
   }

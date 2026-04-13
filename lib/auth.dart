@@ -19,8 +19,10 @@ import 'package:http/http.dart' as http;
 import 'package:http/io_client.dart';
 import 'package:logging/logging.dart';
 import 'package:version/version.dart';
+import 'package:bankify/app_profile.dart';
 import 'package:bankify/generated/l10n/app_localizations.dart';
 import 'package:bankify/generated/swagger_fireflyiii_api/firefly_iii.swagger.dart';
+import 'package:bankify/profile_cache_store.dart';
 import 'package:bankify/stock.dart';
 import 'package:bankify/timezonehandler.dart';
 
@@ -684,6 +686,8 @@ class FireflyService with ChangeNotifier {
   AuthUser? get user => _currentUser;
   bool _signedIn = false;
   bool get signedIn => _signedIn;
+  AppProfile? _currentProfile;
+  AppProfile? get currentProfile => _currentProfile;
   String? _connectedHost;
   String? get connectedHost => _connectedHost;
   String? _lastTriedHost;
@@ -718,11 +722,13 @@ class FireflyService with ChangeNotifier {
   late TimeZoneHandler tzHandler;
 
   final AuthSecureStorage storage;
+  final ProfileCacheStore cacheStore;
 
   final Logger log = Logger("Auth.FireflyService");
 
-  FireflyService({AuthSecureStorage? storage})
-    : storage = storage ?? const FlutterAuthSecureStorage() {
+  FireflyService({AuthSecureStorage? storage, ProfileCacheStore? cacheStore})
+    : storage = storage ?? const FlutterAuthSecureStorage(),
+      cacheStore = cacheStore ?? ProfileCacheStore() {
     log.finest(() => "new FireflyService");
   }
 
@@ -844,15 +850,20 @@ class FireflyService with ChangeNotifier {
 
   Future<void> signOut() async {
     log.config("FireflyService->signOut()");
+    final AppProfile? profileToClear = _currentProfile;
     _currentUser?.dispose();
     _currentUser = null;
     _signedIn = false;
+    _currentProfile = null;
     _connectedHost = null;
     _lastTriedHost = null;
     _storageSignInException = null;
     _apiVersion = null;
     _pendingTrustedCertificate = null;
     _transStock = null;
+    if (profileToClear != null) {
+      await cacheStore.clearProfile(profileToClear);
+    }
     await _clearPersistedSessionSecrets();
 
     log.finest(() => "notify FireflyService->signOut");
@@ -866,6 +877,10 @@ class FireflyService with ChangeNotifier {
       host = "$secureHostScheme$host";
     }
     apiKey = apiKey.strip();
+    final AppProfile profile = AppProfile.fromCredentials(
+      host: host,
+      apiKey: apiKey,
+    );
 
     _lastTriedHost = host;
     final Uri trustedCertificateUri = Uri.parse(host);
@@ -920,6 +935,7 @@ class FireflyService with ChangeNotifier {
     tzHandler = TimeZoneHandler(reply.data.value);
 
     _signedIn = true;
+    _currentProfile = profile;
     _connectedHost = host;
     _transStock = TransStock(api);
     log.finest(() => "notify FireflyService->signIn");
