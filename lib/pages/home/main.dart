@@ -1,6 +1,5 @@
 import 'dart:async';
 
-import 'package:chopper/chopper.dart' show Response;
 import 'package:collection/collection.dart';
 import 'package:community_charts_flutter/community_charts_flutter.dart'
     as charts;
@@ -8,7 +7,6 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:logging/logging.dart';
 import 'package:provider/provider.dart';
-import 'package:timezone/timezone.dart';
 import 'package:bankify/animations.dart';
 import 'package:bankify/auth.dart';
 import 'package:bankify/extensions.dart';
@@ -21,6 +19,7 @@ import 'package:bankify/pages/home/main/charts/netearnings.dart';
 import 'package:bankify/pages/home/main/charts/networth.dart';
 import 'package:bankify/pages/home/main/charts/summary.dart';
 import 'package:bankify/pages/home/main/dashboard.dart';
+import 'package:bankify/services/dashboard_service.dart';
 import 'package:bankify/settings.dart';
 import 'package:bankify/stock.dart';
 import 'package:bankify/timezonehandler.dart';
@@ -53,12 +52,18 @@ class _HomeMainState extends State<HomeMain>
   final Map<String, BudgetProperties> budgetInfos =
       <String, BudgetProperties>{};
   late TransStock _stock;
+  late DashboardService _dashboardService;
 
   @override
   void initState() {
     super.initState();
 
     _stock = context.read<FireflyService>().transStock!;
+    _dashboardService = DashboardService(
+      api: context.read<FireflyService>().api,
+      tzHandler: context.read<FireflyService>().tzHandler,
+      defaultCurrency: context.read<FireflyService>().defaultCurrency,
+    );
     _stock.addListener(_refreshStats);
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -92,41 +97,9 @@ class _HomeMainState extends State<HomeMain>
       return true;
     }
 
-    final FireflyIii api = context.read<FireflyService>().api;
-    final TimeZoneHandler tzHandler = context.read<FireflyService>().tzHandler;
-
-    // Use noon due to daylight saving time
-    final TZDateTime now = tzHandler.sNow().setTimeOfDay(
-      const TimeOfDay(hour: 12, minute: 0),
-    );
-
-    final Response<List<ChartDataSet>> respBalanceData = await api
-        .v1ChartBalanceBalanceGet(
-          start: DateFormat(
-            'yyyy-MM-dd',
-            'en_US',
-          ).format(now.copyWith(day: now.day - 6)),
-          end: DateFormat('yyyy-MM-dd', 'en_US').format(now),
-          period: V1ChartBalanceBalanceGetPeriod.value_1d,
-        );
-    apiThrowErrorIfEmpty(respBalanceData, mounted ? context : null);
-
-    for (ChartDataSet e in respBalanceData.body!) {
-      final Map<String, dynamic> entries = e.entries as Map<String, dynamic>;
-      entries.forEach((String dateStr, dynamic valueStr) {
-        final DateTime date = tzHandler
-            .sTime(DateTime.parse(dateStr))
-            .toLocal()
-            .setTimeOfDay(const TimeOfDay(hour: 12, minute: 0));
-
-        final double value = double.tryParse(valueStr) ?? 0;
-        if (e.label == "earned") {
-          lastDaysIncome[date] = (lastDaysIncome[date] ?? 0) + value;
-        } else if (e.label == "spent") {
-          lastDaysExpense[date] = (lastDaysExpense[date] ?? 0) + value;
-        }
-      });
-    }
+    final DashboardLastDaysData data = await _dashboardService.fetchLastDays();
+    lastDaysExpense.addAll(data.expense);
+    lastDaysIncome.addAll(data.income);
 
     return true;
   }
@@ -136,23 +109,7 @@ class _HomeMainState extends State<HomeMain>
       return true;
     }
 
-    final FireflyIii api = context.read<FireflyService>().api;
-    final TimeZoneHandler tzHandler = context.read<FireflyService>().tzHandler;
-
-    final DateTime now = tzHandler.sNow().clearTime();
-
-    final Response<ChartLine> respChartData = await api
-        .v1ChartAccountOverviewGet(
-          start: DateFormat(
-            'yyyy-MM-dd',
-            'en_US',
-          ).format(now.copyWith(month: now.month - 3)),
-          end: DateFormat('yyyy-MM-dd', 'en_US').format(now),
-          period: V1ChartAccountOverviewGetPeriod.value_1d,
-        );
-    apiThrowErrorIfEmpty(respChartData, mounted ? context : null);
-
-    overviewChartData = respChartData.body!;
+    overviewChartData = await _dashboardService.fetchOverviewChart();
 
     return true;
   }
@@ -162,68 +119,10 @@ class _HomeMainState extends State<HomeMain>
       return true;
     }
 
-    final FireflyIii api = context.read<FireflyService>().api;
-    final TimeZoneHandler tzHandler = context.read<FireflyService>().tzHandler;
-
-    final DateTime now = tzHandler.sNow().clearTime();
-    final List<DateTime> lastMonths = <DateTime>[];
-    for (int i = 0; i < 3; i++) {
-      lastMonths.add(DateTime(now.year, now.month - i, (i == 0) ? now.day : 1));
-    }
-
-    for (DateTime e in lastMonths) {
-      late DateTime start;
-      late DateTime end;
-      if (e == lastMonths.first) {
-        start = e.copyWith(day: 1);
-        end = e;
-      } else {
-        start = e;
-        end = e.copyWith(month: e.month + 1, day: 0);
-      }
-      final (
-        Response<InsightTotal> respInsightExpense,
-        Response<InsightTotal> respInsightIncome,
-      ) = await (
-            api.v1InsightExpenseTotalGet(
-              start: DateFormat('yyyy-MM-dd', 'en_US').format(start),
-              end: DateFormat('yyyy-MM-dd', 'en_US').format(end),
-            ),
-            api.v1InsightIncomeTotalGet(
-              start: DateFormat('yyyy-MM-dd', 'en_US').format(start),
-              end: DateFormat('yyyy-MM-dd', 'en_US').format(end),
-            ),
-          ).wait;
-      apiThrowErrorIfEmpty(respInsightExpense, mounted ? context : null);
-      apiThrowErrorIfEmpty(respInsightIncome, mounted ? context : null);
-
-      lastMonthsExpense[e] =
-          respInsightExpense.body!.isNotEmpty
-              ? respInsightExpense.body!.first
-              : const InsightTotalEntry(differenceFloat: 0);
-      lastMonthsIncome[e] =
-          respInsightIncome.body!.isNotEmpty
-              ? respInsightIncome.body!.first
-              : const InsightTotalEntry(differenceFloat: 0);
-    }
-
-    // If too big digits are present (>=100000), only show two columns to avoid
-    // wrapping issues. See #30.
-    double maxNum = 0;
-    lastMonthsIncome.forEach((_, InsightTotalEntry value) {
-      if ((value.differenceFloat ?? 0) > maxNum) {
-        maxNum = value.differenceFloat ?? 0;
-      }
-    });
-    lastMonthsExpense.forEach((_, InsightTotalEntry value) {
-      if ((value.differenceFloat ?? 0) > maxNum) {
-        maxNum = value.differenceFloat ?? 0;
-      }
-    });
-    if (maxNum >= 100000) {
-      lastMonthsIncome.remove(lastMonthsIncome.keys.first);
-      lastMonthsExpense.remove(lastMonthsExpense.keys.first);
-    }
+    final DashboardLastMonthsData data =
+        await _dashboardService.fetchLastMonthsSummary();
+    lastMonthsExpense.addAll(data.expense);
+    lastMonthsIncome.addAll(data.income);
 
     return true;
   }
@@ -234,162 +133,27 @@ class _HomeMainState extends State<HomeMain>
       return true;
     }
 
-    final FireflyIii api = context.read<FireflyService>().api;
-    final TimeZoneHandler tzHandler = context.read<FireflyService>().tzHandler;
-    final CurrencyRead defaultCurrency =
-        context.read<FireflyService>().defaultCurrency;
-
-    final DateTime now = tzHandler.sNow().clearTime();
-
-    late final Response<InsightGroup> respIncomeData;
-    late final Response<InsightGroup> respExpenseData;
-    if (!tags) {
-      (respIncomeData, respExpenseData) =
-          await (
-            api.v1InsightIncomeCategoryGet(
-              start: DateFormat(
-                'yyyy-MM-dd',
-                'en_US',
-              ).format(now.copyWith(day: 1)),
-              end: DateFormat('yyyy-MM-dd', 'en_US').format(now),
-            ),
-            api.v1InsightExpenseCategoryGet(
-              start: DateFormat(
-                'yyyy-MM-dd',
-                'en_US',
-              ).format(now.copyWith(day: 1)),
-              end: DateFormat('yyyy-MM-dd', 'en_US').format(now),
-            ),
-          ).wait;
+    final List<InsightGroupEntry> data = await _dashboardService
+        .fetchCategoryInsights(tags: tags);
+    if (tags) {
+      tagChartData.addAll(data);
     } else {
-      (respIncomeData, respExpenseData) =
-          await (
-            api.v1InsightIncomeTagGet(
-              start: DateFormat(
-                'yyyy-MM-dd',
-                'en_US',
-              ).format(now.copyWith(day: 1)),
-              end: DateFormat('yyyy-MM-dd', 'en_US').format(now),
-            ),
-            api.v1InsightExpenseTagGet(
-              start: DateFormat(
-                'yyyy-MM-dd',
-                'en_US',
-              ).format(now.copyWith(day: 1)),
-              end: DateFormat('yyyy-MM-dd', 'en_US').format(now),
-            ),
-          ).wait;
-    }
-    apiThrowErrorIfEmpty(respIncomeData, mounted ? context : null);
-    apiThrowErrorIfEmpty(respExpenseData, mounted ? context : null);
-
-    final Map<String, double> incomes = <String, double>{};
-    for (InsightGroupEntry entry
-        in respIncomeData.body ?? <InsightGroupEntry>[]) {
-      if (entry.id?.isEmpty ?? true) {
-        continue;
-      }
-      if (entry.currencyId == null || entry.currencyId != defaultCurrency.id) {
-        continue;
-      }
-      incomes[entry.id!] = entry.differenceFloat ?? 0;
-    }
-
-    for (InsightGroupEntry entry in respExpenseData.body!) {
-      if (entry.id?.isEmpty ?? true) {
-        continue;
-      }
-      if (entry.currencyId == null || entry.currencyId != defaultCurrency.id) {
-        continue;
-      }
-      double amount = entry.differenceFloat ?? 0;
-      if (incomes.containsKey(entry.id)) {
-        amount += incomes[entry.id]!;
-      }
-      // Don't add "positive" entries, we want to show expenses
-      if (amount >= 0) {
-        continue;
-      }
-      tags
-          ? tagChartData.add(entry.copyWith(differenceFloat: amount))
-          : catChartData.add(entry.copyWith(differenceFloat: amount));
+      catChartData.addAll(data);
     }
 
     return true;
   }
 
   Future<List<BudgetLimitRead>> _fetchBudgets() async {
-    final FireflyIii api = context.read<FireflyService>().api;
-    final TimeZoneHandler tzHandler = context.read<FireflyService>().tzHandler;
-
-    final DateTime now = tzHandler.sNow().clearTime();
-
-    final (
-      Response<BudgetArray> respBudgetInfos,
-      Response<BudgetLimitArray> respBudgets,
-    ) = await (
-          api.v1BudgetsGet(),
-          api.v1BudgetLimitsGet(
-            start: DateFormat(
-              'yyyy-MM-dd',
-              'en_US',
-            ).format(now.copyWith(day: 1)),
-            end: DateFormat('yyyy-MM-dd', 'en_US').format(now),
-          ),
-        ).wait;
-    apiThrowErrorIfEmpty(respBudgetInfos, mounted ? context : null);
-    apiThrowErrorIfEmpty(respBudgets, mounted ? context : null);
-
-    for (BudgetRead budget in respBudgetInfos.body!.data) {
-      budgetInfos[budget.id] = budget.attributes;
-    }
-
-    respBudgets.body!.data.sort((BudgetLimitRead a, BudgetLimitRead b) {
-      final BudgetProperties? budgetA = budgetInfos[a.attributes.budgetId];
-      final BudgetProperties? budgetB = budgetInfos[b.attributes.budgetId];
-
-      if (budgetA == null && budgetB != null) {
-        return -1;
-      } else if (budgetA != null && budgetB == null) {
-        return 1;
-      } else if (budgetA == null && budgetB == null) {
-        return 0;
-      }
-      final int compare = (budgetA!.order ?? -1).compareTo(
-        budgetB!.order ?? -1,
-      );
-      if (compare != 0) {
-        return compare;
-      }
-      return a.attributes.start!.compareTo(b.attributes.start!);
-    });
-
-    return respBudgets.body!.data;
+    final DashboardBudgetData data = await _dashboardService.fetchBudgetData();
+    budgetInfos
+      ..clear()
+      ..addAll(data.budgetInfos);
+    return data.budgetLimits;
   }
 
-  Future<List<BillRead>> _fetchBills() async {
-    final FireflyIii api = context.read<FireflyService>().api;
-    final TimeZoneHandler tzHandler = context.read<FireflyService>().tzHandler;
-
-    final DateTime now = tzHandler.sNow().clearTime();
-    final DateTime end = now.copyWith(day: now.day + 7);
-
-    final Response<BillArray> respBills = await api.v1BillsGet(
-      start: DateFormat('yyyy-MM-dd', 'en_US').format(now),
-      end: DateFormat('yyyy-MM-dd', 'en_US').format(end),
-    );
-    apiThrowErrorIfEmpty(respBills, mounted ? context : null);
-
-    return respBills.body!.data
-        .where(
-          (BillRead e) => (e.attributes.nextExpectedMatch != null
-                  ? tzHandler.sTime(e.attributes.nextExpectedMatch!)
-                  : end.copyWith(day: end.day + 2))
-              .toLocal()
-              .clearTime()
-              .isBefore(end.copyWith(day: end.day + 1)),
-        )
-        .toList(growable: false);
+  Future<List<BillRead>> _fetchBills() {
+    return _dashboardService.fetchUpcomingBills();
   }
 
   Future<bool> _fetchBalance() async {
@@ -397,129 +161,12 @@ class _HomeMainState extends State<HomeMain>
       return true;
     }
 
-    final FireflyIii api = context.read<FireflyService>().api;
-    final TimeZoneHandler tzHandler = context.read<FireflyService>().tzHandler;
-
-    final DateTime now = tzHandler.sNow().clearTime();
-    final DateTime end = now.copyWith(
-      month: now.month + 1,
-      day: 0,
-      hour: 23,
-      minute: 59,
-      second: 59,
-    );
-    final DateTime start = now.copyWith(
-      month: now.month - 11,
-      day: 1,
-      hour: 0,
-      minute: 0,
-      second: 0,
-    );
-
-    final (
-      Response<AccountArray> respAssetAccounts,
-      Response<AccountArray> respLiabilityAccounts,
-      Response<List<ChartDataSet>> respBalanceData,
-    ) = await (
-          api.v1AccountsGet(type: AccountTypeFilter.asset),
-          api.v1AccountsGet(type: AccountTypeFilter.liabilities),
-          api.v1ChartAccountOverviewGet(
-            start: DateFormat('yyyy-MM-dd', 'en_US').format(start),
-            end: DateFormat('yyyy-MM-dd', 'en_US').format(end),
-            preselected: V1ChartAccountOverviewGetPreselected.all,
-            period: V1ChartAccountOverviewGetPeriod.value_1d,
-          ),
-        ).wait;
-    apiThrowErrorIfEmpty(respAssetAccounts, mounted ? context : null);
-    apiThrowErrorIfEmpty(respLiabilityAccounts, mounted ? context : null);
-    apiThrowErrorIfEmpty(respBalanceData, mounted ? context : null);
-
-    final Map<String, bool> includeInNetWorth = <String, bool>{
-      for (AccountRead e in respAssetAccounts.body!.data)
-        e.attributes.name: e.attributes.includeNetWorth ?? true,
-    };
-    includeInNetWorth.addAll(<String, bool>{
-      for (AccountRead e in respLiabilityAccounts.body!.data)
-        e.attributes.name: e.attributes.includeNetWorth ?? true,
-    });
-    for (ChartDataSet e in respBalanceData.body!) {
-      if (includeInNetWorth.containsKey(e.label) &&
-          includeInNetWorth[e.label] != true) {
-        continue;
-      }
-      final Map<String, dynamic> entries = e.entries as Map<String, dynamic>;
-      entries.forEach((String dateStr, dynamic valueStr) {
-        DateTime date = tzHandler.sTime(DateTime.parse(dateStr)).toLocal();
-        if (
-        // Current month: take current day
-        (date.month == now.month &&
-                date.year == now.year &&
-                date.day == now.day) ||
-            // Other month: take last day of month
-            (date.month != now.month &&
-                date.copyWith(day: date.day + 1).month != date.month)) {
-          final double value = double.tryParse(valueStr) ?? 0;
-          // We don't really care about the exact date. Always using the first
-          // ensures the loops below to fill up gaps work properly.
-          date = date.copyWith(day: 1);
-          if (value > 0) {
-            lastMonthsAssets[date] = (lastMonthsAssets[date] ?? 0) + value;
-          }
-          if (value < 0) {
-            lastMonthsLiabilities[date] =
-                (lastMonthsLiabilities[date] ?? 0) + value;
-          }
-        }
-      });
-    }
-
-    if (lastMonthsEarned.length < 3) {
-      final DateTime lastDate = now.copyWith(day: 1);
-      for (int i = 0; i < 3; i++) {
-        final DateTime newDate = lastDate.copyWith(month: lastDate.month - i);
-        lastMonthsEarned[newDate] = lastMonthsEarned[newDate] ?? 0;
-      }
-    }
-    lastMonthsEarned = Map<DateTime, double>.fromEntries(
-      lastMonthsEarned.entries.toList()
-        ..sortBy((MapEntry<DateTime, double> e) => e.key),
-    );
-
-    if (lastMonthsSpent.length < 3) {
-      final DateTime lastDate = now.copyWith(day: 1);
-      for (int i = 0; i < 3; i++) {
-        final DateTime newDate = lastDate.copyWith(month: lastDate.month - i);
-        lastMonthsSpent[newDate] = lastMonthsSpent[newDate] ?? 0;
-      }
-    }
-    lastMonthsSpent = Map<DateTime, double>.fromEntries(
-      lastMonthsSpent.entries.toList()
-        ..sortBy((MapEntry<DateTime, double> e) => e.key),
-    );
-
-    if (lastMonthsAssets.length < 12) {
-      final DateTime lastDate = now.copyWith(day: 1);
-      for (int i = 0; i < 12; i++) {
-        final DateTime newDate = lastDate.copyWith(month: lastDate.month - i);
-        lastMonthsAssets[newDate] = lastMonthsAssets[newDate] ?? 0;
-      }
-    }
-    lastMonthsAssets = Map<DateTime, double>.fromEntries(
-      lastMonthsAssets.entries.toList()
-        ..sortBy((MapEntry<DateTime, double> e) => e.key),
-    );
-
-    if (lastMonthsLiabilities.length < 12) {
-      final DateTime lastDate = now.copyWith(day: 1);
-      for (int i = 0; i < 12; i++) {
-        final DateTime newDate = lastDate.copyWith(month: lastDate.month - i);
-        lastMonthsLiabilities[newDate] = lastMonthsLiabilities[newDate] ?? 0;
-      }
-    }
-    lastMonthsLiabilities = Map<DateTime, double>.fromEntries(
-      lastMonthsLiabilities.entries.toList()
-        ..sortBy((MapEntry<DateTime, double> e) => e.key),
-    );
+    final DashboardBalanceData data =
+        await _dashboardService.fetchBalanceData();
+    lastMonthsEarned = data.earned;
+    lastMonthsSpent = data.spent;
+    lastMonthsAssets = data.assets;
+    lastMonthsLiabilities = data.liabilities;
 
     return true;
   }

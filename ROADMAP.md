@@ -490,6 +490,7 @@
 - `stamos/phase-5-shell-state-refactor`
   Completed on 2026-04-13. Replaces the ad hoc startup flags with a typed app-session model, routes initial launch intents through the navigation shell, and gives top-level app-bar/FAB state an explicit chrome controller and regression tests.
 - `stamos/phase-5-domain-service-extraction`
+  Completed on 2026-04-13. Extracts dashboard, bills, accounts, and piggy-bank fetch/shaping logic into reusable services so the widgets keep mostly cache state, refresh triggers, and rendering responsibilities.
 - `stamos/phase-5-logout-preference-retention`
 
 ## Phase 6: UX And Feature Improvement Backlog
@@ -536,6 +537,6 @@
 ## Immediate Next Recommendation
 
 - Phase 5 is in progress.
-- The transaction-editor decomposition and shell-state refactor slices are complete.
-- Next implementation branch should be `stamos/phase-5-domain-service-extraction`.
-- That branch should move dashboard, bills, piggy-bank, and account-fetch logic into reusable services before the final logout preference-retention slice.
+- The transaction-editor decomposition, shell-state refactor, and domain-service extraction slices are complete.
+- Next implementation branch should be `stamos/phase-5-logout-preference-retention`.
+- That branch should narrow `signOut()` so it clears credentials and session material without wiping non-secret user preferences.

@@ -1,5 +1,4 @@
 import 'package:animations/animations.dart';
-import 'package:chopper/chopper.dart' show Response;
 import 'package:flutter/material.dart';
 import 'package:infinite_scroll_pagination/infinite_scroll_pagination.dart';
 import 'package:logging/logging.dart';
@@ -11,6 +10,7 @@ import 'package:bankify/generated/swagger_fireflyiii_api/firefly_iii.swagger.dar
 import 'package:bankify/pages/home/accounts/row.dart';
 import 'package:bankify/pages/home/accounts/search.dart';
 import 'package:bankify/pages/navigation.dart';
+import 'package:bankify/services/accounts_service.dart';
 
 final Logger log = Logger("Pages.Accounts");
 
@@ -137,33 +137,35 @@ class _AccountDetailsState extends State<AccountDetails>
   PagingState<int, AccountRead> _pagingState = PagingState<int, AccountRead>();
 
   final Logger log = Logger("Pages.Accounts.Details");
+  late final AccountsService _accountsService;
+
+  @override
+  void initState() {
+    super.initState();
+    _accountsService = AccountsService(context.read<FireflyService>().api);
+  }
 
   Future<void> _fetchPage() async {
     if (_pagingState.isLoading) return;
 
     try {
-      final FireflyIii api = context.read<FireflyService>().api;
-
       final int pageKey = (_pagingState.keys?.last ?? 0) + 1;
       log.finest(
         "Getting page $pageKey (${_pagingState.pages?.length} pages loaded)",
       );
 
-      final Response<AccountArray> respAccounts = await api.v1AccountsGet(
+      final AccountsPageResult page = await _accountsService.fetchPage(
         type: widget.accountType,
         page: pageKey,
+        limit: _numberOfItemsPerRequest,
       );
-      apiThrowErrorIfEmpty(respAccounts, mounted ? context : null);
-
-      final List<AccountRead> accountList = respAccounts.body!.data;
-      final bool isLastPage = accountList.length < _numberOfItemsPerRequest;
 
       if (mounted) {
         setState(() {
           _pagingState = _pagingState.copyWith(
-            pages: <List<AccountRead>>[...?_pagingState.pages, accountList],
+            pages: <List<AccountRead>>[...?_pagingState.pages, page.accounts],
             keys: <int>[...?_pagingState.keys, pageKey],
-            hasNextPage: !isLastPage,
+            hasNextPage: !page.isLastPage,
             isLoading: false,
             error: null,
           );

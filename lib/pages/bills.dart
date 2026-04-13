@@ -1,7 +1,5 @@
 import 'package:animations/animations.dart';
-import 'package:chopper/chopper.dart' show Response;
 import 'package:flutter/material.dart';
-import 'package:intl/intl.dart';
 import 'package:logging/logging.dart';
 import 'package:provider/provider.dart';
 import 'package:syncfusion_flutter_charts/charts.dart' show SortingOrder;
@@ -11,6 +9,7 @@ import 'package:bankify/generated/l10n/app_localizations.dart';
 import 'package:bankify/generated/swagger_fireflyiii_api/firefly_iii.swagger.dart';
 import 'package:bankify/pages/bills/billdetails.dart';
 import 'package:bankify/pages/navigation.dart';
+import 'package:bankify/services/bills_service.dart';
 import 'package:bankify/settings.dart';
 import 'package:bankify/timezonehandler.dart';
 
@@ -30,6 +29,7 @@ class _BillsPageState extends State<BillsPage>
   final Logger log = Logger("Pages.Bills");
   late SettingsProvider _settings;
   late TimeZoneHandler _tzHandler;
+  late BillsService _billsService;
 
   BillsLayout get _billsLayout => _settings.billsLayout;
   set _billsLayout(BillsLayout value) {
@@ -62,6 +62,7 @@ class _BillsPageState extends State<BillsPage>
 
     _settings = context.read<SettingsProvider>();
     _tzHandler = context.read<FireflyService>().tzHandler;
+    _billsService = BillsService(context.read<FireflyService>().api);
   }
 
   @override
@@ -577,60 +578,11 @@ class _BillsPageState extends State<BillsPage>
     Navigator.pop(context);
   }
 
-  Future<Map<String, List<BillRead>>> _fetchBills() async {
-    final FireflyIii api = context.read<FireflyService>().api;
-    // Start date set to first day of this month (period)
-    final DateTime start = DateTime.now().copyWith(day: 1);
-    // End date set to first day of upcoming month (period)
-    final DateTime end = start.copyWith(month: start.month + 1);
-    final List<BillRead> bills = <BillRead>[];
-    late Response<BillArray> response;
-    int pageNumber = 0;
-
-    do {
-      pageNumber += 1;
-      response = await api.v1BillsGet(
-        page: pageNumber,
-        start: DateFormat('yyyy-MM-dd', 'en_US').format(start),
-        end: DateFormat('yyyy-MM-dd', 'en_US').format(end),
-      );
-      apiThrowErrorIfEmpty(response, mounted ? context : null);
-
-      bills.addAll(response.body!.data);
-    } while ((response.body!.meta.pagination?.currentPage ?? 1) <
-        (response.body!.meta.pagination?.totalPages ?? 1));
-
-    bills.sort(
-      (BillRead a, BillRead b) => (a.attributes.objectGroupOrder ?? 0)
-          .compareTo(b.attributes.objectGroupOrder ?? 0),
+  Future<Map<String, List<BillRead>>> _fetchBills() {
+    return _billsService.fetchCurrentPeriodBills(
+      showOnlyActiveBills: _showOnlyActiveBills,
+      showOnlyExpectedBills: _showOnlyExpectedBills,
+      ungroupedLabel: mounted ? S.of(context).billsUngrouped : "",
     );
-    final Map<String, List<BillRead>> billsMap = <String, List<BillRead>>{};
-
-    for (BillRead bill in bills) {
-      if (_showOnlyActiveBills && !(bill.attributes.active ?? true)) {
-        // Do not show the bill if it is inactive and the user elected to hide
-        // inactive bills
-        continue;
-      }
-
-      if (_showOnlyExpectedBills &&
-          bill.attributes.nextExpectedMatch == null &&
-          bill.attributes.paidDates!.isEmpty) {
-        // Do not show the bill if it is not expected this cycle and the user
-        // elected to hide all those bills that are not expected
-        continue;
-      }
-
-      final String key =
-          bill.attributes.objectGroupTitle ??
-          (mounted ? S.of(context).billsUngrouped : "");
-      if (!billsMap.containsKey(key)) {
-        billsMap[key] = <BillRead>[];
-      }
-
-      billsMap[key]!.add(bill);
-    }
-
-    return billsMap;
   }
 }

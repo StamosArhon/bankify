@@ -13,24 +13,9 @@ import 'package:bankify/generated/l10n/app_localizations.dart';
 import 'package:bankify/generated/swagger_fireflyiii_api/firefly_iii.swagger.dart';
 import 'package:bankify/pages/home.dart';
 import 'package:bankify/pages/home/piggybank/chart.dart';
+import 'package:bankify/services/piggy_bank_service.dart';
 import 'package:bankify/widgets/input_number.dart';
 import 'package:bankify/widgets/materialiconbutton.dart';
-
-class AccountStatusData {
-  const AccountStatusData({
-    required this.account,
-    required this.currency,
-    required this.accountBalance,
-    required this.totalInPiggyBanks,
-    required this.availableBalance,
-  });
-
-  final AccountRead account;
-  final CurrencyRead currency;
-  final double accountBalance;
-  final double totalInPiggyBanks;
-  final double availableBalance;
-}
 
 class HomePiggybank extends StatefulWidget {
   const HomePiggybank({super.key});
@@ -48,10 +33,15 @@ class _HomePiggybankState extends State<HomePiggybank>
       PagingState<int, PiggyBankRead>();
 
   List<AccountStatusData> _accountStatusData = <AccountStatusData>[];
+  late final PiggyBankService _piggyBankService;
 
   @override
   void initState() {
     super.initState();
+    _piggyBankService = PiggyBankService(
+      api: context.read<FireflyService>().api,
+      defaultCurrency: context.read<FireflyService>().defaultCurrency,
+    );
     // Add top-right action to open Available Amounts bottom sheet
     WidgetsBinding.instance.addPostFrameCallback((_) {
       context.read<PageActions>().set(widget.key!, <Widget>[
@@ -68,109 +58,29 @@ class _HomePiggybankState extends State<HomePiggybank>
     if (_pagingState.isLoading) return;
 
     try {
-      final FireflyIii api = context.read<FireflyService>().api;
-      final CurrencyRead defaultCurrency =
-          context.read<FireflyService>().defaultCurrency;
-
       final int pageKey = (_pagingState.keys?.last ?? 0) + 1;
       log.finest(
         "Getting page $pageKey (${_pagingState.pages?.length} pages loaded)",
       );
 
-      final Response<PiggyBankArray> respPiggies = await api.v1PiggyBanksGet(
+      final PiggyBankPageResult page = await _piggyBankService.fetchPage(
         page: pageKey,
         limit: _numberOfItemsPerRequest,
       );
-      apiThrowErrorIfEmpty(respPiggies, mounted ? context : null);
-
-      final List<PiggyBankRead> piggyList = respPiggies.body!.data;
-      piggyList.sortByCompare(
-        (PiggyBankRead element) => element.attributes.objectGroupOrder,
-        (int? a, int? b) => (a ?? 0).compareTo(b ?? 0),
-      );
-      final bool isLastPage = piggyList.length < _numberOfItemsPerRequest;
 
       if (mounted) {
         setState(() {
           _pagingState = _pagingState.copyWith(
-            pages: <List<PiggyBankRead>>[...?_pagingState.pages, piggyList],
+            pages: <List<PiggyBankRead>>[
+              ...?_pagingState.pages,
+              page.piggyBanks,
+            ],
             keys: <int>[...?_pagingState.keys, pageKey],
-            hasNextPage: !isLastPage,
+            hasNextPage: !page.isLastPage,
             isLoading: false,
             error: null,
           );
-        });
-      }
-
-      // Account Status populating
-      // 1) Fetch ALL piggy banks across pages and aggregate totals per account
-      final Map<String, double> accountIdToPiggyTotal = <String, double>{};
-      for (final PiggyBankRead piggy in piggyList) {
-        if (!(piggy.attributes.active ?? false)) continue;
-        if (piggy.attributes.accounts == null) continue;
-        for (final PiggyBankAccountRead acc in piggy.attributes.accounts!) {
-          if ((acc.accountId ?? '').isEmpty) continue;
-          final double amt = double.tryParse(acc.currentAmount ?? "") ?? 0;
-          accountIdToPiggyTotal.update(
-            acc.accountId!,
-            (double prev) => prev + amt,
-            ifAbsent: () => amt,
-          );
-        }
-      }
-      if (accountIdToPiggyTotal.isEmpty) {
-        if (mounted) {
-          setState(() {
-            _accountStatusData = <AccountStatusData>[];
-          });
-        }
-        return;
-      }
-
-      // 2) Build status data only for the accounts referenced by the piggy banks
-      final List<AccountStatusData> statusData = <AccountStatusData>[];
-      for (final MapEntry<String, double> entry
-          in accountIdToPiggyTotal.entries) {
-        final String accountId = entry.key;
-        final Response<AccountSingle> respAcc = await api.v1AccountsIdGet(
-          id: accountId,
-        );
-        apiThrowErrorIfEmpty(respAcc, mounted ? context : null);
-        final AccountRead account = respAcc.body!.data;
-
-        final double accountBalance =
-            double.tryParse(account.attributes.currentBalance ?? "") ?? 0;
-        final double totalInPiggyBanks = entry.value;
-        final double availableBalance = accountBalance - totalInPiggyBanks;
-
-        CurrencyRead currency = CurrencyRead(
-          id: account.attributes.currencyId ?? "0",
-          type: "currencies",
-          attributes: CurrencyProperties(
-            code: account.attributes.currencyCode ?? "",
-            name: "",
-            symbol: account.attributes.currencySymbol ?? "",
-            decimalPlaces: account.attributes.currencyDecimalPlaces,
-          ),
-        );
-        if (currency.id == "0") {
-          currency = defaultCurrency;
-        }
-
-        statusData.add(
-          AccountStatusData(
-            account: account,
-            currency: currency,
-            accountBalance: accountBalance,
-            totalInPiggyBanks: totalInPiggyBanks,
-            availableBalance: availableBalance,
-          ),
-        );
-      }
-
-      if (mounted) {
-        setState(() {
-          _accountStatusData = statusData;
+          _accountStatusData = page.accountStatusData;
         });
       }
     } catch (e, stackTrace) {
