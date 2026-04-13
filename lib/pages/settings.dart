@@ -1,4 +1,3 @@
-import 'package:animations/animations.dart';
 import 'package:dynamic_color/dynamic_color.dart';
 import 'package:flutter/material.dart';
 import 'package:local_auth/local_auth.dart';
@@ -13,10 +12,8 @@ import 'package:bankify/app_lock_policy.dart';
 import 'package:bankify/auth.dart';
 import 'package:bankify/extensions.dart';
 import 'package:bankify/generated/l10n/app_localizations.dart';
-import 'package:bankify/notificationlistener.dart';
 import 'package:bankify/pages/settings/connection.dart';
-import 'package:bankify/pages/settings/debug.dart';
-import 'package:bankify/pages/settings/notifications.dart';
+import 'package:bankify/pages/settings/privacy_center.dart';
 import 'package:bankify/settings.dart';
 
 final Logger log = Logger("Pages.Settings");
@@ -218,54 +215,17 @@ class SettingsPageState extends State<SettingsPage>
             },
           ),
         const Divider(),
-        FutureBuilder<NotificationListenerStatus>(
-          future: nlStatus(),
-          builder: (
-            BuildContext context,
-            AsyncSnapshot<NotificationListenerStatus> snapshot,
-          ) {
-            final S l10n = S.of(context);
-
-            late String subtitle;
-            if (snapshot.connectionState == ConnectionState.done &&
-                snapshot.hasData) {
-              if (!snapshot.data!.servicePermission ||
-                  !snapshot.data!.notificationPermission) {
-                subtitle = l10n.settingsNLPermissionNotGranted;
-              } else if (!snapshot.data!.serviceRunning) {
-                subtitle = l10n.settingsNLServiceStopped;
-              } else {
-                subtitle = l10n.settingsNLServiceRunning;
-              }
-            } else if (snapshot.hasError) {
-              log.severe(
-                "error getting nlStatus",
-                snapshot.error,
-                snapshot.stackTrace,
-              );
-              subtitle = S
-                  .of(context)
-                  .settingsNLServiceCheckingError(snapshot.error.toString());
-            } else {
-              subtitle = S.of(context).settingsNLServiceChecking;
-            }
-            return OpenContainer(
-              openBuilder:
-                  (BuildContext context, Function closedContainer) =>
-                      const SettingsNotifications(),
-              openColor: Theme.of(context).cardColor,
-              closedColor: Theme.of(context).cardColor,
-              closedElevation: 0,
-              closedBuilder:
-                  (BuildContext context, Function openContainer) => ListTile(
-                    title: Text(S.of(context).settingsNotificationListener),
-                    subtitle: Text(subtitle, maxLines: 2),
-                    leading: const CircleAvatar(
-                      child: Icon(Icons.notifications),
-                    ),
-                    onTap: () => openContainer(),
-                  ),
-              onClosed: (_) => setState(() {}),
+        ListTile(
+          title: const Text("Privacy center"),
+          subtitle: const Text(
+            "Notification listener, debug logs, and shared file handling.",
+          ),
+          leading: const CircleAvatar(child: Icon(Icons.privacy_tip_outlined)),
+          onTap: () {
+            Navigator.of(context).push(
+              MaterialPageRoute<Widget>(
+                builder: (BuildContext context) => const PrivacyCenterPage(),
+              ),
             );
           },
         ),
@@ -343,11 +303,17 @@ class SettingsPageState extends State<SettingsPage>
               leading: const CircleAvatar(
                 child: Icon(Icons.info_outline_rounded),
               ),
-              onTap:
-                  () => showDialog(
-                    context: context,
-                    builder: (BuildContext context) => const DebugDialog(),
-                  ),
+              onTap: () {
+                final PackageInfo? appInfo = snapshot.data;
+                showAboutDialog(
+                  context: context,
+                  applicationName: appInfo?.appName ?? "Bankify",
+                  applicationVersion:
+                      appInfo == null
+                          ? null
+                          : "${appInfo.version}+${appInfo.buildNumber}",
+                );
+              },
             );
           },
         ),

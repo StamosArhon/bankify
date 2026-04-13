@@ -758,12 +758,7 @@ class SettingsProvider with ChangeNotifier {
     notifyListeners();
   }
 
-  Future<void> dashboardHideCard(DashboardCards card) async {
-    if (dashboardHidden.contains(card)) {
-      return;
-    }
-    _dashboardHidden.add(card);
-
+  Future<void> _persistDashboardHidden() async {
     final List<String> hiddenStr = <String>[];
     for (DashboardCards e in dashboardHidden) {
       hiddenStr.add(e.name);
@@ -772,6 +767,14 @@ class SettingsProvider with ChangeNotifier {
       settingsDashboardHidden,
       hiddenStr,
     );
+  }
+
+  Future<void> dashboardHideCard(DashboardCards card) async {
+    if (dashboardHidden.contains(card)) {
+      return;
+    }
+    _dashboardHidden.add(card);
+    await _persistDashboardHidden();
 
     log.finest(() => "notify SettingsProvider->dashboardHideCard()");
     notifyListeners();
@@ -782,17 +785,35 @@ class SettingsProvider with ChangeNotifier {
       return;
     }
     _dashboardHidden.remove(card);
-
-    final List<String> hiddenStr = <String>[];
-    for (DashboardCards e in dashboardHidden) {
-      hiddenStr.add(e.name);
-    }
-    await SharedPreferencesAsync().setStringList(
-      settingsDashboardHidden,
-      hiddenStr,
-    );
+    await _persistDashboardHidden();
 
     log.finest(() => "notify SettingsProvider->dashboardShowCard()");
+    notifyListeners();
+  }
+
+  Future<void> showAllDashboardCards() async {
+    if (_dashboardHidden.isEmpty) {
+      return;
+    }
+    _dashboardHidden.clear();
+    await _persistDashboardHidden();
+
+    log.finest(() => "notify SettingsProvider->showAllDashboardCards()");
+    notifyListeners();
+  }
+
+  Future<void> resetDashboardCustomization() async {
+    _dashboardOrder = List<DashboardCards>.from(DashboardCards.values);
+    _dashboardHidden
+      ..clear()
+      ..add(DashboardCards.tags);
+    await SharedPreferencesAsync().setStringList(
+      settingsDashboardOrder,
+      _dashboardOrder.map((DashboardCards card) => card.name).toList(),
+    );
+    await _persistDashboardHidden();
+
+    log.finest(() => "notify SettingsProvider->resetDashboardCustomization()");
     notifyListeners();
   }
 
