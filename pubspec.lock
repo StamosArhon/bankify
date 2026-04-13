@@ -810,7 +810,7 @@ packages:
     dependency: "direct main"
     description:
       path: "."
-      ref: main
+      ref: "256d74f54f2f526a0570239c75fee416e541ec42"
       resolved-ref: "256d74f54f2f526a0570239c75fee416e541ec42"
       url: "https://github.com/dreautall/notification_listener_service.git"
     source: git
@@ -819,7 +819,7 @@ packages:
     dependency: "direct main"
     description:
       path: "."
-      ref: main
+      ref: b29351d11174869ebe0d7a5401ecad0a2300a63b
       resolved-ref: b29351d11174869ebe0d7a5401ecad0a2300a63b
       url: "https://github.com/postflow/open_file_plus.git"
     source: git

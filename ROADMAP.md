@@ -358,6 +358,13 @@
 - Native dependency hygiene is improved.
 - The app ships with less optional attack surface.
 
+### Progress Update (2026-04-13)
+
+- Implemented on `stamos/phase-3-git-dependency-pinning`:
+  - Replaced the remaining mutable Git branch refs in `pubspec.yaml` with immutable commit SHAs for `notifications_listener_service` and `open_file_plus`.
+  - Refreshed `pubspec.lock` so both the declared Git refs and the resolved refs now point at fixed commits instead of `main`.
+  - Confirmed that the remaining direct Git dependency, `appcheck`, was already pinned to a fixed commit and kept that explicit immutable reference in place.
+
 ### Task Slices
 
 - Audit why each Git dependency exists.
@@ -505,6 +512,6 @@
 
 ## Immediate Next Recommendation
 
-- Next implementation branch should be `stamos/phase-3-git-dependency-pinning`.
-- That branch should pin the remaining Git-sourced packages to immutable commits or vendored references so future lockfile refreshes cannot drift to a moving upstream head.
-- After that, continue with `stamos/phase-3-hosted-package-upgrades`.
+- Next implementation branch should be `stamos/phase-3-hosted-package-upgrades`.
+- That branch should review the highest-risk hosted dependencies with native or file/notification touchpoints first, upgrading the supported set deliberately and documenting any version holds.
+- After that, continue with `stamos/phase-3-native-dependency-refresh`.
