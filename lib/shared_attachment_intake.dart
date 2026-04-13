@@ -26,6 +26,7 @@ enum RejectedSharedAttachmentReason {
   unsupportedType,
   invalidOrigin,
   missingFile,
+  duplicatePath,
   tooLarge,
   overLimit,
 }
@@ -68,6 +69,7 @@ Future<SharedAttachmentValidationResult> validateSharedAttachments(
   final List<SharedAttachmentCandidate> accepted =
       <SharedAttachmentCandidate>[];
   final List<RejectedSharedAttachment> rejected = <RejectedSharedAttachment>[];
+  final Set<String> acceptedPaths = <String>{};
 
   for (final SharedFile file in files) {
     final String rawValue = file.value?.trim() ?? '';
@@ -142,6 +144,18 @@ Future<SharedAttachmentValidationResult> validateSharedAttachments(
         ),
       );
       await deleteSharedAttachmentIfOwnedCopy(normalizedPath, ownedRoots);
+      continue;
+    }
+
+    if (!acceptedPaths.add(normalizedPath)) {
+      rejected.add(
+        RejectedSharedAttachment(
+          displayName: displayName,
+          reason: RejectedSharedAttachmentReason.duplicatePath,
+          mimeType: mimeType,
+          size: stat.size,
+        ),
+      );
       continue;
     }
 

@@ -40,6 +40,7 @@ class _BankifyAppState extends State<BankifyApp> {
   AppSessionState _session = const AppSessionState();
   bool _settingsLoadRequested = false;
   bool _startupTaskRunning = false;
+  StreamSubscription<List<SharedFile>>? _sharingIntentSubscription;
 
   void _updateSession(AppSessionState next) {
     if (!mounted) {
@@ -89,6 +90,36 @@ class _BankifyAppState extends State<BankifyApp> {
       return;
     }
     _updateSession(_session.copyWith(launchRequest: AppLaunchRequest.empty));
+  }
+
+  bool _canOpenTransactionComposerImmediately() {
+    final BuildContext? navigationContext = navigatorKey.currentContext;
+    if (_session.startupInProgress || navigationContext == null) {
+      return false;
+    }
+
+    final FireflyService firefly = navigationContext.read<FireflyService>();
+    return _session.resolveHome(
+          signedIn: firefly.signedIn,
+          hasStorageSignInException: firefly.storageSignInException != null,
+        ) ==
+        AppHomeDestination.navigation;
+  }
+
+  void _handleIncomingSharedFiles(List<SharedFile> files) {
+    if (files.isEmpty) {
+      return;
+    }
+
+    log.info('Received ${files.length} shared files');
+    if (_canOpenTransactionComposerImmediately()) {
+      log.finest(() => 'Opening composer immediately for shared files');
+      unawaited(_pushTransactionComposer(files: files));
+    } else {
+      log.finest(() => 'Queueing shared files for startup handoff');
+      _recordSharedFilesLaunch(files);
+    }
+    FlutterSharingIntent.instance.reset();
   }
 
   Future<void> _pushTransactionComposer({
@@ -253,44 +284,30 @@ class _BankifyAppState extends State<BankifyApp> {
       },
     );
 
-    // Share to Bankify
-    // While the app is open...
-    /* Sharing while app is open is currently not supported :(
-       The fix from https://github.com/bhagat-techind/flutter_sharing_intent/issues/33
-       does not seem to work, unfortunately.
-       
-    _intentDataStreamSubscription = FlutterSharingIntent.instance
+    _sharingIntentSubscription = FlutterSharingIntent.instance
         .getMediaStream()
-        .listen((List<SharedFile> value) {
-      setState(() {
-        list = value;
-      });
-      debugPrint(
-          "Shared: getMediaStream ${value.map((SharedFile f) => f.value).join(",")}");
-    }, onError: (Object err) {
-      debugPrint("getIntentDataStream error: $err");
-    });*/
+        .listen(
+          _handleIncomingSharedFiles,
+          onError: (Object err, StackTrace stackTrace) {
+            log.warning('getMediaStream error', err, stackTrace);
+          },
+        );
 
     // For sharing images coming from outside the app while the app is closed
     FlutterSharingIntent.instance.getInitialSharing().then((
       List<SharedFile> value,
     ) {
-      log.config("App was opened via file sharing");
-      log.finest(() => "shared file count: ${value.length}");
-      if (value.isNotEmpty) {
-        _recordSharedFilesLaunch(value);
-      }
-      FlutterSharingIntent.instance.reset();
+      log.config('checking initial file sharing launch');
+      log.finest(() => 'shared file count: ${value.length}');
+      _handleIncomingSharedFiles(value);
     });
   }
 
-  /* Not needed right now, as sharing while the app is open does not work
   @override
   void dispose() {
-    _intentDataStreamSubscription.cancel();
-
+    _sharingIntentSubscription?.cancel();
     super.dispose();
-  }*/
+  }
 
   Future<bool> auth() {
     final LocalAuthentication auth = LocalAuthentication();

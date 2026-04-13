@@ -966,6 +966,10 @@ class SId extends S {
       'Bankify could not read the shared file anymore.';
 
   @override
+  String get transactionSharedAttachmentsRejectedDuplicate =>
+      'Bankify already received this shared file path in the current share action.';
+
+  @override
   String transactionSharedAttachmentsRejectedTooLarge(String maxSize) {
     return 'The shared file is larger than $maxSize.';
   }

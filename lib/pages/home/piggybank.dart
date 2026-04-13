@@ -94,6 +94,15 @@ class _HomePiggybankState extends State<HomePiggybank>
     }
   }
 
+  Future<void> _refreshPiggyBanks() async {
+    if (!mounted) {
+      return;
+    }
+    setState(() {
+      _pagingState = _pagingState.reset();
+    });
+  }
+
   @override
   bool get wantKeepAlive => true;
 
@@ -105,12 +114,7 @@ class _HomePiggybankState extends State<HomePiggybank>
     int lastGroupId = -1;
 
     return RefreshIndicator(
-      onRefresh:
-          () => Future<void>.sync(
-            () => setState(() {
-              _pagingState = _pagingState.reset();
-            }),
-          ),
+      onRefresh: _refreshPiggyBanks,
       child: PagedListView<int, PiggyBankRead>(
         state: _pagingState,
         fetchNextPage: _fetchPage,
@@ -265,12 +269,19 @@ class _HomePiggybankState extends State<HomePiggybank>
                       ],
                     ),
                   ),
-                  onTap: () {
-                    showDialog<void>(
-                      context: context,
-                      builder:
-                          (BuildContext context) => PiggyDetails(piggy: piggy),
-                    ).then((_) => setState(() {}));
+                  onTap: () async {
+                    final bool? shouldRefresh = await Navigator.of(
+                      context,
+                    ).push<bool>(
+                      MaterialPageRoute<bool>(
+                        builder:
+                            (BuildContext context) =>
+                                PiggyDetailsPage(piggy: piggy),
+                      ),
+                    );
+                    if ((shouldRefresh ?? false) && mounted) {
+                      await _refreshPiggyBanks();
+                    }
                   },
                 ),
                 piggy.attributes.percentage != null
@@ -384,20 +395,17 @@ class _HomePiggybankState extends State<HomePiggybank>
   }
 }
 
-class PiggyDetails extends StatefulWidget {
-  const PiggyDetails({super.key, required this.piggy});
+class PiggyDetailsPage extends StatefulWidget {
+  const PiggyDetailsPage({super.key, required this.piggy});
 
   final PiggyBankRead piggy;
 
   @override
-  State<PiggyDetails> createState() => _PiggyDetailsState();
+  State<PiggyDetailsPage> createState() => _PiggyDetailsPageState();
 }
 
-class _PiggyDetailsState extends State<PiggyDetails> {
+class _PiggyDetailsPageState extends State<PiggyDetailsPage> {
   final Logger log = Logger("Pages.Home.Piggybank.Details");
-
-  DateTime? selectedTime;
-  double? selectedValue;
 
   Future<List<PiggyBankEventRead>> _fetchChart() async {
     final FireflyIii api = context.read<FireflyService>().api;
@@ -413,12 +421,36 @@ class _PiggyDetailsState extends State<PiggyDetails> {
   }
 
   late PiggyBankRead currentPiggy;
+  late Future<List<PiggyBankEventRead>> _chartFuture;
+  bool _didMutatePiggy = false;
 
   @override
   void initState() {
     super.initState();
 
     currentPiggy = widget.piggy;
+    _chartFuture = _fetchChart();
+  }
+
+  void _close() {
+    Navigator.of(context).pop(_didMutatePiggy);
+  }
+
+  Future<void> _adjustBalance() async {
+    final PiggyBankSingle? newPiggy = await showDialog<PiggyBankSingle>(
+      context: context,
+      builder:
+          (BuildContext context) => PiggyAdjustBalance(piggy: currentPiggy),
+    );
+    if (!mounted || newPiggy == null) {
+      return;
+    }
+
+    setState(() {
+      currentPiggy = newPiggy.data;
+      _didMutatePiggy = true;
+      _chartFuture = _fetchChart();
+    });
   }
 
   @override
@@ -445,122 +477,143 @@ class _PiggyDetailsState extends State<PiggyDetails> {
     final bool hasMultipleAccounts =
         (currentPiggy.attributes.accounts?.length ?? 1) > 1;
 
-    String infoText = "";
-
+    final List<String> infoLines = <String>[];
     if (targetAmount != 0) {
-      infoText += S.of(context).homePiggyTarget(currency.fmt(targetAmount));
-      infoText += "\n";
+      infoLines.add(S.of(context).homePiggyTarget(currency.fmt(targetAmount)));
     }
     if (!hasMultipleAccounts) {
-      infoText += S.of(context).homePiggySaved(currency.fmt(currentAmount));
-      infoText += "\n";
+      infoLines.add(S.of(context).homePiggySaved(currency.fmt(currentAmount)));
     } else {
-      infoText += S.of(context).homePiggySavedMultiple;
-      infoText += "\n";
-      for (PiggyBankAccountRead e in currentPiggy.attributes.accounts!) {
-        infoText +=
-            "• ${e.name}: ${currency.fmt(double.tryParse(e.currentAmount ?? "") ?? 0)}\n";
+      infoLines.add(S.of(context).homePiggySavedMultiple);
+      for (PiggyBankAccountRead account in currentPiggy.attributes.accounts!) {
+        infoLines.add(
+          '${account.name}: ${currency.fmt(double.tryParse(account.currentAmount ?? "") ?? 0)}',
+        );
       }
     }
     if (leftAmount != 0) {
-      infoText += S.of(context).homePiggyRemaining(currency.fmt(leftAmount));
-      infoText += "\n";
+      infoLines.add(S.of(context).homePiggyRemaining(currency.fmt(leftAmount)));
     }
     if (startDate != null) {
-      infoText += S.of(context).homePiggyDateStart(startDate);
-      infoText += "\n";
+      infoLines.add(S.of(context).homePiggyDateStart(startDate));
     }
     if (targetDate != null) {
-      infoText += S.of(context).homePiggyDateTarget(targetDate);
-      infoText += "\n";
+      infoLines.add(S.of(context).homePiggyDateTarget(targetDate));
     }
 
-    return SimpleDialog(
-      title: Text(currentPiggy.attributes.name),
-      clipBehavior: Clip.hardEdge,
-      children: <Widget>[
-        currentPiggy.attributes.percentage != null
-            ? LinearProgressIndicator(
-              value: currentPiggy.attributes.percentage! / 100,
-            )
-            : const Divider(height: 0),
-        Padding(
-          padding: const EdgeInsets.fromLTRB(24, 12, 24, 0),
-          child: Text(infoText.trim()),
-        ),
-        AnimatedHeight(
-          child: FutureBuilder<List<PiggyBankEventRead>>(
-            future: _fetchChart(),
-            builder: (
-              BuildContext context,
-              AsyncSnapshot<List<PiggyBankEventRead>> snapshot,
-            ) {
-              if (snapshot.connectionState == ConnectionState.done &&
-                  snapshot.hasData) {
-                if (snapshot.data!.isEmpty) {
-                  return Padding(
-                    padding: const EdgeInsets.fromLTRB(24, 12, 24, 0),
-                    child: Text(S.of(context).homeTransactionsEmpty),
-                  );
-                }
-
-                return Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 24),
-                  child: SizedBox(
-                    height: 300,
-                    width: MediaQuery.of(context).size.width,
-                    child: PiggyChart(currentPiggy, snapshot.data!),
-                  ),
-                );
-              } else if (snapshot.hasError) {
-                log.severe(
-                  "error fetching chart",
-                  snapshot.error,
-                  snapshot.stackTrace,
-                );
-                Navigator.of(context).pop();
-                return const SizedBox.shrink();
-              } else {
-                return const Padding(
-                  padding: EdgeInsets.all(8),
-                  child: Center(child: CircularProgressIndicator()),
-                );
-              }
-            },
-          ),
-        ),
-        OverflowBar(
-          alignment: MainAxisAlignment.end,
-          spacing: 12,
-          overflowSpacing: 12,
-          children: <Widget>[
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(),
-
-              child: Text(MaterialLocalizations.of(context).closeButtonLabel),
+    return PopScope<bool>(
+      canPop: false,
+      onPopInvokedWithResult: (bool didPop, bool? result) {
+        if (!didPop) {
+          _close();
+        }
+      },
+      child: Scaffold(
+        appBar: AppBar(
+          title: Text(currentPiggy.attributes.name),
+          actions: <Widget>[
+            IconButton(
+              icon: const Icon(Icons.price_change_outlined),
+              tooltip: S.of(context).homePiggyAdjustDialogTitle,
+              onPressed: _adjustBalance,
             ),
-            FilledButton(
-              onPressed: () async {
-                final PiggyBankSingle? newPiggy =
-                    await showDialog<PiggyBankSingle>(
-                      context: context,
-                      builder:
-                          (BuildContext context) =>
-                              PiggyAdjustBalance(piggy: currentPiggy),
-                    );
-                if (newPiggy == null) {
-                  return;
-                }
-                setState(() {
-                  currentPiggy = newPiggy.data;
-                });
-              },
-              child: const Icon(Icons.price_change_outlined),
-            ),
-            const SizedBox(width: 12),
           ],
         ),
-      ],
+        body: ListView(
+          padding: const EdgeInsets.all(16),
+          children: <Widget>[
+            Card(
+              clipBehavior: Clip.hardEdge,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: <Widget>[
+                  if (currentPiggy.attributes.percentage != null)
+                    LinearProgressIndicator(
+                      value: currentPiggy.attributes.percentage! / 100,
+                    ),
+                  Padding(
+                    padding: const EdgeInsets.all(16),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: infoLines
+                          .map(
+                            (String line) => Padding(
+                              padding: const EdgeInsets.only(bottom: 8),
+                              child: Text(line),
+                            ),
+                          )
+                          .toList(growable: false),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 16),
+            Card(
+              child: Padding(
+                padding: const EdgeInsets.all(16),
+                child: FutureBuilder<List<PiggyBankEventRead>>(
+                  future: _chartFuture,
+                  builder: (
+                    BuildContext context,
+                    AsyncSnapshot<List<PiggyBankEventRead>> snapshot,
+                  ) {
+                    if (snapshot.connectionState != ConnectionState.done) {
+                      return const SizedBox(
+                        height: 300,
+                        child: Center(child: CircularProgressIndicator()),
+                      );
+                    }
+                    if (snapshot.hasError) {
+                      log.severe(
+                        "error fetching chart",
+                        snapshot.error,
+                        snapshot.stackTrace,
+                      );
+                      return SizedBox(
+                        height: 300,
+                        child: Center(
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: <Widget>[
+                              const Icon(Icons.savings_outlined, size: 40),
+                              const SizedBox(height: 12),
+                              Text(S.of(context).errorUnknown),
+                              const SizedBox(height: 12),
+                              FilledButton(
+                                onPressed: () {
+                                  setState(() {
+                                    _chartFuture = _fetchChart();
+                                  });
+                                },
+                                child: Text(S.of(context).generalRetry),
+                              ),
+                            ],
+                          ),
+                        ),
+                      );
+                    }
+                    if (!(snapshot.data?.isNotEmpty ?? false)) {
+                      return SizedBox(
+                        height: 160,
+                        child: Center(
+                          child: Text(S.of(context).homeTransactionsEmpty),
+                        ),
+                      );
+                    }
+
+                    return SizedBox(
+                      height: 300,
+                      width: MediaQuery.of(context).size.width,
+                      child: PiggyChart(currentPiggy, snapshot.data!),
+                    );
+                  },
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 }
@@ -635,7 +688,7 @@ class _PiggyAdjustBalanceState extends State<PiggyAdjustBalance> {
                 Text(S.of(context).homePiggySavedMultiple),
                 ...widget.piggy.attributes.accounts!.map(
                   (PiggyBankAccountRead e) => Text(
-                    "• ${e.name}: ${currency.fmt(double.tryParse(e.currentAmount ?? "") ?? 0)}",
+                    "â€¢ ${e.name}: ${currency.fmt(double.tryParse(e.currentAmount ?? "") ?? 0)}",
                   ),
                 ),
               ],

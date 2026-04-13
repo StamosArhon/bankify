@@ -545,7 +545,7 @@
 - `stamos/phase-6-transaction-flow-productivity`
   Completed on 2026-04-14. Adds saved transaction filter presets, autosaved transaction drafts, reusable transaction templates, and a new-from-template shortcut for repeat-entry workflows.
 - `stamos/phase-6-share-and-detail-flows`
-  Finishes share-while-open behavior and upgrades bills and piggy-bank detail flows into richer dedicated screens where they provide better context.
+  Completed on 2026-04-14. Restores share-while-open intake, deduplicates repeated shared-file paths safely, hardens bill transaction detail opens, and moves piggy-bank details into a richer full-screen flow with an explicit refresh contract.
 - `stamos/phase-6-onboarding-and-connection-health`
   Improves first-run and login guidance, adds connection diagnostics, and introduces safer certificate-management UX for advanced users.
 - `stamos/phase-6-dashboard-and-privacy-center`
@@ -577,6 +577,6 @@
 ## Immediate Next Recommendation
 
 - Phase 6 is in progress.
-- The transaction-editor UX, navigation/screen-state, and transaction-flow productivity slices are complete, so the next dependency-aware step is to tighten share-while-open behavior and upgrade bill / piggy-bank details into richer flows.
+- The transaction-editor UX, navigation/screen-state, transaction-flow productivity, and share/detail flow slices are complete, so the next dependency-aware step is to improve onboarding, connection diagnostics, and advanced certificate-management UX.
 - Architecture work is now in a safer place for UX and feature iteration: transaction payload/editor logic is split out, shell/session state is typed, domain fetch logic has service seams, and logout now preserves non-secret preferences while still clearing persisted auth material.
-- Next implementation work should continue with `stamos/phase-6-share-and-detail-flows`.
+- Next implementation work should continue with `stamos/phase-6-onboarding-and-connection-health`.

@@ -1,4 +1,3 @@
-import 'package:animations/animations.dart';
 import 'package:chopper/chopper.dart' show Response;
 import 'package:flutter/material.dart';
 import 'package:infinite_scroll_pagination/infinite_scroll_pagination.dart';
@@ -13,6 +12,7 @@ import 'package:bankify/generated/swagger_fireflyiii_api/firefly_iii.swagger.dar
 import 'package:bankify/pages/bills/billchart.dart';
 import 'package:bankify/pages/transaction.dart';
 import 'package:bankify/timezonehandler.dart';
+import 'package:bankify/widgets/screen_state_view.dart';
 
 class BillDetails extends StatefulWidget {
   const BillDetails({super.key, required this.bill});
@@ -28,6 +28,7 @@ class _BillDetailsState extends State<BillDetails> {
   PagingState<int, TransactionRead> _pagingState =
       PagingState<int, TransactionRead>();
   final GlobalKey<BillChartState> _billChartKey = GlobalKey<BillChartState>();
+  String? _openingTransactionId;
 
   late final CurrencyRead _currency;
   late final TimeZoneHandler _tzHandler;
@@ -175,6 +176,20 @@ class _BillDetailsState extends State<BillDetails> {
                 transitionDuration: animDurationStandard,
                 invisibleItemsThreshold: 20,
                 itemBuilder: _transactionRowBuilder,
+                firstPageProgressIndicatorBuilder:
+                    (BuildContext context) => ScreenStateView.loading(
+                      title: S.of(context).generalLoading,
+                    ),
+                firstPageErrorIndicatorBuilder:
+                    (BuildContext context) => ScreenStateView(
+                      icon: Icons.receipt_long_outlined,
+                      title: S.of(context).errorUnknown,
+                      message: S.of(context).billsListEmpty,
+                      action: FilledButton(
+                        onPressed: _fetchPage,
+                        child: Text(S.of(context).generalRetry),
+                      ),
+                    ),
                 noItemsFoundIndicatorBuilder: _emptyListBuilder,
               ),
             ),
@@ -194,75 +209,50 @@ class _BillDetailsState extends State<BillDetails> {
         _tzHandler
             .sTime(transaction.attributes.transactions.first.date)
             .toLocal();
-    Widget? openContainerWidget;
+    final bool isOpening = _openingTransactionId == transaction.id;
 
-    return OpenContainer(
-      openBuilder: (BuildContext context, Function closedContainer) {
-        if (openContainerWidget != null) {
-          return openContainerWidget!;
-        }
-        openContainerWidget = FutureBuilder<TransactionRead>(
-          future: _fetchFullTx(transaction.id),
-          builder: (
-            BuildContext context,
-            AsyncSnapshot<TransactionRead> snapshot,
-          ) {
-            if (snapshot.connectionState == ConnectionState.done &&
-                snapshot.hasData &&
-                snapshot.data != null) {
-              return TransactionPage(transaction: snapshot.data);
-            }
-            if (snapshot.hasError) {
-              Navigator.of(context).pop();
-            }
-            return const Center(child: CircularProgressIndicator());
-          },
-        );
-        return openContainerWidget!;
-      },
-      openColor: Theme.of(context).cardColor,
-      closedColor: Theme.of(context).cardColor,
-      closedShape: const RoundedRectangleBorder(
+    return ListTile(
+      title: Text.rich(_getTransactionTitle(transaction)),
+      subtitle: Text(
+        DateFormat.yMMMMd().format(date),
+        style: Theme.of(context).textTheme.bodySmall!.copyWith(
+          color: Theme.of(context).colorScheme.secondary,
+        ),
+      ),
+      shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.all(Radius.circular(16)),
       ),
-      closedElevation: 0,
-      closedBuilder:
-          (BuildContext context, Function openContainer) => ListTile(
-            title: Text.rich(_getTransactionTitle(transaction)),
-            subtitle: Text(
-              DateFormat.yMMMMd().format(date),
-              style: Theme.of(context).textTheme.bodySmall!.copyWith(
-                color: Theme.of(context).colorScheme.secondary,
-              ),
-            ),
-            shape: const RoundedRectangleBorder(
-              borderRadius: BorderRadius.all(Radius.circular(16)),
-            ),
-            isThreeLine: false,
-            trailing: RichText(
-              textAlign: TextAlign.end,
-              maxLines: 2,
-              text: TextSpan(
-                text: _getTransactionAmount(transaction),
-                style: Theme.of(context).textTheme.bodyMedium!.copyWith(
-                  color: Colors.red,
-                  fontFeatures: const <FontFeature>[
-                    FontFeature.tabularFigures(),
+      isThreeLine: false,
+      trailing:
+          isOpening
+              ? const SizedBox(
+                width: 24,
+                height: 24,
+                child: CircularProgressIndicator(strokeWidth: 2.5),
+              )
+              : RichText(
+                textAlign: TextAlign.end,
+                maxLines: 2,
+                text: TextSpan(
+                  text: _getTransactionAmount(transaction),
+                  style: Theme.of(context).textTheme.bodyMedium!.copyWith(
+                    color: Colors.red,
+                    fontFeatures: const <FontFeature>[
+                      FontFeature.tabularFigures(),
+                    ],
+                  ),
+                  children: <InlineSpan>[
+                    const TextSpan(text: "\n"),
+                    TextSpan(
+                      text: _getTransactionSource(transaction),
+                      style: Theme.of(context).textTheme.bodySmall!.copyWith(
+                        color: Theme.of(context).colorScheme.secondary,
+                      ),
+                    ),
                   ],
                 ),
-                children: <InlineSpan>[
-                  const TextSpan(text: "\n"),
-                  TextSpan(
-                    text: _getTransactionSource(transaction),
-                    style: Theme.of(context).textTheme.bodySmall!.copyWith(
-                      color: Theme.of(context).colorScheme.secondary,
-                    ),
-                  ),
-                ],
               ),
-            ),
-            onTap: () => openContainer(),
-          ),
+      onTap: isOpening ? null : () => _openTransaction(transaction),
     );
   }
 
@@ -307,26 +297,49 @@ class _BillDetailsState extends State<BillDetails> {
   }
 
   Widget _emptyListBuilder(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(0, 30, 0, 0),
-      child: Align(
-        alignment: Alignment.topCenter,
-        child: Text.rich(
-          textAlign: TextAlign.center,
-          TextSpan(
-            text: S.of(context).billsNoTransactions,
-            style: Theme.of(context).textTheme.titleMedium,
-            children: <InlineSpan>[
-              const TextSpan(text: "\n\n"),
-              TextSpan(
-                text: S.of(context).billsListEmpty,
-                style: Theme.of(context).textTheme.bodyMedium,
-              ),
-            ],
-          ),
-        ),
-      ),
+    return ScreenStateView(
+      icon: Icons.receipt_long_outlined,
+      title: S.of(context).billsNoTransactions,
+      message: S.of(context).billsListEmpty,
     );
+  }
+
+  Future<void> _openTransaction(TransactionRead transaction) async {
+    setState(() {
+      _openingTransactionId = transaction.id;
+    });
+
+    try {
+      final TransactionRead fullTransaction = await _fetchFullTx(
+        transaction.id,
+      );
+      if (!mounted) {
+        return;
+      }
+      await Navigator.of(context).push(
+        MaterialPageRoute<Widget>(
+          builder:
+              (BuildContext context) =>
+                  TransactionPage(transaction: fullTransaction),
+        ),
+      );
+    } catch (e, stackTrace) {
+      log.severe('open transaction from bill details', e, stackTrace);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(S.of(context).errorUnknown),
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _openingTransactionId = null;
+        });
+      }
+    }
   }
 
   Future<void> _fetchPage() async {

@@ -1230,6 +1230,10 @@
     "@transactionSharedAttachmentsRejectedMissingFile": {
         "description": "Reason shown when the shared file no longer exists by the time validation runs"
     },
+    "transactionSharedAttachmentsRejectedDuplicate": "Bankify already received this shared file path in the current share action.",
+    "@transactionSharedAttachmentsRejectedDuplicate": {
+        "description": "Reason shown when the share action contains the same file path more than once"
+    },
     "transactionSharedAttachmentsRejectedTooLarge": "The shared file is larger than {maxSize}.",
     "@transactionSharedAttachmentsRejectedTooLarge": {
         "description": "Reason shown when a shared file is larger than the configured acceptance limit",

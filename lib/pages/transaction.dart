@@ -3142,6 +3142,8 @@ class SharedAttachmentReviewDialog extends StatelessWidget {
         return l10n.transactionSharedAttachmentsRejectedOrigin;
       case RejectedSharedAttachmentReason.missingFile:
         return l10n.transactionSharedAttachmentsRejectedMissingFile;
+      case RejectedSharedAttachmentReason.duplicatePath:
+        return l10n.transactionSharedAttachmentsRejectedDuplicate;
       case RejectedSharedAttachmentReason.tooLarge:
         return l10n.transactionSharedAttachmentsRejectedTooLarge(
           filesize(maxInboundSharedAttachmentBytes),

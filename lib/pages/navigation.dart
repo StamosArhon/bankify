@@ -210,6 +210,9 @@ class NavPageState extends State<NavPage> {
     super.didUpdateWidget(oldWidget);
 
     if (widget.initialLaunchRequest != oldWidget.initialLaunchRequest) {
+      if (widget.initialLaunchRequest?.opensTransactionComposer ?? false) {
+        _handledInitialLaunch = false;
+      }
       WidgetsBinding.instance.addPostFrameCallback((_) {
         _maybeHandleInitialLaunch();
       });

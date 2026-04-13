@@ -1614,6 +1614,12 @@ abstract class S {
   /// **'Bankify could not read the shared file anymore.'**
   String get transactionSharedAttachmentsRejectedMissingFile;
 
+  /// Reason shown when the share action contains the same file path more than once
+  ///
+  /// In en, this message translates to:
+  /// **'Bankify already received this shared file path in the current share action.'**
+  String get transactionSharedAttachmentsRejectedDuplicate;
+
   /// Reason shown when a shared file is larger than the configured acceptance limit
   ///
   /// In en, this message translates to:

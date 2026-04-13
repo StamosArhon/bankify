@@ -145,6 +145,40 @@ void main() {
     expect(await secondFile.exists(), isFalse);
   });
 
+  test(
+    'rejects duplicate shared file paths after the first accepted item',
+    () async {
+      final File imageFile = File(
+        '${tempDir.path}${Platform.pathSeparator}duplicate.jpg',
+      );
+      await imageFile.writeAsBytes(<int>[1, 2, 3, 4]);
+
+      final SharedAttachmentValidationResult result =
+          await validateSharedAttachments(
+            <SharedFile>[
+              SharedFile(
+                value: imageFile.path,
+                type: SharedMediaType.IMAGE,
+                mimeType: 'image/jpeg',
+              ),
+              SharedFile(
+                value: imageFile.path,
+                type: SharedMediaType.IMAGE,
+                mimeType: 'image/jpeg',
+              ),
+            ],
+            appOwnedRoots: <String>[tempDir.path],
+          );
+
+      expect(result.accepted, hasLength(1));
+      expect(
+        result.rejected.single.reason,
+        RejectedSharedAttachmentReason.duplicatePath,
+      );
+      expect(await imageFile.exists(), isTrue);
+    },
+  );
+
   test('normalizes file uris and rejects relative paths', () async {
     final File localFile = File(
       '${tempDir.path}${Platform.pathSeparator}statement.pdf',
