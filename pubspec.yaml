@@ -19,18 +19,18 @@ dependencies:
   collection: ^1.19.0
   flutter_secure_storage: ^10.0.0
   provider: ^6.1.2
-  shared_preferences: ^2.3.4
+  shared_preferences: ^2.5.5
   chopper: ^8.4.0
   json_annotation: ^4.8.0
-  flutter_svg: ^2.2.3
+  flutter_svg: ^2.2.4
   url_launcher: ^6.3.2
   infinite_scroll_pagination: ^5.1.1
-  badges: ^3.1.2
+  badges: ^3.2.0
   filesize: ^2.0.1
   community_charts_flutter: ^1.0.2
-  file_picker: ^10.3.8
-  animations: ^2.0.11
-  flutter_local_notifications: ^19.4.0
+  file_picker: ^10.3.10
+  animations: ^2.1.2
+  flutter_local_notifications: ^20.1.0
   notifications_listener_service:
     git:
       url: https://github.com/dreautall/notification_listener_service.git
@@ -39,10 +39,10 @@ dependencies:
     git:
       url: https://github.com/bugrevealingbme/AppCheck.git
       ref: ce371398f86412a8d9a2e0b75a9b51597ea1d79f
-  package_info_plus: ^9.0.0
+  package_info_plus: ^9.0.1
   logging: ^1.1.1
   flutter_email_sender: ^8.0.0
-  local_auth: ^3.0.0
+  local_auth: ^3.0.1
   dynamic_color: ^1.7.0
   material_color_utilities: ^0.11.1
   version: ^3.0.2
@@ -51,7 +51,7 @@ dependencies:
   syncfusion_flutter_charts: ^32.1.21
   image_picker: ^1.0.7
   timezone: ^0.10.0
-  flutter_timezone: ^5.0.0
+  flutter_timezone: ^5.0.2
   flutter_sharing_intent: ^2.0.3
   http: ^1.6.0
   crypto: ^3.0.6

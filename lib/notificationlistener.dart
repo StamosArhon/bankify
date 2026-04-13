@@ -303,10 +303,11 @@ void nlCallback() {
 
         unawaited(
           FlutterLocalNotificationsPlugin().show(
-            DateTime.now().millisecondsSinceEpoch ~/ 1000,
-            "Transaction created",
-            "Open Bankify to review the transaction created from a watched notification.",
-            const NotificationDetails(
+            id: DateTime.now().millisecondsSinceEpoch ~/ 1000,
+            title: "Transaction created",
+            body:
+                "Open Bankify to review the transaction created from a watched notification.",
+            notificationDetails: const NotificationDetails(
               android: createdTransactionNotificationDetails,
             ),
             payload: "",
@@ -333,10 +334,11 @@ void nlCallback() {
 
         unawaited(
           FlutterLocalNotificationsPlugin().show(
-            DateTime.now().millisecondsSinceEpoch ~/ 1000,
-            "Review detected transaction",
-            "Open Bankify to review a detected transaction and create it manually.",
-            const NotificationDetails(
+            id: DateTime.now().millisecondsSinceEpoch ~/ 1000,
+            title: "Review detected transaction",
+            body:
+                "Open Bankify to review a detected transaction and create it manually.",
+            notificationDetails: const NotificationDetails(
               android: transactionReviewNotificationDetails,
             ),
             payload: payloadId,

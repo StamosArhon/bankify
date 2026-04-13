@@ -364,6 +364,12 @@
   - Replaced the remaining mutable Git branch refs in `pubspec.yaml` with immutable commit SHAs for `notifications_listener_service` and `open_file_plus`.
   - Refreshed `pubspec.lock` so both the declared Git refs and the resolved refs now point at fixed commits instead of `main`.
   - Confirmed that the remaining direct Git dependency, `appcheck`, was already pinned to a fixed commit and kept that explicit immutable reference in place.
+- Implemented on `stamos/phase-3-hosted-package-upgrades`:
+  - Upgraded the highest-risk hosted dependencies that directly touch files, notifications, local auth, preferences, package metadata, and timezone/platform integration: `file_picker`, `flutter_local_notifications`, `shared_preferences`, `local_auth`, `package_info_plus`, `flutter_timezone`, `flutter_svg`, `animations`, and `badges`.
+  - Pulled their Android-facing implementations forward as part of the same lockfile refresh, including `shared_preferences_android`, `local_auth_android`, `image_picker_android`, `path_provider_android`, `quick_actions_android`, `url_launcher_android`, and `flutter_plugin_android_lifecycle`.
+  - Adjusted Bankify's notification initialization and `show()` calls for the `flutter_local_notifications` 20.x named-parameter API so the app compiles cleanly on the pinned toolchain.
+  - Confirmed a clean debug APK build after a full `flutter clean`, which also flushed a stale generated Android plugin registrant file from the repo working tree.
+  - Intentionally held `file_picker` 11.x, `flutter_local_notifications` 21.x, `package_info_plus` 10.x, `json_annotation` 4.11.x, `chopper` 8.5.x, and `syncfusion_flutter_charts` 33.x for later slices because they either require a newer Dart/toolchain floor or would broaden this branch into codegen/UI churn beyond the native-hosted package hardening scope.
 
 ### Task Slices
 
@@ -512,6 +518,6 @@
 
 ## Immediate Next Recommendation
 
-- Next implementation branch should be `stamos/phase-3-hosted-package-upgrades`.
-- That branch should review the highest-risk hosted dependencies with native or file/notification touchpoints first, upgrading the supported set deliberately and documenting any version holds.
-- After that, continue with `stamos/phase-3-native-dependency-refresh`.
+- Next implementation branch should be `stamos/phase-3-native-dependency-refresh`.
+- That branch should update the explicitly managed Android dependencies in Gradle, especially `androidx.window` / `window-java` and `desugar_jdk_libs`, then rerun the pinned toolchain baseline.
+- After that, continue with `stamos/phase-3-attack-surface-reduction`.

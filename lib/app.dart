@@ -51,7 +51,7 @@ class _BankifyAppState extends State<BankifyApp> {
 
     // Notifications
     FlutterLocalNotificationsPlugin().initialize(
-      const InitializationSettings(
+      settings: const InitializationSettings(
         android: AndroidInitializationSettings('ic_stat_notification'),
       ),
       onDidReceiveNotificationResponse: nlNotificationTap,
