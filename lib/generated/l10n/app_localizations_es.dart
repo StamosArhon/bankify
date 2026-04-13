@@ -1024,6 +1024,62 @@ class SEs extends S {
   String get transactionSplitDelete => 'Eliminar división';
 
   @override
+  String get transactionSectionAttention =>
+      'Finish these essentials before saving';
+
+  @override
+  String get transactionSectionAttentionMissingAccounts =>
+      'Choose accounts so Bankify can determine the transaction type.';
+
+  @override
+  String get transactionSectionAttentionMissingOwnAccount =>
+      'Select the asset or debt account that belongs to you.';
+
+  @override
+  String get transactionSectionAttentionMissingTitle =>
+      'Add a transaction title.';
+
+  @override
+  String get transactionSectionAccounts => 'Accounts';
+
+  @override
+  String get transactionSectionAccountsSubtitle =>
+      'Choose the accounts to let Bankify infer the transaction type.';
+
+  @override
+  String get transactionSectionOverview => 'Overview';
+
+  @override
+  String get transactionSectionOverviewSubtitle =>
+      'Start with the title, amount, and date.';
+
+  @override
+  String get transactionSectionSplits => 'Line items';
+
+  @override
+  String transactionSectionSplitsSubtitle(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count line items',
+      one: '1 line item',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get transactionAdvancedDetails => 'Advanced details';
+
+  @override
+  String get transactionAdvancedDetailsSubtitle =>
+      'Optional fields and split actions';
+
+  @override
+  String transactionSplitLabel(int index) {
+    return 'Line item $index';
+  }
+
+  @override
   String get transactionTitleAdd => 'Añadir Transacción';
 
   @override

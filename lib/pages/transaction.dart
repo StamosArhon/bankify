@@ -137,6 +137,7 @@ class _TransactionPageState extends State<TransactionPage>
   bool _txTypeChipExtended = false;
   bool _showSourceAccountSelection = false;
   bool _showDestinationAccountSelection = false;
+  bool _attachmentLoadRequested = false;
 
   late bool _newTX;
 
@@ -817,6 +818,82 @@ class _TransactionPageState extends State<TransactionPage>
     );
   }
 
+  void _ensureAttachmentCountLoaded() {
+    if (_attachmentLoadRequested || !_hasAttachments || _attachments != null) {
+      return;
+    }
+
+    _attachmentLoadRequested = true;
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      try {
+        await updateAttachmentCount();
+      } finally {
+        _attachmentLoadRequested = false;
+      }
+    });
+  }
+
+  List<String> _validationMessages(BuildContext context) {
+    final S l10n = S.of(context);
+    final List<String> messages = <String>[];
+    if (_titleTextController.text.isEmpty) {
+      messages.add(l10n.transactionSectionAttentionMissingTitle);
+    }
+    if (_transactionType == TransactionTypeProperty.swaggerGeneratedUnknown) {
+      messages.add(l10n.transactionSectionAttentionMissingAccounts);
+    }
+    if (_ownAccountId == null) {
+      messages.add(l10n.transactionSectionAttentionMissingOwnAccount);
+    }
+    return messages;
+  }
+
+  List<Widget> _buildOverviewChips(BuildContext context) {
+    final S l10n = S.of(context);
+    final List<Widget> chips = <Widget>[];
+
+    if (_transactionType != TransactionTypeProperty.swaggerGeneratedUnknown) {
+      chips.add(
+        Chip(
+          avatar: Icon(
+            _transactionType.verticalIcon,
+            color: Theme.of(context).colorScheme.onSecondaryContainer,
+          ),
+          label: Text(_transactionType.friendlyName(context)),
+        ),
+      );
+    }
+
+    chips.add(
+      Chip(
+        avatar: const Icon(Icons.call_split),
+        label: Text(
+          l10n.transactionSectionSplitsSubtitle(_localAmounts.length),
+        ),
+      ),
+    );
+
+    if (_localCurrency != null) {
+      chips.add(
+        Chip(
+          avatar: const Icon(Icons.monetization_on_outlined),
+          label: Text(_localCurrency!.attributes.code),
+        ),
+      );
+    }
+
+    chips.add(
+      Chip(
+        avatar: const Icon(Icons.attach_file),
+        label: Text(
+          '${l10n.transactionAttachments}: ${_attachments?.length ?? (_hasAttachments ? "..." : "0")}',
+        ),
+      ),
+    );
+
+    return chips;
+  }
+
   void splitTransactionCheckAccounts() {
     bool update = false;
 
@@ -893,6 +970,9 @@ class _TransactionPageState extends State<TransactionPage>
           .v1TransactionsIdAttachmentsGet(id: widget.transaction?.id);
       apiThrowErrorIfEmpty(response, mounted ? context : null);
 
+      if (!mounted) {
+        return;
+      }
       _attachments = response.body!.data;
       setState(() {
         _hasAttachments = _attachments?.isNotEmpty ?? false;
@@ -907,9 +987,7 @@ class _TransactionPageState extends State<TransactionPage>
     log.finest(() => "build()");
     _localCurrency ??= context.read<FireflyService>().defaultCurrency;
 
-    if (_hasAttachments && _attachments == null) {
-      updateAttachmentCount();
-    }
+    _ensureAttachmentCountLoaded();
 
     return Scaffold(
       appBar: AppBar(
@@ -1128,92 +1206,110 @@ class _TransactionPageState extends State<TransactionPage>
     log.finer(() => "splits: ${_localAmounts.length}, split? $_split");
 
     final List<Widget> childs = <Widget>[];
-    const Widget hDivider = SizedBox(height: 16);
+    const Widget hDivider = SizedBox(height: 20);
     const Widget vDivider = SizedBox(width: 16);
 
     CancelableOperation<Response<AutocompleteAccountArray>>? fetchOpSource;
     CancelableOperation<Response<AutocompleteAccountArray>>? fetchOpDestination;
+    final S l10n = S.of(context);
+    final List<String> validationMessages = _validationMessages(context);
 
-    // Title
-    childs.add(
-      Row(
-        children: <Widget>[
-          TransactionTitle(
-            textController: _titleTextController,
-            focusNode: _titleFocusNode,
-          ),
-          const SizedBox(width: 12),
-          AttachmentButton(
-            attachments: _attachments,
-            onPressed: () async {
-              final List<AttachmentRead> dialogAttachments =
-                  _attachments ?? <AttachmentRead>[];
-              await showDialog<List<AttachmentRead>>(
-                context: context,
-                builder:
-                    (BuildContext context) => AttachmentDialog(
-                      attachments: dialogAttachments,
-                      transactionId: _transactionJournalIDs.firstWhereOrNull(
-                        (String? element) => element != null,
-                      ),
-                    ),
-              );
-              setState(() {
-                _attachments = dialogAttachments;
-                _hasAttachments = _attachments?.isNotEmpty ?? false;
-              });
-            },
-          ),
-        ],
-      ),
-    );
-    childs.add(hDivider);
+    if (validationMessages.isNotEmpty) {
+      childs.add(
+        _TransactionEditorValidationCard(messages: validationMessages),
+      );
+      childs.add(hDivider);
+    }
 
-    // Amount, Date & Time
     childs.add(
-      // Date/Time select might overflow, so we need to be able to scroll horizontally.
-      SingleChildScrollView(
-        scrollDirection: Axis.horizontal,
-        child: Row(
+      TransactionSectionCard(
+        title: l10n.transactionSectionOverview,
+        subtitle: l10n.transactionSectionOverviewSubtitle,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: <Widget>[
-            SizedBox(
-              width: 130,
-              child: Center(
-                child: NumberInput(
-                  icon:
-                      _localCurrency != null
-                          ? SizedBox(
-                            width: 24,
-                            height: 32,
-                            child: FittedBox(
-                              child: Text(_localCurrency!.attributes.symbol),
-                            ),
-                          )
-                          : const Icon(Icons.monetization_on),
-                  hintText:
-                      _localCurrency?.zero() ??
-                      NumberFormat.currency(decimalDigits: 2).format(0),
-                  decimals: _localCurrency?.attributes.decimalPlaces ?? 2,
-                  //style: Theme.of(context).textTheme.headlineLarge,
-                  controller: _localAmountTextController,
-                  disabled:
-                      _savingInProgress ||
-                      _split ||
-                      (_reconciled && _initiallyReconciled),
-                  onChanged:
-                      (String string) =>
-                          _localAmounts[0] = double.tryParse(string) ?? 0,
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: <Widget>[
+                Expanded(
+                  child: TransactionTitle(
+                    textController: _titleTextController,
+                    focusNode: _titleFocusNode,
+                  ),
                 ),
-              ),
+                const SizedBox(width: 12),
+                AttachmentButton(
+                  attachments: _attachments,
+                  onPressed: () async {
+                    final List<AttachmentRead> dialogAttachments =
+                        _attachments ?? <AttachmentRead>[];
+                    await showDialog<List<AttachmentRead>>(
+                      context: context,
+                      builder:
+                          (BuildContext context) => AttachmentDialog(
+                            attachments: dialogAttachments,
+                            transactionId: _transactionJournalIDs
+                                .firstWhereOrNull(
+                                  (String? element) => element != null,
+                                ),
+                          ),
+                    );
+                    setState(() {
+                      _attachments = dialogAttachments;
+                      _hasAttachments = _attachments?.isNotEmpty ?? false;
+                    });
+                  },
+                ),
+              ],
             ),
-            vDivider,
-            DateTimePicker(
-              initialDateTime: _date,
-              onDateTimeChanged: (tz.TZDateTime newDateTime) {
-                setState(() {
-                  _date = newDateTime;
-                });
-              },
+            const SizedBox(height: 16),
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: _buildOverviewChips(context),
+            ),
+            const SizedBox(height: 16),
+            Wrap(
+              spacing: 16,
+              runSpacing: 16,
+              crossAxisAlignment: WrapCrossAlignment.center,
+              children: <Widget>[
+                SizedBox(
+                  width: 160,
+                  child: NumberInput(
+                    icon:
+                        _localCurrency != null
+                            ? SizedBox(
+                              width: 24,
+                              height: 32,
+                              child: FittedBox(
+                                child: Text(_localCurrency!.attributes.symbol),
+                              ),
+                            )
+                            : const Icon(Icons.monetization_on),
+                    hintText:
+                        _localCurrency?.zero() ??
+                        NumberFormat.currency(decimalDigits: 2).format(0),
+                    decimals: _localCurrency?.attributes.decimalPlaces ?? 2,
+                    controller: _localAmountTextController,
+                    disabled:
+                        _savingInProgress ||
+                        _split ||
+                        (_reconciled && _initiallyReconciled),
+                    onChanged:
+                        (String string) =>
+                            _localAmounts[0] = double.tryParse(string) ?? 0,
+                  ),
+                ),
+                DateTimePicker(
+                  initialDateTime: _date,
+                  onDateTimeChanged: (tz.TZDateTime newDateTime) {
+                    setState(() {
+                      _date = newDateTime;
+                    });
+                  },
+                ),
+              ],
             ),
           ],
         ),
@@ -1221,187 +1317,83 @@ class _TransactionPageState extends State<TransactionPage>
     );
     childs.add(hDivider);
 
-    // Source Account, floating type element
     childs.add(
-      Stack(
-        children: <Widget>[
-          const SizedBox(height: 64 + 16 + 64), // Padding for Stack
-          Row(
-            children: <Widget>[
-              const Icon(Icons.logout),
-              vDivider,
-              Expanded(
-                child: AutoCompleteText<AutocompleteAccount>(
-                  labelText: S.of(context).generalSourceAccount,
-                  //labelIcon: Icons.account_balance,
-                  textController: _sourceAccountTextController,
-                  focusNode: _sourceAccountFocusNode,
-                  /*errorText:
-                  _transactionType == TransactionTypeProperty.withdrawal &&
-                          _sourceAccountId == null
-                      ? S.of(context).transactionErrorInvalidAccount
-                      : null,*/
-                  errorIconOnly: true,
-                  onChanged: (String val) {
-                    for (TextEditingController e
-                        in _sourceAccountTextControllers) {
-                      e.text = val;
-                    }
-
-                    // Reset own account & account type when changed
-                    if (_sourceAccountType ==
-                            AccountTypeProperty.assetAccount ||
-                        _sourceAccountType == AccountTypeProperty.debt) {
-                      _ownAccountId = null;
-                    }
-                    _sourceAccountType =
-                        AccountTypeProperty.swaggerGeneratedUnknown;
-                    checkTXType();
-                  },
-                  onSelected: (AutocompleteAccount option) {
-                    for (TextEditingController e
-                        in _sourceAccountTextControllers) {
-                      e.text = option.name;
-                    }
-                    _sourceAccountType = AccountTypeProperty.values.firstWhere(
-                      (AccountTypeProperty e) => e.value == option.type,
-                      orElse: () => AccountTypeProperty.swaggerGeneratedUnknown,
-                    );
-                    log.finer(
-                      () =>
-                          "selected source account ${option.name}, type ${_sourceAccountType.toString()} (${option.type})",
-                    );
-                    if (_sourceAccountType ==
-                            AccountTypeProperty.assetAccount ||
-                        _sourceAccountType == AccountTypeProperty.debt) {
-                      _ownAccountId = option.id;
-                    }
-                    checkTXType();
-                    checkAccountCurrency(option, true);
-                  },
-                  displayStringForOption:
-                      (AutocompleteAccount option) => option.name,
-                  optionsBuilder: (TextEditingValue textEditingValue) async {
-                    try {
-                      unawaited(fetchOpSource?.cancel());
-
-                      final FireflyIii api = context.read<FireflyService>().api;
-                      fetchOpSource = CancelableOperation<
-                        Response<AutocompleteAccountArray>
-                      >.fromFuture(
-                        api.v1AutocompleteAccountsGet(
-                          query: textEditingValue.text,
-                          types: _destinationAccountType.allowedOpposingTypes(
-                            false,
-                          ),
-                        ),
-                      );
-                      final Response<AutocompleteAccountArray>? response =
-                          await fetchOpSource?.valueOrCancellation();
-                      if (response == null) {
-                        // Cancelled
-                        return const Iterable<AutocompleteAccount>.empty();
-                      }
-                      apiThrowErrorIfEmpty(response, mounted ? context : null);
-
-                      return response.body!;
-                    } catch (e, stackTrace) {
-                      log.severe(
-                        "Error while fetching autocomplete from API",
-                        e,
-                        stackTrace,
-                      );
-                      return const Iterable<AutocompleteAccount>.empty();
-                    }
-                  },
-                  disabled:
-                      _savingInProgress ||
-                      (_reconciled && _initiallyReconciled) ||
-                      _sourceAccountTextController.text ==
-                          "<${S.of(context).generalMultiple}>",
-                ),
-              ),
-            ],
-          ),
-          // Destination account
-          Positioned.fill(
-            top: 64 + 16,
-            child: Row(
+      TransactionSectionCard(
+        title: l10n.transactionSectionAccounts,
+        subtitle: l10n.transactionSectionAccountsSubtitle,
+        child: Stack(
+          children: <Widget>[
+            const SizedBox(height: 64 + 16 + 64),
+            Row(
               children: <Widget>[
-                const Icon(Icons.login),
+                const Icon(Icons.logout),
                 vDivider,
                 Expanded(
                   child: AutoCompleteText<AutocompleteAccount>(
-                    labelText: S.of(context).generalDestinationAccount,
-                    textController: _destinationAccountTextController,
-                    focusNode: _destinationAccountFocusNode,
-                    /*errorText: _transactionType == TransactionTypeProperty.deposit &&
-                      _destinationAccountId == null
-                  ? S.of(context).transactionErrorInvalidAccount
-                  : null,*/
+                    labelText: l10n.generalSourceAccount,
+                    textController: _sourceAccountTextController,
+                    focusNode: _sourceAccountFocusNode,
+                    errorIconOnly: true,
                     onChanged: (String val) {
                       for (TextEditingController e
-                          in _destinationAccountTextControllers) {
+                          in _sourceAccountTextControllers) {
                         e.text = val;
                       }
 
-                      // Reset own account & account type when changed
-                      if (_destinationAccountType ==
+                      if (_sourceAccountType ==
                               AccountTypeProperty.assetAccount ||
-                          _destinationAccountType == AccountTypeProperty.debt) {
+                          _sourceAccountType == AccountTypeProperty.debt) {
                         _ownAccountId = null;
                       }
-                      _destinationAccountType =
+                      _sourceAccountType =
                           AccountTypeProperty.swaggerGeneratedUnknown;
                       checkTXType();
                     },
-                    errorIconOnly: true,
-                    displayStringForOption:
-                        (AutocompleteAccount option) => option.name,
                     onSelected: (AutocompleteAccount option) {
                       for (TextEditingController e
-                          in _destinationAccountTextControllers) {
+                          in _sourceAccountTextControllers) {
                         e.text = option.name;
                       }
-                      _destinationAccountType = AccountTypeProperty.values
+                      _sourceAccountType = AccountTypeProperty.values
                           .firstWhere(
                             (AccountTypeProperty e) => e.value == option.type,
                             orElse:
                                 () =>
                                     AccountTypeProperty.swaggerGeneratedUnknown,
                           );
-                      if (_destinationAccountType ==
-                              AccountTypeProperty.assetAccount ||
-                          _destinationAccountType == AccountTypeProperty.debt) {
-                        _ownAccountId = option.id;
-                      }
                       log.finer(
                         () =>
-                            "selected destination account ${option.name}, type ${_destinationAccountType.toString()} (${option.type})",
+                            "selected source account ${option.name}, type ${_sourceAccountType.toString()} (${option.type})",
                       );
+                      if (_sourceAccountType ==
+                              AccountTypeProperty.assetAccount ||
+                          _sourceAccountType == AccountTypeProperty.debt) {
+                        _ownAccountId = option.id;
+                      }
                       checkTXType();
-                      checkAccountCurrency(option, false);
+                      checkAccountCurrency(option, true);
                     },
+                    displayStringForOption:
+                        (AutocompleteAccount option) => option.name,
                     optionsBuilder: (TextEditingValue textEditingValue) async {
                       try {
-                        unawaited(fetchOpDestination?.cancel());
+                        unawaited(fetchOpSource?.cancel());
 
                         final FireflyIii api =
                             context.read<FireflyService>().api;
-                        fetchOpDestination = CancelableOperation<
+                        fetchOpSource = CancelableOperation<
                           Response<AutocompleteAccountArray>
                         >.fromFuture(
                           api.v1AutocompleteAccountsGet(
                             query: textEditingValue.text,
-                            types: _sourceAccountType.allowedOpposingTypes(
-                              true,
+                            types: _destinationAccountType.allowedOpposingTypes(
+                              false,
                             ),
                           ),
                         );
                         final Response<AutocompleteAccountArray>? response =
-                            await fetchOpDestination?.valueOrCancellation();
+                            await fetchOpSource?.valueOrCancellation();
                         if (response == null) {
-                          // Cancelled
                           return const Iterable<AutocompleteAccount>.empty();
                         }
                         apiThrowErrorIfEmpty(
@@ -1422,62 +1414,172 @@ class _TransactionPageState extends State<TransactionPage>
                     disabled:
                         _savingInProgress ||
                         (_reconciled && _initiallyReconciled) ||
-                        _destinationAccountTextController.text ==
-                            "<${S.of(context).generalMultiple}>",
+                        _sourceAccountTextController.text ==
+                            "<${l10n.generalMultiple}>",
                   ),
                 ),
               ],
             ),
-          ),
-          Positioned(
-            top: (64 + 16 + 4) / 2,
-            right: 15,
-            child: FloatingActionButton.extended(
-              extendedIconLabelSpacing: _txTypeChipExtended ? 10 : 0,
-              extendedPadding:
-                  _txTypeChipExtended ? null : const EdgeInsets.all(16),
-              onPressed: null,
-              label: AnimatedSize(
-                duration: animDurationEmphasized,
-                curve: animCurveEmphasized,
-                child:
-                    _txTypeChipExtended
-                        ? Text(_transactionType.friendlyName(context))
-                        : const SizedBox(),
+            Positioned.fill(
+              top: 64 + 16,
+              child: Row(
+                children: <Widget>[
+                  const Icon(Icons.login),
+                  vDivider,
+                  Expanded(
+                    child: AutoCompleteText<AutocompleteAccount>(
+                      labelText: l10n.generalDestinationAccount,
+                      textController: _destinationAccountTextController,
+                      focusNode: _destinationAccountFocusNode,
+                      onChanged: (String val) {
+                        for (TextEditingController e
+                            in _destinationAccountTextControllers) {
+                          e.text = val;
+                        }
+
+                        if (_destinationAccountType ==
+                                AccountTypeProperty.assetAccount ||
+                            _destinationAccountType ==
+                                AccountTypeProperty.debt) {
+                          _ownAccountId = null;
+                        }
+                        _destinationAccountType =
+                            AccountTypeProperty.swaggerGeneratedUnknown;
+                        checkTXType();
+                      },
+                      errorIconOnly: true,
+                      displayStringForOption:
+                          (AutocompleteAccount option) => option.name,
+                      onSelected: (AutocompleteAccount option) {
+                        for (TextEditingController e
+                            in _destinationAccountTextControllers) {
+                          e.text = option.name;
+                        }
+                        _destinationAccountType = AccountTypeProperty.values
+                            .firstWhere(
+                              (AccountTypeProperty e) => e.value == option.type,
+                              orElse:
+                                  () =>
+                                      AccountTypeProperty
+                                          .swaggerGeneratedUnknown,
+                            );
+                        if (_destinationAccountType ==
+                                AccountTypeProperty.assetAccount ||
+                            _destinationAccountType ==
+                                AccountTypeProperty.debt) {
+                          _ownAccountId = option.id;
+                        }
+                        log.finer(
+                          () =>
+                              "selected destination account ${option.name}, type ${_destinationAccountType.toString()} (${option.type})",
+                        );
+                        checkTXType();
+                        checkAccountCurrency(option, false);
+                      },
+                      optionsBuilder: (
+                        TextEditingValue textEditingValue,
+                      ) async {
+                        try {
+                          unawaited(fetchOpDestination?.cancel());
+
+                          final FireflyIii api =
+                              context.read<FireflyService>().api;
+                          fetchOpDestination = CancelableOperation<
+                            Response<AutocompleteAccountArray>
+                          >.fromFuture(
+                            api.v1AutocompleteAccountsGet(
+                              query: textEditingValue.text,
+                              types: _sourceAccountType.allowedOpposingTypes(
+                                true,
+                              ),
+                            ),
+                          );
+                          final Response<AutocompleteAccountArray>? response =
+                              await fetchOpDestination?.valueOrCancellation();
+                          if (response == null) {
+                            return const Iterable<AutocompleteAccount>.empty();
+                          }
+                          apiThrowErrorIfEmpty(
+                            response,
+                            mounted ? context : null,
+                          );
+
+                          return response.body!;
+                        } catch (e, stackTrace) {
+                          log.severe(
+                            "Error while fetching autocomplete from API",
+                            e,
+                            stackTrace,
+                          );
+                          return const Iterable<AutocompleteAccount>.empty();
+                        }
+                      },
+                      disabled:
+                          _savingInProgress ||
+                          (_reconciled && _initiallyReconciled) ||
+                          _destinationAccountTextController.text ==
+                              "<${l10n.generalMultiple}>",
+                    ),
+                  ),
+                ],
               ),
-              icon: Icon(_transactionType.verticalIcon),
-              backgroundColor:
-                  _savingInProgress
-                      ? Theme.of(context).colorScheme.surfaceContainerHighest
-                      : _transactionType.color,
             ),
-          ),
-        ],
+            Positioned(
+              top: (64 + 16 + 4) / 2,
+              right: 15,
+              child: FloatingActionButton.extended(
+                extendedIconLabelSpacing: _txTypeChipExtended ? 10 : 0,
+                extendedPadding:
+                    _txTypeChipExtended ? null : const EdgeInsets.all(16),
+                onPressed: null,
+                label: AnimatedSize(
+                  duration: animDurationEmphasized,
+                  curve: animCurveEmphasized,
+                  child:
+                      _txTypeChipExtended
+                          ? Text(_transactionType.friendlyName(context))
+                          : const SizedBox(),
+                ),
+                icon: Icon(_transactionType.verticalIcon),
+                backgroundColor:
+                    _savingInProgress
+                        ? Theme.of(context).colorScheme.surfaceContainerHighest
+                        : _transactionType.color,
+              ),
+            ),
+          ],
+        ),
       ),
     );
     childs.add(hDivider);
-    // Cards with (Split Title), Category, (Split Amount), Tags, Notes
-    for (int i = 0; i < _localAmounts.length; i++) {
-      childs.add(
-        SizeTransition(
-          sizeFactor: _cardsAnimation[i],
-          axis: Axis.vertical,
-          child: _buildSplitWidget(context, i),
-        ),
-      );
-    }
-    childs.add(hDivider);
+
     childs.add(
-      FilledButton.icon(
-        onPressed:
-            _savingInProgress
-                ? null
-                : () =>
-                    _reconciled && _initiallyReconciled
-                        ? null
-                        : splitTransactionAdd(),
-        label: Text(S.of(context).transactionSplitAdd),
-        icon: const Icon(Icons.call_split),
+      TransactionSectionCard(
+        title: l10n.transactionSectionSplits,
+        subtitle: l10n.transactionSectionSplitsSubtitle(_localAmounts.length),
+        trailing: FilledButton.tonalIcon(
+          onPressed:
+              _savingInProgress
+                  ? null
+                  : () =>
+                      _reconciled && _initiallyReconciled
+                          ? null
+                          : splitTransactionAdd(),
+          icon: const Icon(Icons.call_split),
+          label: Text(l10n.transactionSplitAdd),
+        ),
+        child: Column(
+          children: <Widget>[
+            for (int i = 0; i < _localAmounts.length; i++) ...<Widget>[
+              SizeTransition(
+                sizeFactor: _cardsAnimation[i],
+                axis: Axis.vertical,
+                child: _buildSplitWidget(context, i),
+              ),
+              if (i != _localAmounts.length - 1) const SizedBox(height: 16),
+            ],
+          ],
+        ),
       ),
     );
 
@@ -1635,9 +1737,11 @@ class _TransactionPageState extends State<TransactionPage>
                         _split
                             ? Row(
                               children: <Widget>[
-                                TransactionTitle(
-                                  textController: _titleTextControllers[i],
-                                  focusNode: _titleFocusNodes[i],
+                                Expanded(
+                                  child: TransactionTitle(
+                                    textController: _titleTextControllers[i],
+                                    focusNode: _titleFocusNodes[i],
+                                  ),
                                 ),
                               ],
                             )
@@ -2240,42 +2344,39 @@ class TransactionTitle extends StatelessWidget {
     CancelableOperation<Response<AutocompleteTransactionArray>>? fetchOp;
 
     log.finest(() => "build()");
-    return Expanded(
-      child: AutoCompleteText<String>(
-        disabled: _savingInProgress,
-        labelText: S.of(context).transactionFormLabelTitle,
-        labelIcon: Icons.receipt_long,
-        textController: textController,
-        focusNode: focusNode,
-        optionsBuilder: (TextEditingValue textEditingValue) async {
-          try {
-            unawaited(fetchOp?.cancel());
+    return AutoCompleteText<String>(
+      disabled: _savingInProgress,
+      labelText: S.of(context).transactionFormLabelTitle,
+      labelIcon: Icons.receipt_long,
+      textController: textController,
+      focusNode: focusNode,
+      optionsBuilder: (TextEditingValue textEditingValue) async {
+        try {
+          unawaited(fetchOp?.cancel());
 
-            final FireflyIii api = context.read<FireflyService>().api;
-            fetchOp = CancelableOperation<
-              Response<AutocompleteTransactionArray>
-            >.fromFuture(
-              api.v1AutocompleteTransactionsGet(query: textEditingValue.text),
-            );
-            final Response<AutocompleteTransactionArray>? response =
-                await fetchOp?.valueOrCancellation();
-            if (response == null) {
-              // Cancelled
-              return const Iterable<String>.empty();
-            }
-            apiThrowErrorIfEmpty(response, context.mounted ? context : null);
-
-            return response.body!.map((AutocompleteTransaction e) => e.name);
-          } catch (e, stackTrace) {
-            log.severe(
-              "Error while fetching autocomplete from API",
-              e,
-              stackTrace,
-            );
+          final FireflyIii api = context.read<FireflyService>().api;
+          fetchOp = CancelableOperation<
+            Response<AutocompleteTransactionArray>
+          >.fromFuture(
+            api.v1AutocompleteTransactionsGet(query: textEditingValue.text),
+          );
+          final Response<AutocompleteTransactionArray>? response =
+              await fetchOp?.valueOrCancellation();
+          if (response == null) {
             return const Iterable<String>.empty();
           }
-        },
-      ),
+          apiThrowErrorIfEmpty(response, context.mounted ? context : null);
+
+          return response.body!.map((AutocompleteTransaction e) => e.name);
+        } catch (e, stackTrace) {
+          log.severe(
+            "Error while fetching autocomplete from API",
+            e,
+            stackTrace,
+          );
+          return const Iterable<String>.empty();
+        }
+      },
     );
   }
 }
@@ -2626,6 +2727,114 @@ class SharedAttachmentReviewDialog extends StatelessWidget {
                   child: Text(l10n.transactionSharedAttachmentsClose),
                 ),
               ],
+    );
+  }
+}
+
+class _TransactionEditorValidationCard extends StatelessWidget {
+  const _TransactionEditorValidationCard({required this.messages});
+
+  final List<String> messages;
+
+  @override
+  Widget build(BuildContext context) {
+    return Card(
+      color: Theme.of(context).colorScheme.errorContainer,
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: <Widget>[
+            Row(
+              children: <Widget>[
+                Icon(
+                  Icons.info_outline,
+                  color: Theme.of(context).colorScheme.onErrorContainer,
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Text(
+                    S.of(context).transactionSectionAttention,
+                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                      color: Theme.of(context).colorScheme.onErrorContainer,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            ...messages.map(
+              (String message) => Padding(
+                padding: const EdgeInsets.only(bottom: 8),
+                child: Text(
+                  '- $message',
+                  style: TextStyle(
+                    color: Theme.of(context).colorScheme.onErrorContainer,
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class TransactionSectionCard extends StatelessWidget {
+  const TransactionSectionCard({
+    super.key,
+    required this.title,
+    required this.subtitle,
+    required this.child,
+    this.trailing,
+  });
+
+  final String title;
+  final String subtitle;
+  final Widget child;
+  final Widget? trailing;
+
+  @override
+  Widget build(BuildContext context) {
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: <Widget>[
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: <Widget>[
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: <Widget>[
+                      Text(
+                        title,
+                        style: Theme.of(context).textTheme.titleMedium,
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        subtitle,
+                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                          color: Theme.of(context).colorScheme.onSurfaceVariant,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                if (trailing != null) ...<Widget>[
+                  const SizedBox(width: 12),
+                  trailing!,
+                ],
+              ],
+            ),
+            const SizedBox(height: 16),
+            child,
+          ],
+        ),
+      ),
     );
   }
 }

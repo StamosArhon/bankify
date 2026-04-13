@@ -1710,6 +1710,84 @@ abstract class S {
   /// **'Delete split'**
   String get transactionSplitDelete;
 
+  /// Headline for the editor validation summary card
+  ///
+  /// In en, this message translates to:
+  /// **'Finish these essentials before saving'**
+  String get transactionSectionAttention;
+
+  /// Validation guidance shown when the transaction type is still unknown because the account selection is incomplete
+  ///
+  /// In en, this message translates to:
+  /// **'Choose accounts so Bankify can determine the transaction type.'**
+  String get transactionSectionAttentionMissingAccounts;
+
+  /// Validation guidance shown when no own asset account has been identified yet
+  ///
+  /// In en, this message translates to:
+  /// **'Select the asset or debt account that belongs to you.'**
+  String get transactionSectionAttentionMissingOwnAccount;
+
+  /// Validation guidance shown when the transaction title is empty
+  ///
+  /// In en, this message translates to:
+  /// **'Add a transaction title.'**
+  String get transactionSectionAttentionMissingTitle;
+
+  /// Transaction editor section title for source and destination account selection
+  ///
+  /// In en, this message translates to:
+  /// **'Accounts'**
+  String get transactionSectionAccounts;
+
+  /// Supporting text for the account section in the transaction editor
+  ///
+  /// In en, this message translates to:
+  /// **'Choose the accounts to let Bankify infer the transaction type.'**
+  String get transactionSectionAccountsSubtitle;
+
+  /// Transaction editor section title for the top-level title, amount, and date controls
+  ///
+  /// In en, this message translates to:
+  /// **'Overview'**
+  String get transactionSectionOverview;
+
+  /// Supporting text for the overview section in the transaction editor
+  ///
+  /// In en, this message translates to:
+  /// **'Start with the title, amount, and date.'**
+  String get transactionSectionOverviewSubtitle;
+
+  /// Transaction editor section title for split transaction line items
+  ///
+  /// In en, this message translates to:
+  /// **'Line items'**
+  String get transactionSectionSplits;
+
+  /// Supporting text for the split section in the transaction editor
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1 {1 line item} other {{count} line items}}'**
+  String transactionSectionSplitsSubtitle(int count);
+
+  /// Expansion title for optional per-line-item fields and actions in the transaction editor
+  ///
+  /// In en, this message translates to:
+  /// **'Advanced details'**
+  String get transactionAdvancedDetails;
+
+  /// Default expansion subtitle for optional transaction editor details
+  ///
+  /// In en, this message translates to:
+  /// **'Optional fields and split actions'**
+  String get transactionAdvancedDetailsSubtitle;
+
+  /// Heading label for a split transaction card
+  ///
+  /// In en, this message translates to:
+  /// **'Line item {index}'**
+  String transactionSplitLabel(int index);
+
   /// Title: Add a new transaction
   ///
   /// In en, this message translates to:

@@ -539,11 +539,11 @@
 ### Suggested Branches
 
 - `stamos/phase-6-transaction-editor-ux`
-  Reworks editor information architecture, sections, progressive disclosure, validation ergonomics, and advanced-field presentation.
-- `stamos/phase-6-transaction-flow-productivity`
-  Adds saved filter presets, draft autosave, and transaction templates / shortcuts for repeat workflows.
+  Completed on 2026-04-14. Reworks the transaction editor into clearer overview/accounts/line-item sections, adds inline pre-save guidance for missing essentials, and removes attachment-count fetch side effects from the render path.
 - `stamos/phase-6-navigation-and-screen-states`
   Normalizes top-level navigation and standardizes loading, empty, and error presentation across the main screens.
+- `stamos/phase-6-transaction-flow-productivity`
+  Adds saved filter presets, draft autosave, and transaction templates / shortcuts for repeat workflows.
 - `stamos/phase-6-share-and-detail-flows`
   Finishes share-while-open behavior and upgrades bills and piggy-bank detail flows into richer dedicated screens where they provide better context.
 - `stamos/phase-6-onboarding-and-connection-health`
@@ -567,8 +567,8 @@
 10. `stamos/phase-5-domain-service-extraction`
 11. `stamos/phase-5-logout-preference-retention`
 12. `stamos/phase-6-transaction-editor-ux`
-13. `stamos/phase-6-transaction-flow-productivity`
-14. `stamos/phase-6-navigation-and-screen-states`
+13. `stamos/phase-6-navigation-and-screen-states`
+14. `stamos/phase-6-transaction-flow-productivity`
 15. `stamos/phase-6-share-and-detail-flows`
 16. `stamos/phase-6-onboarding-and-connection-health`
 17. `stamos/phase-6-dashboard-and-privacy-center`
@@ -576,6 +576,7 @@
 
 ## Immediate Next Recommendation
 
-- Phase 5 is complete, and Phase 6 is now formalized into 12 task slices across 7 suggested branch groups.
+- Phase 6 is in progress.
+- The transaction-editor UX slice is complete, and the next dependency-aware step is to normalize the shell and screen-state contract before layering in saved filter presets, drafts, and templates.
 - Architecture work is now in a safer place for UX and feature iteration: transaction payload/editor logic is split out, shell/session state is typed, domain fetch logic has service seams, and logout now preserves non-secret preferences while still clearing persisted auth material.
-- Next implementation work should begin with `stamos/phase-6-transaction-editor-ux`.
+- Next implementation work should continue with `stamos/phase-6-navigation-and-screen-states`.
