@@ -144,4 +144,47 @@ void main() {
     );
     expect(await secondFile.exists(), isFalse);
   });
+
+  test('normalizes file uris and rejects relative paths', () async {
+    final File localFile = File(
+      '${tempDir.path}${Platform.pathSeparator}statement.pdf',
+    );
+    await localFile.writeAsBytes(<int>[1, 2, 3]);
+
+    expect(
+      normalizeSharedAttachmentPath(localFile.uri.toString()),
+      localFile.path,
+    );
+    expect(normalizeSharedAttachmentPath('statement.pdf'), isNull);
+  });
+
+  test('deletes only app-owned copies during cleanup', () async {
+    final Directory externalDir = await Directory.systemTemp.createTemp(
+      'bankify_shared_attachment_external',
+    );
+    final File ownedFile = File(
+      '${tempDir.path}${Platform.pathSeparator}owned.pdf',
+    );
+    final File externalFile = File(
+      '${externalDir.path}${Platform.pathSeparator}external.pdf',
+    );
+    await ownedFile.writeAsBytes(<int>[1, 2, 3]);
+    await externalFile.writeAsBytes(<int>[4, 5, 6]);
+
+    try {
+      await deleteSharedAttachmentIfOwnedCopy(ownedFile.path, <String>[
+        tempDir.path,
+      ]);
+      await deleteSharedAttachmentIfOwnedCopy(externalFile.path, <String>[
+        tempDir.path,
+      ]);
+
+      expect(await ownedFile.exists(), isFalse);
+      expect(await externalFile.exists(), isTrue);
+    } finally {
+      if (await externalDir.exists()) {
+        await externalDir.delete(recursive: true);
+      }
+    }
+  });
 }

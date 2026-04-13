@@ -45,14 +45,75 @@ void main() {
     expect(await store.consume(payloadId), isNull);
   });
 
-  test('uses private notification visibility for notification listener flows', () {
-    expect(
-      transactionReviewNotificationDetails.visibility,
-      NotificationVisibility.private,
+  test(
+    'store cleans up stale draft json files but keeps unrelated files',
+    () async {
+      final NotificationPayloadStore store = NotificationPayloadStore(
+        baseDirectory: tempDir,
+      );
+      final Directory draftDir = Directory(
+        '${tempDir.path}${Platform.pathSeparator}notification_drafts',
+      );
+      await draftDir.create(recursive: true);
+
+      final File staleDraft = File(
+        '${draftDir.path}${Platform.pathSeparator}stale.json',
+      );
+      await staleDraft.writeAsString('{"appName":"old"}');
+      await staleDraft.setLastModified(
+        DateTime.now().subtract(const Duration(days: 2)),
+      );
+
+      final File unrelatedFile = File(
+        '${draftDir.path}${Platform.pathSeparator}keep.txt',
+      );
+      await unrelatedFile.writeAsString('keep');
+      await unrelatedFile.setLastModified(
+        DateTime.now().subtract(const Duration(days: 2)),
+      );
+
+      await store.store(
+        NotificationTransaction(
+          'com.example.bank',
+          'Groceries',
+          'Paid EUR 9.90',
+          DateTime.utc(2026, 4, 13, 9),
+        ),
+      );
+
+      expect(await staleDraft.exists(), isFalse);
+      expect(await unrelatedFile.exists(), isTrue);
+    },
+  );
+
+  test('consume deletes malformed drafts after returning null', () async {
+    final NotificationPayloadStore store = NotificationPayloadStore(
+      baseDirectory: tempDir,
     );
-    expect(
-      createdTransactionNotificationDetails.visibility,
-      NotificationVisibility.private,
+    final Directory draftDir = Directory(
+      '${tempDir.path}${Platform.pathSeparator}notification_drafts',
     );
+    await draftDir.create(recursive: true);
+    final File invalidDraft = File(
+      '${draftDir.path}${Platform.pathSeparator}broken.json',
+    );
+    await invalidDraft.writeAsString('not json');
+
+    expect(await store.consume('broken'), isNull);
+    expect(await invalidDraft.exists(), isFalse);
   });
+
+  test(
+    'uses private notification visibility for notification listener flows',
+    () {
+      expect(
+        transactionReviewNotificationDetails.visibility,
+        NotificationVisibility.private,
+      );
+      expect(
+        createdTransactionNotificationDetails.visibility,
+        NotificationVisibility.private,
+      );
+    },
+  );
 }

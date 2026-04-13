@@ -17,6 +17,43 @@ import 'package:bankify/generated/l10n/app_localizations.dart';
 import 'package:bankify/generated/swagger_fireflyiii_api/firefly_iii.swagger.dart';
 import 'package:bankify/widgets/materialiconbutton.dart';
 
+String sanitizeAttachmentFilename(String? filename) {
+  String safeName = (filename ?? "").trim().replaceAll("\\", "/");
+  if (safeName.contains("/")) {
+    safeName = safeName.split("/").last;
+  }
+  safeName = safeName.replaceAll(RegExp(r'[\x00-\x1F\x7F]'), "");
+  safeName = safeName.replaceAll(RegExp(r"[^A-Za-z0-9._ -]"), "_");
+  safeName = safeName.replaceAll(RegExp(r"\s+"), " ").trim();
+  if (safeName.isEmpty || safeName == "." || safeName == "..") {
+    safeName = "attachment";
+  }
+  if (safeName.length > 80) {
+    final int dotIndex = safeName.lastIndexOf(".");
+    if (dotIndex > 0 && safeName.length - dotIndex <= 10) {
+      final String extension = safeName.substring(dotIndex);
+      final int baseLength = 80 - extension.length;
+      safeName = "${safeName.substring(0, baseLength)}$extension";
+    } else {
+      safeName = safeName.substring(0, 80);
+    }
+  }
+  return safeName;
+}
+
+String attachmentDownloadFileName(AttachmentRead attachment) {
+  final String safeName = sanitizeAttachmentFilename(
+    attachment.attributes.filename,
+  );
+  return "bankify-${attachment.id}-$safeName";
+}
+
+File attachmentDownloadFile(Directory tmpPath, AttachmentRead attachment) {
+  return File.fromUri(
+    tmpPath.uri.resolve(attachmentDownloadFileName(attachment)),
+  );
+}
+
 class AttachmentDialog extends StatefulWidget {
   const AttachmentDialog({
     super.key,
@@ -36,38 +73,6 @@ class _AttachmentDialogState extends State<AttachmentDialog>
   final Logger log = Logger("Pages.Transaction.AttachmentDialog");
 
   final Map<int, double> _dlProgress = <int, double>{};
-
-  String _safeAttachmentFilename(String? filename) {
-    String safeName = (filename ?? "").trim().replaceAll("\\", "/");
-    if (safeName.contains("/")) {
-      safeName = safeName.split("/").last;
-    }
-    safeName = safeName.replaceAll(RegExp(r'[\x00-\x1F\x7F]'), "");
-    safeName = safeName.replaceAll(RegExp(r"[^A-Za-z0-9._ -]"), "_");
-    safeName = safeName.replaceAll(RegExp(r"\s+"), " ").trim();
-    if (safeName.isEmpty || safeName == "." || safeName == "..") {
-      safeName = "attachment";
-    }
-    if (safeName.length > 80) {
-      final int dotIndex = safeName.lastIndexOf(".");
-      if (dotIndex > 0 && safeName.length - dotIndex <= 10) {
-        final String extension = safeName.substring(dotIndex);
-        final int baseLength = 80 - extension.length;
-        safeName = "${safeName.substring(0, baseLength)}$extension";
-      } else {
-        safeName = safeName.substring(0, 80);
-      }
-    }
-    return safeName;
-  }
-
-  File _attachmentDownloadFile(Directory tmpPath, AttachmentRead attachment) {
-    final String safeName = _safeAttachmentFilename(
-      attachment.attributes.filename,
-    );
-    final String fileName = "bankify-${attachment.id}-$safeName";
-    return File.fromUri(tmpPath.uri.resolve(fileName));
-  }
 
   Future<bool> _confirmExternalOpen(
     BuildContext context, {
@@ -139,7 +144,7 @@ class _AttachmentDialogState extends State<AttachmentDialog>
       total = attachment.attributes.size ?? 0;
     }
     final Directory tmpPath = await getTemporaryDirectory();
-    final File outputFile = _attachmentDownloadFile(tmpPath, attachment);
+    final File outputFile = attachmentDownloadFile(tmpPath, attachment);
     final IOSink fileSink = outputFile.openWrite();
 
     try {

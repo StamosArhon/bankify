@@ -443,6 +443,7 @@
 ### Suggested Branches
 
 - `stamos/phase-4-security-unit-tests`
+  Completed on 2026-04-13. Adds expanded transport-policy coverage, attachment filename sanitization tests, shared-attachment cleanup tests, and notification draft expiry/malformed payload regression coverage.
 - `stamos/phase-4-widget-and-flow-tests`
 - `stamos/phase-4-manual-security-qa-checklist`
 
@@ -527,6 +528,6 @@
 
 ## Immediate Next Recommendation
 
-- Next implementation branch should be `stamos/phase-4-security-unit-tests`.
-- That branch should add focused regression coverage for attachment origin/open behavior, logout and preference retention, and any remaining transport/privacy edge cases that still rely mainly on manual QA.
-- After that, continue with `stamos/phase-4-widget-and-flow-tests`.
+- Next implementation branch should be `stamos/phase-4-widget-and-flow-tests`.
+- That branch should add focused widget and flow coverage for login secret-entry behavior, the certificate-trust path, and lock-timeout settings while keeping expectations around logout retention explicit.
+- After that, continue with `stamos/phase-4-manual-security-qa-checklist`.

@@ -113,7 +113,12 @@ class NotificationPayloadStore {
     }
 
     try {
-      final dynamic decoded = jsonDecode(await file.readAsString());
+      final dynamic decoded;
+      try {
+        decoded = jsonDecode(await file.readAsString());
+      } on FormatException {
+        return null;
+      }
       if (decoded is! Map<String, dynamic>) {
         return null;
       }
@@ -144,27 +149,27 @@ final RegExp rFindMoney = RegExp(
   r'(?:^|[^\w])(?<preCurrency>(?:[^\r\n\t\f\v 0-9]){0,3})\s*(?<amount>\d[.,\s\d]+(?:[.,]\d+)?)\s*(?<postCurrency>(?:[^\r\n\t\f\v 0-9]){0,3})(?:$|\s|\.|,)',
 );
 
-const AndroidNotificationDetails createdTransactionNotificationDetails =
-    AndroidNotificationDetails(
-      'extract_transaction_created',
-      'Transaction from Notification Created',
-      channelDescription:
-          'Notification that a Transaction has been created from another Notification.',
-      importance: Importance.low,
-      priority: Priority.low,
-      visibility: NotificationVisibility.private,
-    );
+const AndroidNotificationDetails
+createdTransactionNotificationDetails = AndroidNotificationDetails(
+  'extract_transaction_created',
+  'Transaction from Notification Created',
+  channelDescription:
+      'Notification that a Transaction has been created from another Notification.',
+  importance: Importance.low,
+  priority: Priority.low,
+  visibility: NotificationVisibility.private,
+);
 
-const AndroidNotificationDetails transactionReviewNotificationDetails =
-    AndroidNotificationDetails(
-      'extract_transaction',
-      'Create Transaction from Notification',
-      channelDescription:
-          'Notification asking to create a transaction from another Notification.',
-      importance: Importance.low,
-      priority: Priority.low,
-      visibility: NotificationVisibility.private,
-    );
+const AndroidNotificationDetails
+transactionReviewNotificationDetails = AndroidNotificationDetails(
+  'extract_transaction',
+  'Create Transaction from Notification',
+  channelDescription:
+      'Notification asking to create a transaction from another Notification.',
+  importance: Importance.low,
+  priority: Priority.low,
+  visibility: NotificationVisibility.private,
+);
 
 Future<NotificationListenerStatus> nlStatus() async {
   return NotificationListenerStatus(
@@ -221,10 +226,10 @@ void nlCallback() {
       return;
     }
 
-      final NotificationAppSettings appSettings = await settings
-          .notificationGetAppSettings(evt.packageName!);
-      final NotificationPayloadStore payloadStore = NotificationPayloadStore();
-      bool showNotification = true;
+    final NotificationAppSettings appSettings = await settings
+        .notificationGetAppSettings(evt.packageName!);
+    final NotificationPayloadStore payloadStore = NotificationPayloadStore();
+    bool showNotification = true;
 
     if (appSettings.autoAdd) {
       tz.initializeTimeZones();
@@ -367,15 +372,15 @@ Future<void> nlNotificationTap(
   final NotificationTransaction? transaction = await NotificationPayloadStore()
       .consume(notificationResponse.payload!);
   final NavigatorState? navigatorState = navigatorKey.currentState;
-  if (transaction == null || navigatorState == null || !navigatorState.mounted) {
+  if (transaction == null ||
+      navigatorState == null ||
+      !navigatorState.mounted) {
     return;
   }
   await showDialog(
     context: navigatorState.context,
     builder:
-        (BuildContext context) => TransactionPage(
-          notification: transaction,
-        ),
+        (BuildContext context) => TransactionPage(notification: transaction),
   );
 }
 
