@@ -1,4 +1,5 @@
 import 'package:bankify/app_lock_policy.dart';
+import 'package:bankify/app_profile.dart';
 import 'package:bankify/app_session_state.dart';
 import 'package:bankify/notificationlistener.dart';
 import 'package:flutter_sharing_intent/model/sharing_file.dart';
@@ -116,6 +117,25 @@ void main() {
         ).shouldRequireUnlockOnResume,
         isTrue,
       );
+    });
+
+    test('can track and clear the active profile identity', () {
+      final AppProfile profile = AppProfile.fromCredentials(
+        host: 'https://bankify.example.com',
+        apiKey: 'secret-token',
+      );
+      const AppSessionState ready = AppSessionState(
+        startupPhase: AppStartupPhase.ready,
+        unlockSatisfied: true,
+      );
+
+      final AppSessionState withProfile = ready.copyWith(profile: profile);
+      final AppSessionState clearedProfile = withProfile.copyWith(
+        clearProfile: true,
+      );
+
+      expect(withProfile.profile, profile);
+      expect(clearedProfile.profile, isNull);
     });
   });
 }

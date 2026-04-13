@@ -62,8 +62,13 @@ class _BillsPageState extends State<BillsPage>
     super.initState();
 
     _settings = context.read<SettingsProvider>();
-    _tzHandler = context.read<FireflyService>().tzHandler;
-    _billsService = BillsService(context.read<FireflyService>().api);
+    final FireflyService firefly = context.read<FireflyService>();
+    _tzHandler = firefly.tzHandler;
+    _billsService = BillsService(
+      api: firefly.api,
+      profile: firefly.currentProfile!,
+      cacheStore: firefly.cacheStore,
+    );
   }
 
   @override

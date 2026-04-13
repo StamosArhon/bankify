@@ -12,6 +12,7 @@ import 'package:provider/provider.dart';
 import 'package:provider/single_child_widget.dart';
 import 'package:quick_actions/quick_actions.dart';
 import 'package:bankify/app_lock_policy.dart';
+import 'package:bankify/app_profile.dart';
 import 'package:bankify/app_session_state.dart';
 import 'package:bankify/auth.dart';
 import 'package:bankify/generated/l10n/app_localizations.dart';
@@ -359,6 +360,9 @@ class _BankifyAppState extends State<BankifyApp> {
             final bool signedIn = context.select(
               (FireflyService f) => f.signedIn,
             );
+            final AppProfile? currentProfile = context.select(
+              (FireflyService f) => f.currentProfile,
+            );
             final bool hasStorageSignInException = context.select(
               (FireflyService f) => f.storageSignInException != null,
             );
@@ -374,10 +378,13 @@ class _BankifyAppState extends State<BankifyApp> {
               lockEnabled: settings.lock,
               lockTimeout: settings.lockTimeout,
               unlockSatisfied: settings.lock ? _session.unlockSatisfied : true,
+              profile: currentProfile,
+              clearProfile: currentProfile == null,
             );
             if (syncedSession.lockEnabled != _session.lockEnabled ||
                 syncedSession.lockTimeout != _session.lockTimeout ||
-                syncedSession.unlockSatisfied != _session.unlockSatisfied) {
+                syncedSession.unlockSatisfied != _session.unlockSatisfied ||
+                syncedSession.profile != _session.profile) {
               WidgetsBinding.instance.addPostFrameCallback((_) {
                 if (!mounted) {
                   return;

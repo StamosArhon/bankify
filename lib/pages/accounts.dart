@@ -143,7 +143,12 @@ class _AccountDetailsState extends State<AccountDetails>
   @override
   void initState() {
     super.initState();
-    _accountsService = AccountsService(context.read<FireflyService>().api);
+    final FireflyService firefly = context.read<FireflyService>();
+    _accountsService = AccountsService(
+      api: firefly.api,
+      profile: firefly.currentProfile!,
+      cacheStore: firefly.cacheStore,
+    );
   }
 
   Future<void> _fetchPage() async {
