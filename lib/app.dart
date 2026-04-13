@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:dynamic_color/dynamic_color.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart' show SystemChannels;
@@ -10,6 +12,7 @@ import 'package:provider/provider.dart';
 import 'package:provider/single_child_widget.dart';
 import 'package:quick_actions/quick_actions.dart';
 import 'package:bankify/app_lock_policy.dart';
+import 'package:bankify/app_session_state.dart';
 import 'package:bankify/auth.dart';
 import 'package:bankify/generated/l10n/app_localizations.dart';
 import 'package:bankify/notificationlistener.dart';
@@ -34,16 +37,126 @@ class BankifyApp extends StatefulWidget {
 }
 
 class _BankifyAppState extends State<BankifyApp> {
-  bool _startup = true;
-  bool _authed = false;
-  String? _quickAction;
-  NotificationTransaction? _notificationPayload;
-  // Not needed right now, as sharing while the app is open does not work
-  //late StreamSubscription<List<SharedFile>> _intentDataStreamSubscription;
-  List<SharedFile>? _filesSharedToApp;
-  bool _requiresAuth = false;
-  AppLockTimeout _lockTimeout = defaultAppLockTimeout;
-  DateTime? _lcLastOpen;
+  AppSessionState _session = const AppSessionState();
+  bool _settingsLoadRequested = false;
+  bool _startupTaskRunning = false;
+
+  void _updateSession(AppSessionState next) {
+    if (!mounted) {
+      _session = next;
+      return;
+    }
+    setState(() {
+      _session = next;
+    });
+  }
+
+  void _recordNotificationLaunch(NotificationTransaction notification) {
+    _updateSession(
+      _session.copyWith(
+        launchRequest: _session.launchRequest.copyWith(
+          notification: notification,
+          clearNotification: false,
+        ),
+      ),
+    );
+  }
+
+  void _recordQuickActionLaunch(String shortcutType) {
+    _updateSession(
+      _session.copyWith(
+        launchRequest: _session.launchRequest.copyWith(
+          quickActionType: shortcutType,
+          clearQuickActionType: false,
+        ),
+      ),
+    );
+  }
+
+  void _recordSharedFilesLaunch(List<SharedFile> files) {
+    _updateSession(
+      _session.copyWith(
+        launchRequest: _session.launchRequest.copyWith(
+          sharedFiles: files,
+          clearSharedFiles: false,
+        ),
+      ),
+    );
+  }
+
+  void _clearLaunchRequest() {
+    if (_session.launchRequest.isEmpty) {
+      return;
+    }
+    _updateSession(_session.copyWith(launchRequest: AppLaunchRequest.empty));
+  }
+
+  Future<void> _pushTransactionComposer({
+    NotificationTransaction? notification,
+    List<SharedFile>? files,
+  }) async {
+    final NavigatorState? navigator = navigatorKey.currentState;
+    if (navigator == null) {
+      return;
+    }
+    await navigator.push(
+      MaterialPageRoute<Widget>(
+        builder:
+            (BuildContext context) =>
+                TransactionPage(notification: notification, files: files),
+      ),
+    );
+  }
+
+  Future<void> _maybeAdvanceStartup(BuildContext context) async {
+    if (_startupTaskRunning || !_session.startupInProgress) {
+      return;
+    }
+    if (!context.read<SettingsProvider>().loaded) {
+      return;
+    }
+
+    if (_session.startupPhase == AppStartupPhase.waitingForSettings) {
+      if (_session.lockEnabled && !_session.unlockSatisfied) {
+        _startupTaskRunning = true;
+        _updateSession(
+          _session.copyWith(startupPhase: AppStartupPhase.awaitingUnlock),
+        );
+        final bool authed = await auth();
+        _startupTaskRunning = false;
+        if (!mounted) {
+          return;
+        }
+        if (!authed) {
+          log.shout(() => "startup authentication failed");
+          await SystemChannels.platform.invokeMethod('SystemNavigator.pop');
+          return;
+        }
+        _updateSession(
+          _session.copyWith(
+            startupPhase: AppStartupPhase.waitingForSettings,
+            unlockSatisfied: true,
+          ),
+        );
+      } else {
+        _startupTaskRunning = true;
+        _updateSession(
+          _session.copyWith(startupPhase: AppStartupPhase.signingInFromStorage),
+        );
+        await context.read<FireflyService>().signInFromStorage();
+        _startupTaskRunning = false;
+        if (!mounted) {
+          return;
+        }
+        _updateSession(
+          _session.copyWith(
+            startupPhase: AppStartupPhase.ready,
+            unlockSatisfied: true,
+          ),
+        );
+      }
+    }
+  }
 
   @override
   void initState() {
@@ -68,12 +181,10 @@ class _BankifyAppState extends State<BankifyApp> {
             await NotificationPayloadStore().consume(
               details!.notificationResponse!.payload!,
             );
-        if (!mounted || notificationPayload == null) {
+        if (notificationPayload == null) {
           return;
         }
-        setState(() {
-          _notificationPayload = notificationPayload;
-        });
+        _recordNotificationLaunch(notificationPayload);
       }
     });
 
@@ -81,29 +192,28 @@ class _BankifyAppState extends State<BankifyApp> {
     const QuickActions quickActions = QuickActions();
     quickActions.initialize((String shortcutType) {
       log.info("Was launched from QuickAction $shortcutType");
-      _quickAction = shortcutType;
-      if (!_startup && navigatorKey.currentState != null) {
+      final bool canOpenImmediately =
+          !_session.startupInProgress &&
+          navigatorKey.currentState != null &&
+          (navigatorKey.currentContext?.read<FireflyService>().signedIn ??
+              false);
+      if (canOpenImmediately) {
         log.finest(() => "App already started, pushing route");
-        navigatorKey.currentState!.push(
-          MaterialPageRoute<Widget>(
-            builder: (BuildContext context) => const TransactionPage(),
-          ),
-        );
+        unawaited(_pushTransactionComposer());
+        return;
       }
+      _recordQuickActionLaunch(shortcutType);
     });
     quickActions.clearShortcutItems();
 
     // App Lifecycle State
     AppLifecycleListener(
       onResume: () {
-        if (_requiresAuth &&
-            shouldRequireAppUnlock(
-              lastPausedAt: _lcLastOpen,
-              timeout: _lockTimeout,
-            )) {
-          log.finest(() => "App resuming, last opened: $_lcLastOpen");
-          _lcLastOpen = null;
-          _authed = false;
+        if (_session.shouldRequireUnlockOnResume) {
+          log.finest(
+            () => "App resuming, last opened: ${_session.lastPausedAt}",
+          );
+          _updateSession(_session.copyWith(clearLastPausedAt: true));
 
           final bool canPush = navigatorKey.currentState != null;
           if (canPush) {
@@ -118,13 +228,14 @@ class _BankifyAppState extends State<BankifyApp> {
             log.finest(() => "done authing, $authed");
             if (authed) {
               log.finest(() => "authentication succeeded");
-              _authed = true;
               if (canPush) {
                 navigatorKey.currentState?.pop();
               }
             } else {
               log.shout(() => "authentication failed");
-              _lcLastOpen = forceExpiredAppLockTimestamp();
+              _updateSession(
+                _session.copyWith(lastPausedAt: forceExpiredAppLockTimestamp()),
+              );
               // close app
               SystemChannels.platform.invokeMethod('SystemNavigator.pop');
               if (canPush) {
@@ -135,8 +246,8 @@ class _BankifyAppState extends State<BankifyApp> {
         }
       },
       onPause: () {
-        if (_requiresAuth) {
-          _lcLastOpen = DateTime.now();
+        if (_session.lockEnabled) {
+          _updateSession(_session.copyWith(lastPausedAt: DateTime.now()));
           log.finest(() => "App pausing now");
         }
       },
@@ -166,7 +277,9 @@ class _BankifyAppState extends State<BankifyApp> {
     ) {
       log.config("App was opened via file sharing");
       log.finest(() => "shared file count: ${value.length}");
-      _filesSharedToApp = value;
+      if (value.isNotEmpty) {
+        _recordSharedFilesLaunch(value);
+      }
       FlutterSharingIntent.instance.reset();
     });
   }
@@ -222,58 +335,60 @@ class _BankifyAppState extends State<BankifyApp> {
             ),
           ],
           builder: (BuildContext context, _) {
-            late bool signedIn;
-            log.finest(() => "_startup = $_startup");
-            _requiresAuth = context.watch<SettingsProvider>().lock;
-            _lockTimeout = context.watch<SettingsProvider>().lockTimeout;
-            log.finest(() => "_requiresAuth = $_requiresAuth");
-            if (_startup) {
-              signedIn = false;
+            final SettingsProvider settings = context.read<SettingsProvider>();
+            final bool settingsLoaded = context.select(
+              (SettingsProvider s) => s.loaded,
+            );
+            final bool signedIn = context.select(
+              (FireflyService f) => f.signedIn,
+            );
+            final bool hasStorageSignInException = context.select(
+              (FireflyService f) => f.storageSignInException != null,
+            );
 
-              if (!context.select((SettingsProvider s) => s.loaded)) {
-                log.finer(() => "Load Step 1: Loading Settings");
-                context.read<SettingsProvider>().loadSettings();
-              } else {
-                log.finer(() => "Load Step 2: Signin In");
-
-                if (context.read<SettingsProvider>().lock && !_authed) {
-                  // Authentication required
-                  log.fine("awaiting authentication");
-                  auth().then((bool authed) {
-                    log.finest(() => "done authing, $authed");
-                    if (authed) {
-                      log.finest(() => "authentication succeeded");
-                      setState(() {
-                        _authed = true;
-                      });
-                    } else {
-                      log.shout(() => "authentication failed");
-                      // close app
-                      SystemChannels.platform.invokeMethod(
-                        'SystemNavigator.pop',
-                      );
-                    }
-                  });
-                } else {
-                  log.finest(() => "signing in");
-                  context.read<FireflyService>().signInFromStorage().then(
-                    (bool _) => setState(() {
-                      log.finest(() => "set _startup = false");
-                      _authed = true;
-                      _startup = false;
-                    }),
-                  );
-                }
-              }
-            } else {
-              signedIn = context.select((FireflyService f) => f.signedIn);
-              if (signedIn) {
-                context.read<FireflyService>().tzHandler.setUseServerTime(
-                  context.read<SettingsProvider>().useServerTime,
-                );
-              }
-              log.config("signedIn: $signedIn");
+            log.finest(() => "startupPhase = ${_session.startupPhase}");
+            if (!_settingsLoadRequested && !settingsLoaded) {
+              _settingsLoadRequested = true;
+              log.finer(() => "Load Step 1: Loading Settings");
+              settings.loadSettings();
             }
+
+            final AppSessionState syncedSession = _session.copyWith(
+              lockEnabled: settings.lock,
+              lockTimeout: settings.lockTimeout,
+              unlockSatisfied: settings.lock ? _session.unlockSatisfied : true,
+            );
+            if (syncedSession.lockEnabled != _session.lockEnabled ||
+                syncedSession.lockTimeout != _session.lockTimeout ||
+                syncedSession.unlockSatisfied != _session.unlockSatisfied) {
+              WidgetsBinding.instance.addPostFrameCallback((_) {
+                if (!mounted) {
+                  return;
+                }
+                _updateSession(syncedSession);
+              });
+            }
+
+            if (settingsLoaded && _session.startupInProgress) {
+              WidgetsBinding.instance.addPostFrameCallback((_) {
+                if (!mounted) {
+                  return;
+                }
+                unawaited(_maybeAdvanceStartup(context));
+              });
+            }
+
+            if (signedIn) {
+              context.read<FireflyService>().tzHandler.setUseServerTime(
+                settings.useServerTime,
+              );
+            }
+            log.config("signedIn: $signedIn");
+
+            final AppHomeDestination homeDestination = _session.resolveHome(
+              signedIn: signedIn,
+              hasStorageSignInException: hasStorageSignInException,
+            );
 
             return MaterialApp(
               title: 'Bankify',
@@ -306,35 +421,17 @@ class _BankifyAppState extends State<BankifyApp> {
               supportedLocales: S.supportedLocales,
               locale: context.select((SettingsProvider s) => s.locale),
               navigatorKey: navigatorKey,
-              home:
-                  ((_startup || !_authed) ||
-                          context.select(
-                            (FireflyService f) =>
-                                f.storageSignInException != null,
-                          ))
-                      ? const SplashPage()
-                      : signedIn
-                      ? (_notificationPayload != null ||
-                              _quickAction == "action_transaction_add" ||
-                              (_filesSharedToApp != null &&
-                                  _filesSharedToApp!.isNotEmpty))
-                          ? TransactionPage(
-                            notification: _notificationPayload,
-                            files: _filesSharedToApp,
-                            onSharedFilesConsumed:
-                                (_filesSharedToApp?.isNotEmpty ?? false)
-                                    ? () {
-                                      if (!mounted) {
-                                        return;
-                                      }
-                                      setState(() {
-                                        _filesSharedToApp = null;
-                                      });
-                                    }
-                                    : null,
-                          )
-                          : const NavPage()
-                      : const LoginPage(),
+              home: switch (homeDestination) {
+                AppHomeDestination.splash => const SplashPage(),
+                AppHomeDestination.login => const LoginPage(),
+                AppHomeDestination.navigation => NavPage(
+                  initialLaunchRequest:
+                      _session.launchRequest.isEmpty
+                          ? null
+                          : _session.launchRequest,
+                  onInitialLaunchHandled: _clearLaunchRequest,
+                ),
+              },
             );
           },
         );

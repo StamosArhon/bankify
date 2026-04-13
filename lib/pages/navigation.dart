@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:logging/logging.dart';
 import 'package:provider/provider.dart';
 import 'package:bankify/animations.dart';
+import 'package:bankify/app_session_state.dart';
 import 'package:bankify/auth.dart';
 import 'package:bankify/generated/l10n/app_localizations.dart';
 import 'package:bankify/pages/accounts.dart';
@@ -9,6 +10,7 @@ import 'package:bankify/pages/bills.dart';
 import 'package:bankify/pages/categories.dart';
 import 'package:bankify/pages/home.dart';
 import 'package:bankify/pages/settings.dart';
+import 'package:bankify/pages/transaction.dart';
 
 final Logger log = Logger("Pages.Navigation");
 
@@ -26,72 +28,95 @@ class NavDestination {
   final Widget selectedIcon;
 }
 
-class NavPageElements with ChangeNotifier {
-  NavPageElements(this.defaultTitle);
-  final Widget defaultTitle;
+class NavigationChromeController with ChangeNotifier {
+  NavigationChromeController({required Widget title}) : _title = title;
 
-  List<Widget>? _appBarActions;
-  List<Widget>? get appBarActions => _appBarActions;
-  set appBarActions(List<Widget>? value) {
-    if (value == appBarActions) {
-      log.finer(() => "NavPageElements->setAppBarActions equal, skipping");
-      return;
-    }
-    _appBarActions = value;
-    log.finest(() => "notify NavPageElements->setAppBarActions()");
-    notifyListeners();
-  }
+  Widget _title;
+  Widget get title => _title;
+  Widget get appBarTitle => _title;
+  set appBarTitle(Widget value) => setTitle(value);
 
-  PreferredSizeWidget? _appBarBottom;
-  PreferredSizeWidget? get appBarBottom => _appBarBottom;
-  set appBarBottom(PreferredSizeWidget? value) {
-    if (value == appBarBottom) {
-      log.finer(() => "NavPageElements->setAppBarBottom equal, skipping");
-      return;
-    }
-    _appBarBottom = value;
-    log.finest(() => "notify NavPageElements->setAppBarBottom()");
-    notifyListeners();
-  }
+  List<Widget>? _actions;
+  List<Widget>? get actions => _actions;
+  List<Widget>? get appBarActions => _actions;
+  set appBarActions(List<Widget>? value) => setActions(value);
+
+  PreferredSizeWidget? _bottom;
+  PreferredSizeWidget? get bottom => _bottom;
+  PreferredSizeWidget? get appBarBottom => _bottom;
+  set appBarBottom(PreferredSizeWidget? value) => setBottom(value);
 
   Widget? _fab;
   Widget? get fab => _fab;
-  set fab(Widget? value) {
-    if (value == fab) {
-      log.finer(() => "NavPageElements->setFab equal, skipping");
+  set fab(Widget? value) => setFab(value);
+
+  void setTitle(Widget title) {
+    if (_title == title) {
+      log.finer(() => "NavigationChromeController->setTitle equal, skipping");
       return;
     }
-    _fab = value;
-    log.finest(() => "notify NavPageElements->setFab()");
+    _title = title;
     notifyListeners();
   }
 
-  Widget? _appBarTitle;
-  Widget get appBarTitle => _appBarTitle ?? defaultTitle;
-  set appBarTitle(Widget value) {
-    if (value == appBarTitle) {
-      log.finer(() => "NavPageElements->setAppBarTitle equal, skipping");
+  void setActions(List<Widget>? actions) {
+    if (_actions == actions) {
+      log.finer(() => "NavigationChromeController->setActions equal, skipping");
       return;
     }
-    _appBarTitle = value;
-    log.finest(() => "notify NavPageElements->setAppBarTitle()");
+    _actions = actions;
+    notifyListeners();
+  }
+
+  void setBottom(PreferredSizeWidget? bottom) {
+    if (_bottom == bottom) {
+      log.finer(() => "NavigationChromeController->setBottom equal, skipping");
+      return;
+    }
+    _bottom = bottom;
+    notifyListeners();
+  }
+
+  void setFab(Widget? fab) {
+    if (_fab == fab) {
+      log.finer(() => "NavigationChromeController->setFab equal, skipping");
+      return;
+    }
+    _fab = fab;
+    notifyListeners();
+  }
+
+  void resetForDestination({required Widget title}) {
+    _title = title;
+    _actions = null;
+    _bottom = null;
+    _fab = null;
     notifyListeners();
   }
 }
 
+typedef NavPageElements = NavigationChromeController;
+
 class NavPage extends StatefulWidget {
-  const NavPage({super.key});
+  const NavPage({
+    super.key,
+    this.initialLaunchRequest,
+    this.onInitialLaunchHandled,
+  });
+
+  final AppLaunchRequest? initialLaunchRequest;
+  final VoidCallback? onInitialLaunchHandled;
 
   @override
   State<NavPage> createState() => NavPageState();
 }
 
-class NavPageState extends State<NavPage> with TickerProviderStateMixin {
+class NavPageState extends State<NavPage> {
   final Logger log = Logger("Pages.Navigation.Page");
 
-  late TabController _tabController;
   int screenIndex = 0;
   late List<NavDestination> navDestinations;
+  bool _handledInitialLaunch = false;
 
   @override
   void didChangeDependencies() {
@@ -130,14 +155,42 @@ class NavPageState extends State<NavPage> with TickerProviderStateMixin {
       ),
     ];
 
-    _tabController = TabController(vsync: this, length: navDestinations.length);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _maybeHandleInitialLaunch();
+    });
+  }
+
+  void _maybeHandleInitialLaunch() {
+    if (_handledInitialLaunch || !mounted) {
+      return;
+    }
+    final AppLaunchRequest? launchRequest = widget.initialLaunchRequest;
+    if (!(launchRequest?.opensTransactionComposer ?? false)) {
+      return;
+    }
+
+    _handledInitialLaunch = true;
+    widget.onInitialLaunchHandled?.call();
+    Navigator.of(context).push(
+      MaterialPageRoute<Widget>(
+        builder:
+            (BuildContext context) => TransactionPage(
+              notification: launchRequest?.notification,
+              files: launchRequest?.sharedFiles,
+            ),
+      ),
+    );
   }
 
   @override
-  void dispose() {
-    _tabController.dispose();
+  void didUpdateWidget(covariant NavPage oldWidget) {
+    super.didUpdateWidget(oldWidget);
 
-    super.dispose();
+    if (widget.initialLaunchRequest != oldWidget.initialLaunchRequest) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        _maybeHandleInitialLaunch();
+      });
+    }
   }
 
   @override
@@ -145,14 +198,20 @@ class NavPageState extends State<NavPage> with TickerProviderStateMixin {
     final NavDestination currentPage = navDestinations[screenIndex];
     log.finest(() => "nav build(page: $screenIndex)");
 
-    return ChangeNotifierProvider<NavPageElements>(
-      create: (_) => NavPageElements(Text(navDestinations[0].label)),
+    return ChangeNotifierProvider<NavigationChromeController>(
+      create:
+          (_) =>
+              NavigationChromeController(title: Text(navDestinations[0].label)),
       builder:
           (BuildContext context, _) => Scaffold(
             appBar: AppBar(
-              title: context.select((NavPageElements n) => n.appBarTitle),
-              actions: context.select((NavPageElements n) => n.appBarActions),
-              bottom: context.select((NavPageElements n) => n.appBarBottom),
+              title: context.select((NavigationChromeController n) => n.title),
+              actions: context.select(
+                (NavigationChromeController n) => n.actions,
+              ),
+              bottom: context.select(
+                (NavigationChromeController n) => n.bottom,
+              ),
             ),
             drawer: NavigationDrawer(
               selectedIndex: screenIndex,
@@ -174,14 +233,14 @@ class NavPageState extends State<NavPage> with TickerProviderStateMixin {
                     ),
                   );
                 } else {
-                  context.read<NavPageElements>().appBarActions = null;
-                  context.read<NavPageElements>().appBarBottom = null;
-                  context.read<NavPageElements>().fab = null;
-                  context.read<NavPageElements>().appBarTitle = Text(
-                    navDestinations[index].label,
-                  );
+                  context
+                      .read<NavigationChromeController>()
+                      .resetForDestination(
+                        title: Text(navDestinations[index].label),
+                      );
                   setState(() {
                     screenIndex = index;
+                    _handledInitialLaunch = true;
                   });
                 }
               },
@@ -243,7 +302,9 @@ class NavPageState extends State<NavPage> with TickerProviderStateMixin {
               },
               child: currentPage.pageHandler,
             ),
-            floatingActionButton: context.select((NavPageElements n) => n.fab),
+            floatingActionButton: context.select(
+              (NavigationChromeController n) => n.fab,
+            ),
           ),
     );
   }

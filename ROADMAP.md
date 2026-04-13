@@ -488,6 +488,7 @@
 - `stamos/phase-5-transaction-editor-decomposition`
   Completed on 2026-04-13. Extracts transaction payload mapping, notification-prefill translation, shared-attachment intake helpers, and attachment-upload orchestration out of `TransactionPage`, with focused payload regression tests.
 - `stamos/phase-5-shell-state-refactor`
+  Completed on 2026-04-13. Replaces the ad hoc startup flags with a typed app-session model, routes initial launch intents through the navigation shell, and gives top-level app-bar/FAB state an explicit chrome controller and regression tests.
 - `stamos/phase-5-domain-service-extraction`
 - `stamos/phase-5-logout-preference-retention`
 
@@ -535,6 +536,6 @@
 ## Immediate Next Recommendation
 
 - Phase 5 is in progress.
-- The transaction-editor decomposition slice is complete.
-- Next implementation branch should be `stamos/phase-5-shell-state-refactor`.
-- That branch should extract launch/session intent and shell ownership out of the mutable root widget flow before broader domain-service work continues.
+- The transaction-editor decomposition and shell-state refactor slices are complete.
+- Next implementation branch should be `stamos/phase-5-domain-service-extraction`.
+- That branch should move dashboard, bills, piggy-bank, and account-fetch logic into reusable services before the final logout preference-retention slice.
