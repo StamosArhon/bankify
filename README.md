@@ -69,6 +69,7 @@ The app is built using [Flutter](https://flutter.dev/) and tries to stay close t
 
 The repo is pinned to Flutter `3.35.6` through [`pubspec.yaml`](pubspec.yaml), and GitHub Actions reads that exact version during CI. Local workflow and branch-process notes live in [`CONTRIBUTING.md`](CONTRIBUTING.md).
 Manual security and privacy release checks live in [`MANUAL_SECURITY_QA.md`](MANUAL_SECURITY_QA.md).
+A machine-switch/project-status handoff lives in [`HANDOFF.md`](HANDOFF.md), and the reusable sync prompt for future Codex threads lives in [`MACHINE_SWITCH_PROMPT.md`](MACHINE_SWITCH_PROMPT.md).
 
 ## Local Preview
 
